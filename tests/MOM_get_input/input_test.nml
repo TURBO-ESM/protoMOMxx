@@ -1,0 +1,8 @@
+! Test namelist file for MOM_get_input
+&MOM_INPUT_NML
+  OUTPUT_DIRECTORY = './output'
+  RESTART_INPUT_DIR = './RESTART'
+  RESTART_OUTPUT_DIR = './RESTART'
+  INPUT_FILENAME = 'n'
+  PARAMETER_FILENAME = 'MOM_input', 'MOM_override'
+/
