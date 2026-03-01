@@ -56,18 +56,9 @@
 #include <vector>
 #include <iostream>
 #include "MOM_string_functions.h"
+#include "MOM_parser_utilities.h"
 
-/// @brief A type alias for the supported parameter value types.
-using ParamValue = std::variant<
-  bool,
-  std::int64_t,
-  double,
-  std::string,
-  std::vector<bool>,
-  std::vector<std::int64_t>,
-  std::vector<double>,
-  std::vector<std::string>
->;
+using mom_parser_utilities::ParamValue;
 
 class RuntimeParams {
 public:

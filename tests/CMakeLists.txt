@@ -19,12 +19,14 @@ FetchContent_MakeAvailable(googletest)
 
 # Add test source files in subdirectories
 file(GLOB MOM_FILE_PARSER_TESTS "MOM_file_parser/*.cpp")
+file(GLOB MOM_NML_PARSER_TESTS "MOM_nml_parser/*.cpp")
 
 add_executable(test_MOM_file_parser ${MOM_FILE_PARSER_TESTS})
 target_link_libraries(test_MOM_file_parser gtest_main protoMOMxx_framework)
 
-# Add include directories if needed
-# target_include_directories(test_MOM_file_parser PRIVATE ../src/framework)
+add_executable(test_MOM_nml_parser ${MOM_NML_PARSER_TESTS})
+target_link_libraries(test_MOM_nml_parser gtest_main protoMOMxx_framework)
 
 include(GoogleTest)
 gtest_discover_tests(test_MOM_file_parser)
+gtest_discover_tests(test_MOM_nml_parser)
