@@ -1,13 +1,16 @@
 /**
- * @file MOM_driver.cpp
- * @brief Driver program for protoMOMxx
- */
+* @file MOM_driver.cpp
+* @brief Driver program for protoMOMxx
+*/
 
- #include <iostream>
+#include <iostream>
+#include "MOM.h"
 
 int main() {
 
-    std::cout << "Hello C++ world from Modular Ocean Model (MOM)!" << std::endl;
+    std::cout << "Hello C++ world. This is protoMOMxx!" << std::endl;
+
+    MOM mom;
 
     return 0;
 }
