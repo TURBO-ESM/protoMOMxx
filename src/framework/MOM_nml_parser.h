@@ -57,8 +57,11 @@
 
 using mom_parser_utilities::ParamValue;
 
+/// @brief The NamelistParams class provides an interface for parsing Fortran namelist files and retrieving values.
 class NamelistParams {
 public:
+  /// @brief Construct a NamelistParams object by parsing the specified namelist file.
+  /// @param path The path to the namelist file to parse.
   explicit NamelistParams(const std::string &path);
 
   /// @brief Get a parameter value from a namelist
@@ -68,13 +71,13 @@ public:
   /// @throws std::out_of_range if the namelist or key does not exist
   const ParamValue &get(const std::string &key, const std::string &namelist = "") const;
 
-  template <typename T>
   /// @brief Get a parameter value as a specific type.
   /// @tparam T The expected type of the parameter value.
   /// @param key The parameter key
   /// @param namelist The namelist name (empty string for global scope)
   /// @return The parameter value as type T
   /// @throws std::runtime_error if the parameter is not of type T
+  template <typename T>
   T get_as(const std::string &key, const std::string &namelist = "") const;
 
   /// @brief Check if a parameter exists
@@ -87,6 +90,8 @@ public:
   /// @return A vector of namelist names
   std::vector<std::string> get_namelists() const;
 
+  /// @brief Get the total number of parameters across all namelists
+  /// @return The total number of parameters across all namelists
   size_t get_num_parameters() const;
 
 private:

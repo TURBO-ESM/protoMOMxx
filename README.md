@@ -10,9 +10,9 @@ The code is currently in *very* early stages of development, and is ***not yet f
 To build the protoMOMxx executable:
 
 ```
-  cd protoMOMxx
-  cmake -S . -B build
-  cmake --build build -j
+cd protoMOMxx
+cmake -S . -B build
+cmake --build build -j
 ```
 
 This will create the `protoMOMxx` executable in the `build` directory. You can run it with:
@@ -24,8 +24,8 @@ This will create the `protoMOMxx` executable in the `build` directory. You can r
 To run the unit tests:
 
 ```
-  cd protoMOMxx
-  cmake -S . -B buildtest
-  cmake --build buildtest -j
-  ctest --test-dir buildtest --output-on-failure
+cd protoMOMxx
+cmake -S . -B buildtest
+cmake --build buildtest -j
+ctest --test-dir buildtest --output-on-failure
 ```
