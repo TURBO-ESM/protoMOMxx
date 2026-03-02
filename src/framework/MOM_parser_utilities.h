@@ -28,6 +28,7 @@ using ParamValue = std::variant<
   std::vector<double>,
   std::vector<std::string>
 >;
+static const ParamValue NotFound{};
 
 
 /// @brief Find the first occurrence of a character that is not inside quotes. Handles both single and double quotes.

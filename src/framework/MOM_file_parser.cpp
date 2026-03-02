@@ -2,6 +2,7 @@
 
 using mom_parser_utilities::find_unquoted;
 using mom_parser_utilities::get_value;
+using mom_parser_utilities::NotFound;
 
 namespace {
 
@@ -140,6 +141,8 @@ static void add_data_from_file(
   std::unordered_map<std::string, std::unordered_map<std::string, ParamValue>>& table
 ) {
   namespace fs = std::filesystem;
+
+  std::cout << "  Reading parameter file: " << path << std::endl;
 
   if (!fs::exists(path)) {
     throw std::runtime_error("Runtime parameter file not found: " + path);
@@ -324,30 +327,6 @@ RuntimeParams::RuntimeParams(const std::vector<std::string>& paths) {
   }
 }
 
-template<typename T>
-T RuntimeParams::get_as(const std::string& key, const std::string& module) const {
-  const auto& val = get(key, module);
-  if (std::holds_alternative<T>(val)) {
-    return std::get<T>(val);
-  }
-  throw std::runtime_error("Parameter " + module + ":" + key + " is not of the requested type");
-}
-
-
-const ParamValue& RuntimeParams::get(const std::string& key, const std::string& module) const {
-  auto mod_it = table_.find(module);
-  if (mod_it == table_.end()) {
-    throw std::out_of_range("Module not found: " + module);
-  }
-  
-  auto key_it = mod_it->second.find(key);
-  if (key_it == mod_it->second.end()) {
-    throw std::out_of_range("Key not found in module " + module + ": " + key);
-  }
-  
-  return key_it->second;
-}
-
 bool RuntimeParams::has_param(const std::string& key, 
                               const std::string& module) const {
   auto mod_it = table_.find(module);
@@ -374,12 +353,51 @@ size_t RuntimeParams::get_num_parameters() const {
   return count;
 }
 
-// Explicit template instantiations for get_as
-template bool RuntimeParams::get_as<bool>(const std::string&, const std::string&) const;
-template std::int64_t RuntimeParams::get_as<std::int64_t>(const std::string&, const std::string&) const;
-template double RuntimeParams::get_as<double>(const std::string&, const std::string&) const;
-template std::string RuntimeParams::get_as<std::string>(const std::string&, const std::string&) const;
-template std::vector<bool> RuntimeParams::get_as<std::vector<bool>>(const std::string&, const std::string&) const;
-template std::vector<std::int64_t> RuntimeParams::get_as<std::vector<std::int64_t>>(const std::string&, const std::string&) const;
-template std::vector<double> RuntimeParams::get_as<std::vector<double>>(const std::string&, const std::string&) const;
-template std::vector<std::string> RuntimeParams::get_as<std::vector<std::string>>(const std::string&, const std::string&) const;
+const ParamValue& RuntimeParams::get_variant(const std::string& key, const std::string& module) const {
+  auto mod_it = table_.find(module);
+  if (mod_it == table_.end()) {
+    throw std::out_of_range("Module not found: " + module);
+  }
+  
+  auto key_it = mod_it->second.find(key);
+  if (key_it == mod_it->second.end()) {
+    throw std::out_of_range("Key not found in module " + module + ": " + key);
+  }
+  
+  return key_it->second;
+}
+
+template<typename T>
+bool RuntimeParams::get(const std::string& key, T& value, const ParamGetOptions<T>& options) const {
+  bool stat = false;
+  try {
+    const auto& val = get_variant(key, options.module);
+    if (std::holds_alternative<T>(val)) {
+      value = std::get<T>(val);
+      stat = true;
+    } else {
+      throw std::runtime_error("Parameter " + options.module + ":" + key + " is not of the requested type");
+    }
+  } catch (const std::out_of_range&) {
+    if (options.fail_if_missing) {
+      throw std::out_of_range("Key not found in module " + options.module + ": " + key);
+    }
+    if (options.default_value.has_value()) {
+      value = options.default_value.value();
+      stat = true;
+    }
+  }
+
+  return stat;
+}
+
+
+// Explicit template instantiations for get
+template bool RuntimeParams::get<bool>(const std::string&, bool&, const ParamGetOptions<bool>&) const;
+template bool RuntimeParams::get<std::int64_t>(const std::string&, std::int64_t&, const ParamGetOptions<std::int64_t>&) const;
+template bool RuntimeParams::get<double>(const std::string&, double&, const ParamGetOptions<double>&) const;
+template bool RuntimeParams::get<std::string>(const std::string&, std::string&, const ParamGetOptions<std::string>&) const;
+template bool RuntimeParams::get<std::vector<bool>>(const std::string&, std::vector<bool>&, const ParamGetOptions<std::vector<bool>>&) const;
+template bool RuntimeParams::get<std::vector<std::int64_t>>(const std::string&, std::vector<std::int64_t>&, const ParamGetOptions<std::vector<std::int64_t>>&) const;
+template bool RuntimeParams::get<std::vector<double>>(const std::string&, std::vector<double>&, const ParamGetOptions<std::vector<double>>&) const;
+template bool RuntimeParams::get<std::vector<std::string>>(const std::string&, std::vector<std::string>&, const ParamGetOptions<std::vector<std::string>>&) const;

@@ -55,31 +55,48 @@
 #include <variant>
 #include <vector>
 #include <iostream>
+#include <optional>
 #include "MOM_string_functions.h"
 #include "MOM_parser_utilities.h"
 
 using mom_parser_utilities::ParamValue;
+
+/// @brief Options for getting a parameter value.
+///
+/// @details Controls default value fallback, module attribution, documentation
+/// output, and error handling behavior for RuntimeParams::get().
+///
+/// @tparam T The type of the parameter value being retrieved.
+template<typename T>
+struct ParamGetOptions {
+  std::optional<T> default_value; ///< The default value of the parameter
+  std::string module = "";        ///< The name of the calling module
+  std::string desc = "";          ///< A description of this variable;
+                                  ///< If empty, this parameter is not written to a doc file.
+  std::string units = "";         ///< The units of this parameter
+  bool fail_if_missing = false;   ///< If true, get() will throw std::out_of_range if the parameter is missing.
+  bool do_not_read = false;       ///< If true, do not read a value for this parameter
+                                  ///< although it may be logged.
+  bool do_not_log = false;        ///< If true, do not log this parameter to a doc file.
+  bool layout_param = false;      ///< If true, this parameter is logged in the layout parameter file.
+  bool debugging_param = false;   ///< If true, this parameter is logged in the debugging parameter file. 
+};
 
 class RuntimeParams {
 public:
   explicit RuntimeParams(const std::string& path);
   explicit RuntimeParams(const std::vector<std::string>& paths);  
 
+
+  template<typename T>
+  bool get(const std::string& key, T& value, const ParamGetOptions<T>& options = ParamGetOptions<T>{}) const;
+
   /// @brief Get a parameter value from a module
   /// @param key The parameter key
   /// @param module The module name
   /// @return The parameter value as a ParamValue
   /// @throws std::out_of_range if the module or key does not exist
-  const ParamValue& get(const std::string& key, const std::string& module = "") const;
-
-  template<typename T>
-  /// @brief Get a parameter value as a specific type.
-  /// @tparam T The expected type of the parameter value.
-  /// @param key The parameter key
-  /// @param module The module name (empty string for global scope)
-  /// @return The parameter value as type T
-  /// @throws std::runtime_error if the parameter is not of type T
-  T get_as(const std::string& key, const std::string& module = "") const;
+  const ParamValue& get_variant(const std::string& key, const std::string& module = "") const;
 
   /// @brief Check if a parameter exists
   /// @param key The parameter key

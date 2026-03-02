@@ -50,9 +50,17 @@ TEST(MOMFileParserTest, ParseMOMInputSimple) {
   EXPECT_TRUE(rp.has_param("DT_THERM"));
   EXPECT_TRUE(rp.has_param("VERT_COORDINATE"));
 
-  EXPECT_TRUE(check_value(rp.get_as<bool>("REENTRANT_X"), false));
-  EXPECT_EQ(rp.get_as<std::int64_t>("DT_THERM"), 3600);
-  EXPECT_TRUE(check_value(rp.get_as<std::string>("VERT_COORDINATE"), std::string("ALE")));
+  bool reentrant_x;
+  rp.get("REENTRANT_X", reentrant_x);
+  EXPECT_FALSE(reentrant_x);
+
+  int64_t dt_therm;
+  rp.get("DT_THERM", dt_therm);
+  EXPECT_EQ(dt_therm, 3600);
+
+  std::string vert_coordinate;
+  rp.get("VERT_COORDINATE", vert_coordinate);
+  EXPECT_EQ(vert_coordinate, "ALE");
 
   // Check that all 54 of the parameters in the file are present
   EXPECT_EQ(rp.get_num_parameters(), 5);
@@ -69,13 +77,24 @@ TEST(MOMFileParserTest, ParseMOMInputDirective) {
   // Check that all of the parameters in the file are present
   EXPECT_EQ(rp.get_num_parameters(), 8);
 
-  EXPECT_TRUE(rp.get_as<bool>("Foo"));
-  EXPECT_EQ(rp.get_as<std::int64_t>("Bar"), 43); // Check that #override Bar = 43 takes effect
-  EXPECT_EQ(rp.get_as<double>("PI"), 3.14159);
-  EXPECT_EQ(rp.get_as<std::string>("Baz"), "Hello, World!");
-  EXPECT_EQ(rp.get_as<double>("ALPHA"), 0.1); // Commented out override should not take effect
-  EXPECT_FALSE(rp.get_as<bool>("DELTA")); // Undefine should set to false
-  EXPECT_FALSE(rp.get_as<bool>("GAMMA")); // Define-Undefine should set to false
+  bool Foo; rp.get("Foo", Foo);
+  std::int64_t Bar; rp.get("Bar", Bar);
+  double PI; rp.get("PI", PI);
+  std::string Baz; rp.get("Baz", Baz);
+
+  EXPECT_TRUE(Foo); // Check that #define Foo takes effect
+  EXPECT_EQ(Bar, 43); // Check that #override Bar = 43 takes effect
+  EXPECT_EQ(PI, 3.14159);
+  EXPECT_EQ(Baz, "Hello, World!");
+
+  double Alpha; rp.get("ALPHA", Alpha);
+  EXPECT_EQ(Alpha, 0.1); // Check that #define ALPHA takes effect
+
+  bool Delta; rp.get("DELTA", Delta);
+  EXPECT_FALSE(Delta); // Check that #undef DELTA takes effect
+
+  bool Gamma; rp.get("GAMMA", Gamma);
+  EXPECT_FALSE(Gamma); // Check that #define GAMMA followed by #undef GAMMA results in GAMMA being false
 }
 
 
@@ -90,13 +109,23 @@ TEST(MOMFileParserTest, ParseMOMInputLarge1) {
   EXPECT_FALSE(rp.get_modules().empty());
 
   // Check several values
-  EXPECT_TRUE(check_value(rp.get_as<bool>("TRIPOLAR_N"), true));
-  EXPECT_EQ(rp.get_as<std::int64_t>("NIGLOBAL"), 540);
-  EXPECT_EQ(rp.get_as<std::int64_t>("NJGLOBAL"), 480);
-  EXPECT_EQ(rp.get_as<double>("MLD_DECAYING_TFILTER", "MLE"), 2592000.0);
+  bool tripolar_n; rp.get("TRIPOLAR_N", tripolar_n);
+  EXPECT_TRUE(tripolar_n);
 
-  // Expect error when trying to get a parameter with the wrong type
-  EXPECT_THROW(rp.get_as<double>("NIGLOBAL"), std::runtime_error);
+  // check that attempting to read niglobal as a double throws an error
+  double niglobal_double;
+  EXPECT_THROW(rp.get("NIGLOBAL", niglobal_double), std::runtime_error);
+
+  std::int64_t niglobal; rp.get("NIGLOBAL", niglobal);
+  EXPECT_EQ(niglobal, 540);
+
+  std::int64_t njglobal; rp.get("NJGLOBAL", njglobal);
+  EXPECT_EQ(njglobal, 480);
+
+  EXPECT_TRUE(check_double_value(rp.get_variant("MLD_DECAYING_TFILTER", "MLE"), 2592000.0));
+
+  double mld_decaying_tfilter; rp.get("MLD_DECAYING_TFILTER", mld_decaying_tfilter, { .module = "MLE" });
+  EXPECT_EQ(mld_decaying_tfilter, 2592000.0);
 
   // Check that all 54 of the parameters in the file are present
   EXPECT_EQ(rp.get_num_parameters(), 243);
@@ -113,21 +142,38 @@ TEST(MOMFileParserTest, ParseMOMInputModules) {
   // Check that we have the expected modules
   auto modules = rp.get_modules();
 
+  // Attemping to read D as a double should throw an error since D is a bool
+  double D_double;
+  try {
+    rp.get("D", D_double);
+    FAIL() << "Expected std::runtime_error when trying to read D as double";
+  } catch (const std::runtime_error& e) {
+    EXPECT_TRUE(std::string(e.what()).find("not of the requested type") != std::string::npos);
+  } catch (...) {
+    FAIL() << "Expected std::runtime_error when trying to read D as double, but caught different exception";
+  }
+
   // First, check the global scope parameters:
-  EXPECT_EQ(rp.get_as<std::string>("B"), "fed.nc");
-  EXPECT_EQ(rp.get_as<std::string>("C"), "False.nc");
-  EXPECT_THROW(rp.get_as<std::string>("D"), std::runtime_error); // D should be a bool
-  EXPECT_EQ(rp.get_as<bool>("D"), true);
-  EXPECT_EQ(rp.get_as<double>("G"), 1e-3);
-  EXPECT_EQ(rp.get_as<double>("H"), 1e-3);
-  EXPECT_EQ(rp.get_as<std::string>("F"), "./t.nc");
+  EXPECT_EQ([&]{ std::string B; rp.get("B", B); return B; }(), "fed.nc");
+  EXPECT_EQ([&]{ std::string C; rp.get("C", C); return C; }(), "False.nc");
+  EXPECT_EQ([&]{ bool D; rp.get("D", D); return D; }(), true);
+  EXPECT_EQ([&]{ double G; rp.get("G", G); return G; }(), 1e-3);
+  EXPECT_EQ([&]{ double H; rp.get("H", H); return H; }(), 1e-3);
+  EXPECT_EQ([&]{ std::string F; rp.get("F", F); return F; }(), "./t.nc");
 
   // Now check the parameters in module blocks
-  EXPECT_THROW(rp.get_as<std::int64_t>("N_SMOOTH"), std::out_of_range); // N_SMOOTH should be in module KPP, not global
-  EXPECT_EQ(rp.get_as<std::int64_t>("N_SMOOTH", "KPP"), 3);
-  EXPECT_EQ(rp.get_as<bool>("USE_BODNER23", "MLE"), false);
-  EXPECT_EQ(rp.get_as<std::string>("BAR", "FOO"), "t.nc");
-
+  try {
+    std::int64_t N_SMOOTH;
+    rp.get("N_SMOOTH", N_SMOOTH, { .fail_if_missing = true });
+    FAIL() << "Expected std::out_of_range when trying to read N_SMOOTH without specifying module, but no exception was thrown";
+  } catch (const std::out_of_range& e) {
+    EXPECT_TRUE(std::string(e.what()).find("Key not found in module ") != std::string::npos);
+  } catch (...) {
+    FAIL() << "Expected std::out_of_range when trying to read N_SMOOTH without specifying module, but caught different exception";
+  }
+  EXPECT_EQ([&]{ std::int64_t N_SMOOTH; rp.get("N_SMOOTH", N_SMOOTH, { .module = "KPP" }); return N_SMOOTH; }(), 3);
+  EXPECT_EQ([&]{ bool USE_BODNER23; rp.get("USE_BODNER23", USE_BODNER23, { .module = "MLE" }); return USE_BODNER23; }(), false);
+  EXPECT_EQ([&]{ std::string BAR; rp.get("BAR", BAR, { .module = "FOO" }); return BAR; }(), "t.nc");
 }
 
 TEST(MOMFileParserTest, ParseMOMInputLists) {
@@ -138,20 +184,20 @@ TEST(MOMFileParserTest, ParseMOMInputLists) {
   RuntimeParams rp(test_file_path.string());
   
   // Check that A, B, C are parsed as lists of ints
-  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get("A")));
-  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get("B")));
-  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get("C")));
-  EXPECT_EQ(rp.get_as<std::vector<std::int64_t>>("A"), std::vector<std::int64_t>({1, 2}));
-  EXPECT_EQ(rp.get_as<std::vector<std::int64_t>>("B"), std::vector<std::int64_t>({3, 4}));
-  EXPECT_EQ(rp.get_as<std::vector<std::int64_t>>("C"), std::vector<std::int64_t>({5, 6, 7, 8}));
+  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get_variant("A")));
+  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get_variant("B")));
+  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get_variant("C")));
+  EXPECT_EQ([&]{ std::vector<std::int64_t> A; rp.get("A", A); return A; }(), std::vector<std::int64_t>({1, 2}));
+  EXPECT_EQ([&]{ std::vector<std::int64_t> B; rp.get("B", B); return B; }(), std::vector<std::int64_t>({3, 4}));
+  EXPECT_EQ([&]{ std::vector<std::int64_t> C; rp.get("C", C); return C; }(), std::vector<std::int64_t>({5, 6, 7, 8}));
 
   // Check that D is parsed as a list of doubles
-  EXPECT_TRUE(is_vector_of<double>(rp.get("D")));
-  EXPECT_EQ(rp.get_as<std::vector<double>>("D"), std::vector<double>({1.0, 2.0, 3.0}));
+  EXPECT_TRUE(is_vector_of<double>(rp.get_variant("D")));
+  EXPECT_EQ([&]{ std::vector<double> D; rp.get("D", D); return D; }(), std::vector<double>({1.0, 2.0, 3.0}));
 
   // Check that my_str_list is parsed as a list of strings
-  EXPECT_TRUE(is_vector_of<std::string>(rp.get("my_str_list")));
-  EXPECT_EQ(rp.get_as<std::vector<std::string>>("my_str_list"), std::vector<std::string>({"sd.nc", "foo.nc"}));
+  EXPECT_TRUE(is_vector_of<std::string>(rp.get_variant("my_str_list")));
+  EXPECT_EQ([&]{ std::vector<std::string> my_str_list; rp.get("my_str_list", my_str_list); return my_str_list; }(), std::vector<std::string>({"sd.nc", "foo.nc"}));
 
 }
 
@@ -163,36 +209,35 @@ TEST(MOMFileParserTest, ParseMOMInputScalars) {
   RuntimeParams rp(test_file_path.string());
   
   // Check that X and Y are parsed as scalar ints
-  EXPECT_TRUE(std::holds_alternative<std::int64_t>(rp.get("X")));
-  EXPECT_TRUE(std::holds_alternative<std::int64_t>(rp.get("Y")));
-  EXPECT_EQ(rp.get_as<std::int64_t>("X"), 1);
-  EXPECT_EQ(rp.get_as<std::int64_t>("Y"), 3);
+  EXPECT_TRUE(std::holds_alternative<std::int64_t>(rp.get_variant("X")));
+  EXPECT_TRUE(std::holds_alternative<std::int64_t>(rp.get_variant("Y")));
+  EXPECT_EQ([&]{ std::int64_t X; rp.get("X", X); return X; }(), 1);
+  EXPECT_EQ([&]{ std::int64_t Y; rp.get("Y", Y); return Y; }(), 3);
 
   // Check that A, B, C are parsed as lists of ints
-  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get("A")));
-  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get("B")));
-  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get("C")));
-  EXPECT_EQ(rp.get_as<std::vector<std::int64_t>>("A"), std::vector<std::int64_t>({1, 2}));
-  EXPECT_EQ(rp.get_as<std::vector<std::int64_t>>("B"), std::vector<std::int64_t>({3, 4}));
-  EXPECT_EQ(rp.get_as<std::vector<std::int64_t>>("C"), std::vector<std::int64_t>({5, 6, 7, 8}));
+  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get_variant("A")));
+  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get_variant("B")));
+  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get_variant("C")));
+  EXPECT_EQ([&]{ std::vector<std::int64_t> A; rp.get("A", A); return A; }(), std::vector<std::int64_t>({1, 2}));
+  EXPECT_EQ([&]{ std::vector<std::int64_t> B; rp.get("B", B); return B; }(), std::vector<std::int64_t>({3, 4}));
+  EXPECT_EQ([&]{ std::vector<std::int64_t> C; rp.get("C", C); return C; }(), std::vector<std::int64_t>({5, 6, 7, 8}));
 
   // Check that D is parsed as a list of doubles
-  EXPECT_TRUE(is_vector_of<double>(rp.get("D")));
-  EXPECT_EQ(rp.get_as<std::vector<double>>("D"), std::vector<double>({1.0, 2.0, 3.0}));
+  EXPECT_TRUE(is_vector_of<double>(rp.get_variant("D")));
+  EXPECT_EQ([&]{ std::vector<double> D; rp.get("D", D); return D; }(), std::vector<double>({1.0, 2.0, 3.0}));
 
   // Check that my_str_list is parsed as a list of strings
-  EXPECT_TRUE(is_vector_of<std::string>(rp.get("my_str_list")));
-  EXPECT_EQ(rp.get_as<std::vector<std::string>>("my_str_list"), std::vector<std::string>({"sd.nc", "foo.nc"})); 
-
+  EXPECT_TRUE(is_vector_of<std::string>(rp.get_variant("my_str_list")));
+  EXPECT_EQ([&]{ std::vector<std::string> my_str_list; rp.get("my_str_list", my_str_list); return my_str_list; }(), std::vector<std::string>({"sd.nc", "foo.nc"})); 
   // Check that not_a_list and also_not_a_list are parsed as scalar strings, not lists
-  EXPECT_TRUE(std::holds_alternative<std::string>(rp.get("not_a_list")));
-  EXPECT_TRUE(std::holds_alternative<std::string>(rp.get("also_not_a_list")));
-  EXPECT_EQ(rp.get_as<std::string>("not_a_list"), "sd.nc, foo.nc");
-  EXPECT_EQ(rp.get_as<std::string>("also_not_a_list"), "\"sd.nc\" , \"foo.nc\" , \"bar.nc\"");
+  EXPECT_TRUE(std::holds_alternative<std::string>(rp.get_variant("not_a_list")));
+  EXPECT_TRUE(std::holds_alternative<std::string>(rp.get_variant("also_not_a_list")));
+  EXPECT_EQ([&]{ std::string not_a_list; rp.get("not_a_list", not_a_list); return not_a_list; }(), "sd.nc, foo.nc");
+  EXPECT_EQ([&]{ std::string also_not_a_list; rp.get("also_not_a_list", also_not_a_list); return also_not_a_list; }(), "\"sd.nc\" , \"foo.nc\" , \"bar.nc\"");
 
   // Check that foo is parsed as a scalar string, not a list
-  EXPECT_TRUE(std::holds_alternative<std::string>(rp.get("foo")));
-  EXPECT_EQ(rp.get_as<std::string>("foo"), "\"FILE:fed.nc,dz\"");
+  EXPECT_TRUE(std::holds_alternative<std::string>(rp.get_variant("foo")));
+  EXPECT_EQ([&]{ std::string foo; rp.get("foo", foo); return foo; }(), "\"FILE:fed.nc,dz\"");
 }
 
 
@@ -287,22 +332,32 @@ TEST(MOMFileParserTest, OverrideModules) {
 
   RuntimeParams rp(paths);
   // Check that the override file successfully overrides some values from the first file
-  EXPECT_EQ(rp.get_as<double>("H"), 1e-5); // H should be overridden to 1e-5
-  EXPECT_EQ(rp.get_as<std::int64_t>("N_SMOOTH", "KPP"), 5); // N_SMOOTH in KPP should be overridden to 5
+  double H; rp.get("H", H);
+  EXPECT_EQ(H, 1e-5); // H should be overridden to 1e-5
+
+  std::int64_t N_SMOOTH; rp.get("N_SMOOTH", N_SMOOTH, { .module = "KPP" });
+  EXPECT_EQ(N_SMOOTH, 5); // N_SMOOTH in KPP should be overridden to 5
 
   // Newly defined variable in the override file should be present
   EXPECT_TRUE(rp.has_param("NEW_VAR"));
-  EXPECT_EQ(rp.get_as<std::string>("NEW_VAR"), "xyz");
+  std::string NEW_VAR; rp.get("NEW_VAR", NEW_VAR);
+  EXPECT_EQ(NEW_VAR, "xyz");
 
   // Those that are not overridden should retain their original values
-  EXPECT_EQ(rp.get_as<std::string>("B"), "fed.nc");
-  EXPECT_EQ(rp.get_as<std::string>("C"), "False.nc");
-  EXPECT_EQ(rp.get_as<bool>("D"), true);
-  EXPECT_EQ(rp.get_as<double>("G"), 1e-3);
-  EXPECT_EQ(rp.get_as<std::string>("F"), "./t.nc");
-  EXPECT_EQ(rp.get_as<bool>("USE_BODNER23", "MLE"), false);
-  EXPECT_EQ(rp.get_as<std::string>("BAR", "FOO"), "t.nc");
-
+  std::string B; rp.get("B", B);
+  EXPECT_EQ(B, "fed.nc");
+  std::string C; rp.get("C", C);
+  EXPECT_EQ(C, "False.nc");
+  bool D; rp.get("D", D);
+  EXPECT_EQ(D, true);
+  double G; rp.get("G", G);
+  EXPECT_EQ(G, 1e-3);
+  std::string F; rp.get("F", F);
+  EXPECT_EQ(F, "./t.nc");
+  bool USE_BODNER23; rp.get("USE_BODNER23", USE_BODNER23, { .module = "MLE" });
+  EXPECT_EQ(USE_BODNER23, false);
+  std::string BAR; rp.get("BAR", BAR, { .module = "FOO" });
+  EXPECT_EQ(BAR, "t.nc");
 }
 
 TEST(MOMNmlParserTest, InvalidOverride) {
