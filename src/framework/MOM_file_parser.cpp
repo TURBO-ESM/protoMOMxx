@@ -388,6 +388,16 @@ bool RuntimeParams::get(const std::string& key, T& value, const ParamGetOptions<
     }
   }
 
+  // Document the parameter if a doc writer is attached and desc is provided
+  if (stat && doc_ && !options.do_not_log && !options.desc.empty()) {
+    DocParamOptions doc_opts;
+    doc_opts.layout_param = options.layout_param;
+    doc_opts.debugging_param = options.debugging_param;
+    doc_opts.module = options.module;
+    doc_->doc_param(key, options.desc, options.units, value,
+                    options.default_value, doc_opts);
+  }
+
   return stat;
 }
 

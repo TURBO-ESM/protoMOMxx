@@ -47,6 +47,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <memory>
 #include <unordered_map>
 #include <stdexcept>
 #include <string>
@@ -58,6 +59,8 @@
 #include <optional>
 #include "MOM_string_functions.h"
 #include "MOM_parser_utilities.h"
+#include "MOM_document.h"
+#include "MOM_get_input.h"
 
 using mom_parser_utilities::ParamValue;
 
@@ -110,8 +113,28 @@ public:
 
   size_t get_num_parameters() const;
 
+  /// @brief Set the documentation writer for this parameter file.
+  /// @param doc Shared pointer to a DocFileWriter. Pass nullptr to disable documentation.
+  void set_doc(std::shared_ptr<DocFileWriter> doc) { doc_ = std::move(doc); }
+
+  /// @brief Get the documentation writer.
+  std::shared_ptr<DocFileWriter> get_doc() const { return doc_; }
+
+  /// @brief Document a module header.
+  void doc_module(const std::string& modname, const std::string& desc,
+                  bool layout_mod = false, bool debugging_mod = false,
+                  bool all_default = false) {
+    if (doc_) doc_->doc_module(modname, desc, layout_mod, debugging_mod, all_default);
+  }
+
+  /// @brief Close a module (write closing block).
+  void close_module() {
+    if (doc_) doc_->close_module();
+  }
+
 private:
 
   std::string path_;
   std::unordered_map<std::string, std::unordered_map<std::string, ParamValue>> table_;
+  std::shared_ptr<DocFileWriter> doc_;  ///< Optional documentation writer
 };

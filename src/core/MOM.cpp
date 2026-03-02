@@ -11,6 +11,11 @@ MOM::MOM(
   
   // Instantiate RuntimeParams by reading the parameter files specified in the namelist.
   params = std::make_unique<RuntimeParams>(MOM_get_input::get_parameter_filenames());
+  auto doc = std::make_shared<DocFileWriter>("MOM_parameter_doc");
+  params->set_doc(doc);
+
+  // Document the MOM module
+  params->doc_module("MOM", "Main MOM ocean model module");
 
   bool verbosity = false;
   params->get("VERBOSITY", verbosity, {
@@ -22,7 +27,6 @@ MOM::MOM(
         .units = "",
         .fail_if_missing = false
   });
-  std::cout << "MOM initialized with verbosity level: " << verbosity_ << std::endl;
 
   bool split = false;
   params->get("SPLIT", split, {
@@ -37,8 +41,38 @@ MOM::MOM(
                  "exchanges velocities with step_MOM that have the average barotropic phase over "
                  "a baroclinic timestep rather than the instantaneous barotropic phase.",
         .do_not_log = !split
+    });
+    
+
+  bool REENTRANT_X = false;
+  params->get("REENTRANT_X", REENTRANT_X, {
+        .default_value = true,
+        .desc = "If true, the domain is zonally reentrant",
+        .units = "nondim"
   });
 
-    
+  std::int64_t N_SMOOTH = 0;
+  params->get("N_SMOOTH", N_SMOOTH, {
+        .default_value = 0,
+        .module = "KPP",
+        .desc = "Number of times to apply the smoothing operator to the initial condition",
+        .units = "nondim"
+  }); 
+
+  bool debug = false;
+  params->get("DEBUG", debug, {
+        .default_value = false,
+        .desc = "If true, write out verbose debugging data.",
+        .units = "nondim",
+        .debugging_param = true
+  });
+
+  bool global_indexing = false;
+  params->get("GLOBAL_INDEXING", global_indexing, {
+        .default_value = false,
+        .desc = "If true, use global indexing for all I/O and internal operations. "
+                "If false, use local indexing with halo regions.",
+        .layout_param = true
+  });
 
 }

@@ -1,5 +1,6 @@
 # CMake configuration for src/framework
 add_library(MOM_src_framework
+    MOM_document.cpp
     MOM_file_parser.cpp
     MOM_nml_parser.cpp
     MOM_parser_utilities.cpp
