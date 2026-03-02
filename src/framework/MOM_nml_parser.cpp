@@ -106,10 +106,9 @@ NamelistParams::NamelistParams(const std::string& path) : path_(path) {
         throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": empty namelist name");
       }
       
-      // Convert to uppercase (Fortran convention)
       std::string namelist_name(name);
       for (char& c : namelist_name) {
-        c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
       }
       
       curr_namelist = namelist_name;
@@ -118,64 +117,70 @@ NamelistParams::NamelistParams(const std::string& path) : path_(path) {
       continue;
     }
 
-    // Check for namelist end: /
-    if (sv.front() == '/' && sv.size() == 1) {
+    // Helper: flush the current accumulated assignment into the table.
+    // Called before closing '/' and before starting a new 'key = ...' line.
+    auto flush_accumulated = [&]() {
+      if (accumulated_line.empty()) return;
+      std::string_view acc_sv = trim(accumulated_line);
+      auto eq = find_unquoted(acc_sv, '=');
+      if (eq != std::string_view::npos) {
+        auto lhs = trim(acc_sv.substr(0, eq));
+        auto rhs = trim(acc_sv.substr(eq + 1));
+        if (lhs.empty()) {
+          throw std::runtime_error(path_ + ":" + std::to_string(line_no) +
+                                   ": empty variable name");
+        }
+        std::string key(lowercase(lhs));
+        assign_param(curr_namelist, key, get_value(rhs, line_no, path_, true));
+      }
+      accumulated_line.clear();
+    };
+
+    // Check for unquoted '/' anywhere in the line (Fortran allows the closing
+    // delimiter on the same line as the last value, e.g.  value = 'x' / ).
+    std::string_view::size_type slash_pos = find_unquoted(sv, '/');
+    if (slash_pos != std::string_view::npos) {
       if (!in_namelist) {
-        throw std::runtime_error(path_ + ":" + std::to_string(line_no) + 
+        throw std::runtime_error(path_ + ":" + std::to_string(line_no) +
                                  ": unexpected '/' outside of a namelist");
       }
-      
-      // Process any accumulated line before closing
-      if (!accumulated_line.empty()) {
-        std::string_view acc_sv = trim(accumulated_line);
-        auto eq = find_unquoted(acc_sv, '=');
-        if (eq != std::string_view::npos) {
-          auto lhs = trim(acc_sv.substr(0, eq));
-          auto rhs = trim(acc_sv.substr(eq + 1));
-          
-          if (lhs.empty()) {
-            throw std::runtime_error(path_ + ":" + std::to_string(line_no) + 
-                                     ": empty variable name");
-          }
-          
-          // Convert key to uppercase
-          std::string key(lhs);
-          for (char& c : key) {
-            c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
-          }
-          
-          assign_param(curr_namelist, key, get_value(rhs, line_no, path_, true));
-        }
-        accumulated_line.clear();
-      }
-      
+      // Any content before the slash is a continuation of the last assignment.
+      std::string_view before = trim(sv.substr(0, slash_pos));
+      if (!before.empty())
+        accumulated_line += " " + std::string(before);
+      flush_accumulated();
       in_namelist = false;
       curr_namelist.clear();
       continue;
     }
 
     if (!in_namelist) {
-      throw std::runtime_error(path_ + ":" + std::to_string(line_no) + 
+      throw std::runtime_error(path_ + ":" + std::to_string(line_no) +
                                ": content outside of namelist block");
     }
 
-    // Accumulate line content (handles continuation)
+    // If this line starts a new assignment, flush any previously deferred
+    // assignment (one that ended with a trailing comma). This makes a bare
+    // newline a valid parameter separator, matching Fortran namelist rules.
+    if (find_unquoted(sv, '=') != std::string_view::npos)
+      flush_accumulated();
+
+    // Accumulate line content (handles multi-line continuation).
     accumulated_line += " " + std::string(sv);
-    
-    // Check if this line contains a complete assignment
+
+    // Try to process immediately when the assignment looks complete.
+    // A trailing comma means more values may follow on the next line, so defer.
     std::string_view acc_sv = trim(accumulated_line);
     auto eq = find_unquoted(acc_sv, '=');
-    
+
     if (eq != std::string_view::npos) {
-      // Check if the value part ends (no unclosed quotes and no trailing comma suggesting continuation)
       auto rhs = trim(acc_sv.substr(eq + 1));
-      
-      // Simple heuristic: if line ends with comma, it might continue
-      // But for now, process each assignment when we find '='
-      bool looks_complete = true;
-      if (!rhs.empty() && rhs.back() == ',') {
-        // Could be continuation, but also could be end of array with trailing comma
-        // For simplicity, treat as complete if it has balanced quotes
+
+      // Trailing comma → defer; let the next line decide.
+      bool looks_complete = (rhs.empty() || rhs.back() != ',');
+
+      // Unbalanced quotes → also incomplete.
+      if (looks_complete) {
         char in_quote = 0;
         for (char c : rhs) {
           if (in_quote) {
@@ -186,21 +191,14 @@ NamelistParams::NamelistParams(const std::string& path) : path_(path) {
         }
         looks_complete = (in_quote == 0);
       }
-      
+
       if (looks_complete) {
         auto lhs = trim(acc_sv.substr(0, eq));
-        
         if (lhs.empty()) {
-          throw std::runtime_error(path_ + ":" + std::to_string(line_no) + 
+          throw std::runtime_error(path_ + ":" + std::to_string(line_no) +
                                    ": empty variable name");
         }
-        
-        // Convert key to uppercase
-        std::string key(lhs);
-        for (char& c : key) {
-          c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
-        }
-        
+        std::string key(lowercase(lhs));
         assign_param(curr_namelist, key, get_value(rhs, line_no, path_, true));
         accumulated_line.clear();
       }
@@ -222,12 +220,16 @@ T NamelistParams::get_as(const std::string& key, const std::string& namelist) co
 }
 
 const ParamValue& NamelistParams::get(const std::string& key, const std::string& namelist) const {
-  auto nml_it = table_.find(namelist);
+  // Keys and namelist names are stored lowercase; normalise the lookup too.
+  const std::string lower_nml = lowercase(namelist);
+  const std::string lower_key = lowercase(key);
+
+  auto nml_it = table_.find(lower_nml);
   if (nml_it == table_.end()) {
     throw std::out_of_range("Namelist not found: " + namelist);
   }
   
-  auto key_it = nml_it->second.find(key);
+  auto key_it = nml_it->second.find(lower_key);
   if (key_it == nml_it->second.end()) {
     throw std::out_of_range("Key not found in namelist " + namelist + ": " + key);
   }
@@ -237,11 +239,11 @@ const ParamValue& NamelistParams::get(const std::string& key, const std::string&
 
 bool NamelistParams::has_param(const std::string& key, 
                                const std::string& namelist) const {
-  auto nml_it = table_.find(namelist);
+  auto nml_it = table_.find(lowercase(namelist));
   if (nml_it == table_.end()) {
     return false;
   }
-  return nml_it->second.find(key) != nml_it->second.end();
+  return nml_it->second.find(lowercase(key)) != nml_it->second.end();
 }
 
 std::vector<std::string> NamelistParams::get_namelists() const {

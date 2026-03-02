@@ -27,13 +27,16 @@ struct Directories {
 /// @param namelist_file The path to the namelist file to read.
 /// @param ensemble_num The ensemble number for ensembler processing (use -1 if not applicable).
 /// @return A Directories struct containing the parsed paths and input filename.
-Directories get_directories(const std::filesystem::path& namelist_file, int ensemble_num);
+Directories get_directories(
+  const std::filesystem::path& namelist_file=std::filesystem::path("input.nml"),
+  int ensemble_num=-1);
 
 /// @brief Read the MOM_input_nml namelist to get the list of parameter file names.
 /// @param namelist_file The path to the namelist file to read.
 /// @param ensemble_num The ensemble number for ensembler processing (use -1 if not applicable).
 /// @return A vector of parameter file names parsed from the namelist.
 /// @throws std::runtime_error if no valid PARAMETER_FILENAME entry is found in the namelist.
-std::vector<std::string> get_parameter_filenames(const std::filesystem::path& namelist_file, int ensemble_num);
-
+std::vector<std::string> get_parameter_filenames(
+  const std::filesystem::path& namelist_file=std::filesystem::path("input.nml"),
+  int ensemble_num=-1);
 }

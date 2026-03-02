@@ -220,6 +220,28 @@ TEST(MOMNmlParserTest, TypeMismatch) {
 }
 
 
+// Read in double_gyre_input.nml and check that the expected parameters are present and correct:
+TEST(MOMNmlParserTest, ParseDoubleGyreInput) {
+  auto test_file_path = get_test_data_dir() / "double_gyre_input.nml";
+  ASSERT_TRUE(std::filesystem::exists(test_file_path)) 
+    << "Test file " << test_file_path << " does not exist";
+  NamelistParams nml(test_file_path.string());
+
+  EXPECT_EQ(nml.get_as<std::string>("output_directory", "MOM_input_nml"), "./");
+  EXPECT_EQ(nml.get_as<std::string>("input_filename", "MOM_INPUT_NML"), "n");
+  EXPECT_EQ(nml.get_as<std::string>("restart_input_dir", "MOM_INPUT_NML"), "INPUT/");
+  EXPECT_EQ(nml.get_as<std::string>("restart_output_dir", "MOM_INPUT_NML"), "RESTART/");
+  EXPECT_TRUE(nml.has_param("parameter_filename", "MOM_INPUT_NML"));
+  const auto& param_val = nml.get("parameter_filename", "MOM_INPUT_NML");
+  EXPECT_TRUE(std::holds_alternative<std::vector<std::string>>(param_val));
+  auto param_files = std::get<std::vector<std::string>>(param_val);
+  EXPECT_EQ(param_files.size(), 2);
+  EXPECT_EQ(param_files[0], "MOM_input");
+  EXPECT_EQ(param_files[1], "MOM_override");
+
+}
+
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
