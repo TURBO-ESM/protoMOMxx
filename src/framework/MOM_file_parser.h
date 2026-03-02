@@ -85,7 +85,7 @@ template <typename T> struct ParamGetOptions {
 };
 
 /// @brief The RuntimeParams class provides an interface for parsing MOM runtime parameter files and retrieving values.
-/// 
+///
 /// Supported value types include scalars (bool, int64, double, string) and homogeneous comma-separated lists of the
 /// above types. It supports C-style block comments, Fortran-style line comments, quoted strings, and error reporting.
 /// Example usage:
@@ -111,7 +111,7 @@ public:
   /// @param key The parameter key to look up.
   /// @param value An output reference to store the retrieved parameter value.
   /// @param options A ParamGetOptions struct controlling default fallback, documentation, and error handling behavior.
-  /// @return 
+  /// @return
   template <typename T>
   bool get(const std::string &key, T &value, const ParamGetOptions<T> &options = ParamGetOptions<T>{}) const;
 
@@ -149,7 +149,8 @@ public:
   /// @param desc A description of the module (written to doc file).
   /// @param layout_mod If true, treat this as a layout module (write to .layout file).
   /// @param debugging_mod If true, treat this as a debugging module (write to .debugging file).
-  /// @param all_default If true, treat all parameters in this module as if they equal their defaults (only write to .all file).
+  /// @param all_default If true, treat all parameters in this module as if they equal their defaults (only write to
+  /// .all file).
   void doc_module(const std::string &modname, const std::string &desc, bool layout_mod = false,
                   bool debugging_mod = false, bool all_default = false) {
     if (doc_)

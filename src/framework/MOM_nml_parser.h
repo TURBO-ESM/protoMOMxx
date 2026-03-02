@@ -77,8 +77,7 @@ public:
   /// @param namelist The namelist name (empty string for global scope)
   /// @return The parameter value as type T
   /// @throws std::runtime_error if the parameter is not of type T
-  template <typename T>
-  T get_as(const std::string &key, const std::string &namelist = "") const;
+  template <typename T> T get_as(const std::string &key, const std::string &namelist = "") const;
 
   /// @brief Check if a parameter exists
   /// @param key The parameter key

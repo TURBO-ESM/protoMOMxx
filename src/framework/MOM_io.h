@@ -21,8 +21,6 @@ inline std::filesystem::path ensembler(std::filesystem::path p, int n = -1) {
 /// @param s    Input filename as a string, e.g. "output.nc"
 /// @param n    Ensemble number; negative means no-op.
 /// @return     e.g. "output.3.nc"
-inline std::filesystem::path ensembler(const std::string &s, int n) {
-  return ensembler(std::filesystem::path(s), n);
-}
+inline std::filesystem::path ensembler(const std::string &s, int n) { return ensembler(std::filesystem::path(s), n); }
 
 } // namespace MOM_io

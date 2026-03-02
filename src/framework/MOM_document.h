@@ -69,7 +69,8 @@ public:
   /// @param desc A description of the parameter (written to doc file).
   /// @param units The units of the parameter (written to doc file).
   /// @param val The value of the parameter.
-  /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short file).
+  /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short
+  /// file).
   /// @param opts Additional options controlling documentation behavior (e.g. which files to write to).
   void doc_param(const std::string &varname, const std::string &desc, const std::string &units, bool val,
                  std::optional<bool> default_val = std::nullopt, const DocParamOptions &opts = {});
@@ -79,7 +80,8 @@ public:
   /// @param desc A description of the parameter (written to doc file).
   /// @param units The units of the parameter (written to doc file).
   /// @param val The value of the parameter.
-  /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short file).
+  /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short
+  /// file).
   /// @param opts Additional options controlling documentation behavior (e.g. which files to write to).
   void doc_param(const std::string &varname, const std::string &desc, const std::string &units, std::int64_t val,
                  std::optional<std::int64_t> default_val = std::nullopt, const DocParamOptions &opts = {});
@@ -89,7 +91,8 @@ public:
   /// @param desc A description of the parameter (written to doc file).
   /// @param units The units of the parameter (written to doc file).
   /// @param val The value of the parameter.
-  /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short file).
+  /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short
+  /// file).
   /// @param opts Additional options controlling documentation behavior (e.g. which files to write to).
   void doc_param(const std::string &varname, const std::string &desc, const std::string &units, double val,
                  std::optional<double> default_val = std::nullopt, const DocParamOptions &opts = {});
@@ -99,7 +102,8 @@ public:
   /// @param desc A description of the parameter (written to doc file).
   /// @param units The units of the parameter (written to doc file).
   /// @param val The value of the parameter.
-  /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short file).
+  /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short
+  /// file).
   /// @param opts Additional options controlling documentation behavior (e.g. which files to write to).
   void doc_param(const std::string &varname, const std::string &desc, const std::string &units, const std::string &val,
                  std::optional<std::string> default_val = std::nullopt, const DocParamOptions &opts = {});
@@ -109,7 +113,8 @@ public:
   /// @param desc A description of the parameter (written to doc file).
   /// @param units The units of the parameter (written to doc file).
   /// @param vals The values of the parameter.
-  /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short file).
+  /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short
+  /// file).
   /// @param opts Additional options controlling documentation behavior (e.g. which files to write to).
   void doc_param(const std::string &varname, const std::string &desc, const std::string &units,
                  const std::vector<bool> &vals, std::optional<std::vector<bool>> default_val = std::nullopt,
@@ -120,7 +125,8 @@ public:
   /// @param desc A description of the parameter (written to doc file).
   /// @param units The units of the parameter (written to doc file).
   /// @param vals The values of the parameter.
-  /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short file).
+  /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short
+  /// file).
   /// @param opts Additional options controlling documentation behavior (e.g. which files to write to).
   void doc_param(const std::string &varname, const std::string &desc, const std::string &units,
                  const std::vector<std::int64_t> &vals,
@@ -131,7 +137,8 @@ public:
   /// @param desc A description of the parameter (written to doc file).
   /// @param units The units of the parameter (written to doc file).
   /// @param vals The values of the parameter.
-  /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short file).
+  /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short
+  /// file).
   /// @param opts Additional options controlling documentation behavior (e.g. which files to write to).
   void doc_param(const std::string &varname, const std::string &desc, const std::string &units,
                  const std::vector<double> &vals, std::optional<std::vector<double>> default_val = std::nullopt,
@@ -142,7 +149,8 @@ public:
   /// @param desc A description of the parameter (written to doc file).
   /// @param units The units of the parameter (written to doc file).
   /// @param vals The values of the parameter.
-  /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short file).
+  /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short
+  /// file).
   /// @param opts Additional options controlling documentation behavior (e.g. which files to write to).
   void doc_param(const std::string &varname, const std::string &desc, const std::string &units,
                  const std::vector<std::string> &vals,
@@ -155,7 +163,8 @@ public:
   /// @param desc A description of the module (written to doc file).
   /// @param layout_mod If true, treat this as a layout module (write to .layout file).
   /// @param debugging_mod If true, treat this as a debugging module (write to .debugging file).
-  /// @param all_default If true, treat all parameters in this module as if they equal their defaults (only write to .all file).
+  /// @param all_default If true, treat all parameters in this module as if they equal their defaults (only write to
+  /// .all file).
   void doc_module(const std::string &modname, const std::string &desc, bool layout_mod = false,
                   bool debugging_mod = false, bool all_default = false);
 
