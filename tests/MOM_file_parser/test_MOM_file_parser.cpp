@@ -278,3 +278,46 @@ TEST(MOMFileParserTest, InvalidFile6) {
     FAIL() << "Expected std::runtime_error due to invalid module%key syntax, but caught different exception";
   }
 }
+
+TEST(MOMFileParserTest, OverrideModules) {
+  std::vector<std::string> paths = {
+    (get_test_data_dir() / "MOM_input_modules").string(),
+    (get_test_data_dir() / "MOM_override_modules").string()
+  };
+
+  RuntimeParams rp(paths);
+  // Check that the override file successfully overrides some values from the first file
+  EXPECT_EQ(rp.get_as<double>("H"), 1e-5); // H should be overridden to 1e-5
+  EXPECT_EQ(rp.get_as<std::int64_t>("N_SMOOTH", "KPP"), 5); // N_SMOOTH in KPP should be overridden to 5
+
+  // Newly defined variable in the override file should be present
+  EXPECT_TRUE(rp.has_param("NEW_VAR"));
+  EXPECT_EQ(rp.get_as<std::string>("NEW_VAR"), "xyz");
+
+  // Those that are not overridden should retain their original values
+  EXPECT_EQ(rp.get_as<std::string>("B"), "fed.nc");
+  EXPECT_EQ(rp.get_as<std::string>("C"), "False.nc");
+  EXPECT_EQ(rp.get_as<bool>("D"), true);
+  EXPECT_EQ(rp.get_as<double>("G"), 1e-3);
+  EXPECT_EQ(rp.get_as<std::string>("F"), "./t.nc");
+  EXPECT_EQ(rp.get_as<bool>("USE_BODNER23", "MLE"), false);
+  EXPECT_EQ(rp.get_as<std::string>("BAR", "FOO"), "t.nc");
+
+}
+
+TEST(MOMNmlParserTest, InvalidOverride) {
+  std::vector<std::string> paths = {
+    (get_test_data_dir() / "MOM_input_modules").string(),
+    (get_test_data_dir() / "MOM_override_invalid").string()
+  };
+  
+  // Parsing should throw an error due to a missing override directive
+  try {
+    RuntimeParams rp(paths);
+    FAIL() << "Expected std::runtime_error due to invalid override file";
+  } catch (const std::runtime_error& e) {
+    EXPECT_TRUE(std::string(e.what()).find("duplicate assignment") != std::string::npos);
+  } catch (...) {
+    FAIL() << "Expected std::runtime_error due to invalid override file, but caught different exception";
+  }
+}

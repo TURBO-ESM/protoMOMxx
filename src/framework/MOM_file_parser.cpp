@@ -10,6 +10,8 @@ struct ParsedTarget {
   std::string key;
 };
 
+} // namespace
+
 /// @brief Parse key target syntax for assignment-like statements.
 ///
 /// Supports either:
@@ -62,8 +64,6 @@ static ParsedTarget parse_target(std::string_view lhs,
   out.key = std::string(lhs);
   return out;
 }
-
-} // namespace
 
 /// @brief Strip comments from a line in a quote-aware manner.
 ///
@@ -132,19 +132,25 @@ static std::string strip_comments(std::string_view line, bool& in_block) {
   return out;
 }
 
-RuntimeParams::RuntimeParams(const std::string& path) : path_(path) {
+/// @brief Parse a runtime parameter file and add its contents to the provided table.
+/// @param path The file path of the runtime parameter file to parse.
+/// @param table The table to which parsed parameters will be added. This is a map from module names to maps of key-value pairs.
+static void add_data_from_file(
+  const std::string& path,
+  std::unordered_map<std::string, std::unordered_map<std::string, ParamValue>>& table
+) {
   namespace fs = std::filesystem;
 
-  if (!fs::exists(path_)) {
-    throw std::runtime_error("Runtime parameter file not found: " + path_);
+  if (!fs::exists(path)) {
+    throw std::runtime_error("Runtime parameter file not found: " + path);
   }
-  if (!fs::is_regular_file(path_)) {
-    throw std::runtime_error("Runtime parameter path is not a regular file: " + path_);
+  if (!fs::is_regular_file(path)) {
+    throw std::runtime_error("Runtime parameter path is not a regular file: " + path);
   }
 
-  std::ifstream infile(path_);
+  std::ifstream infile(path);
   if (!infile) {
-    throw std::runtime_error("Unable to open runtime parameter file at " + path_);
+    throw std::runtime_error("Unable to open runtime parameter file at " + path);
   }
 
   std::string curr_module;
@@ -157,12 +163,12 @@ RuntimeParams::RuntimeParams(const std::string& path) : path_(path) {
                           const std::string& key,
                           ParamValue value,
                           bool is_override) {
-    auto& mod_table = table_[module];
+    auto& mod_table = table[module];
     auto it = mod_table.find(key);
 
     if (is_override) {
       if (it == mod_table.end()) {
-        throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": #override requires an existing key: '" +
+        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": #override requires an existing key: '" +
                                  (module.empty() ? key : module + "%" + key) + "'");
       }
       it->second = std::move(value);
@@ -176,7 +182,7 @@ RuntimeParams::RuntimeParams(const std::string& path) : path_(path) {
 
     // Keep repeated assignments only when they agree exactly.
     if (it->second != value) {
-      throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": duplicate assignment for '" +
+      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": duplicate assignment for '" +
                                (module.empty() ? key : module + "%" + key) +
                                "' with a different value; use #override to change it");
     }
@@ -195,10 +201,10 @@ RuntimeParams::RuntimeParams(const std::string& path) : path_(path) {
     if (sv.back() == '%' && sv.front() != '%') {
       auto name = trim(sv.substr(0, sv.size() - 1));
       if (!is_valid_identifier(name)) {
-        throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": invalid module name: '" + std::string(name) + "'");
+        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": invalid module name: '" + std::string(name) + "'");
       }
       if (!curr_module.empty()) {
-        throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": cannot open module '" + std::string(name) +
+        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": cannot open module '" + std::string(name) +
                                  "' inside already-open module '" + curr_module + "'");
       }
       curr_module = std::string(name);
@@ -209,10 +215,10 @@ RuntimeParams::RuntimeParams(const std::string& path) : path_(path) {
     if (sv.front() == '%' && sv.size() >= 2) {
       auto name = trim(sv.substr(1));
       if (!is_valid_identifier(name)) {
-        throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": invalid module close: '%" + std::string(name) + "'");
+        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": invalid module close: '%" + std::string(name) + "'");
       }
       if (curr_module != name) {
-        throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": module mismatch: closing '" +
+        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": module mismatch: closing '" +
                                  std::string(name) + "' but open module is '" + curr_module + "'");
       }
       curr_module.clear();
@@ -224,21 +230,21 @@ RuntimeParams::RuntimeParams(const std::string& path) : path_(path) {
     if (sv.front() == '#') {
       auto rest = trim(sv.substr(1));
       if (rest.empty()) {
-        throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": malformed directive: '" + std::string(sv) + "'");
+        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": malformed directive: '" + std::string(sv) + "'");
       }
       auto cmd_end = rest.find_first_of(" \t");
       std::string cmd = lowercase(trim(cmd_end == std::string_view::npos ? rest : rest.substr(0, cmd_end)));
       auto args = trim(cmd_end == std::string_view::npos ? std::string_view{} : rest.substr(cmd_end + 1));
       if (args.empty()) {
-        throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": directive '#" + std::string(cmd) + "' requires arguments");
+        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": directive '#" + std::string(cmd) + "' requires arguments");
       }
       
       auto lhs_end = args.find_first_of(" \t\r");
       auto lhs = trim(lhs_end == std::string_view::npos ? args : args.substr(0, lhs_end));
       if (lhs.empty()) {
-        throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": directive '#" + std::string(cmd) + "' requires a key");
+        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": directive '#" + std::string(cmd) + "' requires a key");
       }
-      auto target = parse_target(lhs, curr_module, line_no, path_);
+      auto target = parse_target(lhs, curr_module, line_no, path);
 
       auto rhs = trim(lhs_end == std::string_view::npos ? std::string_view{} : args.substr(lhs_end + 1));
       
@@ -248,7 +254,7 @@ RuntimeParams::RuntimeParams(const std::string& path) : path_(path) {
           assign_param(target.module, target.key, ParamValue(true), false);
         } else {
           // #define key value means parse value as usual
-          assign_param(target.module, target.key, get_value(rhs, line_no, path_), false);
+          assign_param(target.module, target.key, get_value(rhs, line_no, path), false);
         }
         continue;
       }
@@ -256,11 +262,11 @@ RuntimeParams::RuntimeParams(const std::string& path) : path_(path) {
       if (cmd == "undef") {
         bool is_override = false;
         // if a value was already provided, it must be "true":
-        auto it = table_[target.module].find(target.key);
-        if (it != table_[target.module].end()) {
+        auto it = table[target.module].find(target.key);
+        if (it != table[target.module].end()) {
           const auto& existing_val = it->second;
           if (!std::holds_alternative<bool>(existing_val) || !std::get<bool>(existing_val)) {
-            throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": #undef can only be applied to keys that are currently defined as true; use #override to change other values");
+            throw std::runtime_error(path + ":" + std::to_string(line_no) + ": #undef can only be applied to keys that are currently defined as true; use #override to change other values");
           }
           is_override = true;
         } 
@@ -270,41 +276,51 @@ RuntimeParams::RuntimeParams(const std::string& path) : path_(path) {
 
       if (cmd == "override") {
         if (rhs.empty()) {
-          throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": #override requires a value");
+          throw std::runtime_error(path + ":" + std::to_string(line_no) + ": #override requires a value");
         }
         if (rhs.front() != '=') {
-          throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": expected '=' after key in #override directive");
+          throw std::runtime_error(path + ":" + std::to_string(line_no) + ": expected '=' after key in #override directive");
         }
         rhs.remove_prefix(1); // remove '='
-        assign_param(target.module, target.key, get_value(rhs, line_no, path_), true);
+        assign_param(target.module, target.key, get_value(rhs, line_no, path), true);
         continue;
       }
 
-      throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": unknown directive '#" + std::string(cmd) + "'");
+      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": unknown directive '#" + std::string(cmd) + "'");
     }
 
     // key = value (find '=' not in quotes)
     auto eq = find_unquoted(sv, '=');
     if (eq == std::string_view::npos) {
-      throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": expected 'key = value' but got: '" + std::string(sv) + "'");
+      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": expected 'key = value' but got: '" + std::string(sv) + "'");
     }
 
     auto lhs = trim(sv.substr(0, eq));
     auto rhs = trim(sv.substr(eq + 1));
 
     if (lhs.empty()) {
-      throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": empty key in: '" + std::string(sv) + "'");
+      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": empty key in: '" + std::string(sv) + "'");
     }
 
-    auto target = parse_target(lhs, curr_module, line_no, path_);
-    assign_param(target.module, target.key, get_value(rhs, line_no, path_), false);
+    auto target = parse_target(lhs, curr_module, line_no, path);
+    assign_param(target.module, target.key, get_value(rhs, line_no, path), false);
   }
 
   if (in_block_comment) {
-    throw std::runtime_error(path_ + ":EOF: unterminated block comment (missing '*/')");
+    throw std::runtime_error(path + ":EOF: unterminated block comment (missing '*/')");
   }
   if (!curr_module.empty()) {
-    throw std::runtime_error(path_ + ":EOF: unterminated module '" + curr_module + "' (missing '%" + curr_module + "')");
+    throw std::runtime_error(path + ":EOF: unterminated module '" + curr_module + "' (missing '%" + curr_module + "')");
+  }
+}
+
+RuntimeParams::RuntimeParams(const std::string& path) : path_(path) {
+  add_data_from_file(path, table_);
+}
+
+RuntimeParams::RuntimeParams(const std::vector<std::string>& paths) {
+  for (const auto& path : paths) {
+    add_data_from_file(path, table_);
   }
 }
 
@@ -316,7 +332,6 @@ T RuntimeParams::get_as(const std::string& key, const std::string& module) const
   }
   throw std::runtime_error("Parameter " + module + ":" + key + " is not of the requested type");
 }
-
 
 
 const ParamValue& RuntimeParams::get(const std::string& key, const std::string& module) const {

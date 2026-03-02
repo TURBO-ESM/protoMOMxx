@@ -47,7 +47,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
-#include <map>
+#include <unordered_map>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -63,6 +63,7 @@ using mom_parser_utilities::ParamValue;
 class RuntimeParams {
 public:
   explicit RuntimeParams(const std::string& path);
+  explicit RuntimeParams(const std::vector<std::string>& paths);  
 
   /// @brief Get a parameter value from a module
   /// @param key The parameter key
@@ -94,7 +95,6 @@ public:
 
 private:
 
-
   std::string path_;
-  std::map<std::string, std::map<std::string, ParamValue>> table_;
+  std::unordered_map<std::string, std::unordered_map<std::string, ParamValue>> table_;
 };

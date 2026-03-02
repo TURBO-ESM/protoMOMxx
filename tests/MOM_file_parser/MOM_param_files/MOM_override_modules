@@ -1,0 +1,7 @@
+! override some parameters defined in MOM_input_modules
+
+#override H = 1e-5
+
+#override KPP%N_SMOOTH = 5
+
+NEW_VAR = "xyz" ! This variable is only defined in the override file, not in the main input file
