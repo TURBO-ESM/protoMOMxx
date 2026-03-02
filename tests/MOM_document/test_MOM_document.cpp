@@ -9,9 +9,10 @@
 
 namespace fs = std::filesystem;
 
-static std::string read_file(const fs::path& path) {
+static std::string read_file(const fs::path &path) {
   std::ifstream ifs(path);
-  if (!ifs) return "";
+  if (!ifs)
+    return "";
   std::ostringstream oss;
   oss << ifs.rdbuf();
   return oss.str();
@@ -39,14 +40,14 @@ protected:
     fs::create_directories(output_dir_);
     base_path_ = output_dir_ / "test_param_doc";
     // Remove any leftover files from previous runs
-    for (auto& ext : {".all", ".short", ".layout", ".debugging"}) {
+    for (auto &ext : {".all", ".short", ".layout", ".debugging"}) {
       fs::remove(base_path_.string() + ext);
     }
   }
 
   void TearDown() override {
     // Clean up test files
-    for (auto& ext : {".all", ".short", ".layout", ".debugging"}) {
+    for (auto &ext : {".all", ".short", ".layout", ".debugging"}) {
       fs::remove(base_path_.string() + ext);
     }
   }
@@ -180,8 +181,7 @@ TEST_F(DocTestFixture, DocParamBoolDefault) {
 TEST_F(DocTestFixture, LayoutParam) {
   {
     DocFileWriter doc(base_path_.string());
-    doc.doc_param("LAYOUT_VAR", "A layout variable", "", true, std::nullopt,
-                  DocParamOptions{.layout_param = true});
+    doc.doc_param("LAYOUT_VAR", "A layout variable", "", true, std::nullopt, DocParamOptions{.layout_param = true});
   }
   std::string layout_content = read_file(base_path_.string() + ".layout");
   EXPECT_NE(layout_content.find("LAYOUT_VAR"), std::string::npos);
@@ -228,8 +228,7 @@ TEST_F(DocTestFixture, BlockOpenClose) {
     doc.doc_openBlock("KPP", "KPP mixing parameterization");
     EXPECT_EQ(doc.block_prefix(), "KPP%");
 
-    doc.doc_param("N_SMOOTH", "Number of smoothing passes", "count",
-                  std::int64_t(3));
+    doc.doc_param("N_SMOOTH", "Number of smoothing passes", "count", std::int64_t(3));
     doc.doc_closeBlock("KPP");
     EXPECT_EQ(doc.block_prefix(), "");
   }
@@ -263,7 +262,7 @@ TEST_F(DocTestFixture, DuplicateDetection) {
   {
     DocFileWriter doc(base_path_.string());
     doc.doc_param("VALUE", "First doc", "m", 1.0);
-    doc.doc_param("VALUE", "First doc", "m", 1.0);  // Same message, no warning
+    doc.doc_param("VALUE", "First doc", "m", 1.0); // Same message, no warning
   }
 }
 
@@ -271,7 +270,7 @@ TEST_F(DocTestFixture, DuplicateWithDifferentValue) {
   {
     DocFileWriter doc(base_path_.string());
     doc.doc_param("VALUE", "First doc", "m", 1.0);
-    doc.doc_param("VALUE", "First doc", "m", 2.0);  // Different value, should warn
+    doc.doc_param("VALUE", "First doc", "m", 2.0); // Different value, should warn
   }
 }
 
@@ -282,9 +281,10 @@ TEST_F(DocTestFixture, DuplicateWithDifferentValue) {
 TEST_F(DocTestFixture, LongDescription) {
   {
     DocFileWriter doc(base_path_.string());
-    doc.doc_param("VAR", "This is a very long description that should be wrapped "
-                        "across multiple lines to ensure that the formatting works "
-                        "correctly and all text is properly indented.",
+    doc.doc_param("VAR",
+                  "This is a very long description that should be wrapped "
+                  "across multiple lines to ensure that the formatting works "
+                  "correctly and all text is properly indented.",
                   "", 1.0);
   }
   std::string content = read_file(base_path_.string() + ".all");
@@ -307,11 +307,7 @@ TEST_F(DocTestFixture, RuntimeParamsDocIntegration) {
   rp.set_doc(doc);
 
   bool reentrant_x;
-  rp.get("REENTRANT_X", reentrant_x,
-         ParamGetOptions<bool>{
-           .desc = "Reentrant x-axis",
-           .units = "bool"
-         });
+  rp.get("REENTRANT_X", reentrant_x, ParamGetOptions<bool>{.desc = "Reentrant x-axis", .units = "bool"});
 
   rp.set_doc(nullptr);
   doc.reset();
@@ -330,10 +326,7 @@ TEST_F(DocTestFixture, RuntimeParamsNoDocByDefault) {
   // Not setting a doc writer
 
   bool reentrant_x;
-  rp.get("REENTRANT_X", reentrant_x,
-         ParamGetOptions<bool>{
-           .desc = "Reentrant x-axis"
-         });
+  rp.get("REENTRANT_X", reentrant_x, ParamGetOptions<bool>{.desc = "Reentrant x-axis"});
 
   // Should not have created any documentation files
   EXPECT_FALSE(fs::exists(base_path_.string() + ".all"));
@@ -350,11 +343,7 @@ TEST_F(DocTestFixture, RuntimeParamsDoNotLog) {
   rp.set_doc(doc);
 
   bool reentrant_x;
-  rp.get("REENTRANT_X", reentrant_x,
-         ParamGetOptions<bool>{
-           .desc = "Reentrant x-axis",
-           .do_not_log = true
-         });
+  rp.get("REENTRANT_X", reentrant_x, ParamGetOptions<bool>{.desc = "Reentrant x-axis", .do_not_log = true});
 
   rp.set_doc(nullptr);
   doc.reset();
@@ -376,7 +365,7 @@ TEST_F(DocTestFixture, RuntimeParamsEmptyDescSkipsDoc) {
   bool reentrant_x;
   rp.get("REENTRANT_X", reentrant_x,
          ParamGetOptions<bool>{
-           .desc = ""  // Empty description
+             .desc = "" // Empty description
          });
 
   rp.set_doc(nullptr);
@@ -406,8 +395,7 @@ TEST_F(DocTestFixture, EmptyUnits) {
   // Should not have brackets for empty units
   // The line should have the "!" comment marker but no "[...]"
   auto line_end = content.find('\n', content.find("FLAG = True"));
-  auto line = content.substr(content.find("FLAG = True"),
-                             line_end - content.find("FLAG = True"));
+  auto line = content.substr(content.find("FLAG = True"), line_end - content.find("FLAG = True"));
   EXPECT_EQ(line.find("["), std::string::npos);
 }
 

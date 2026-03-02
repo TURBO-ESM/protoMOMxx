@@ -1,16 +1,16 @@
 /**
-* @file MOM_driver.cpp
-* @brief Driver program for protoMOMxx
-*/
+ * @file MOM_driver.cpp
+ * @brief Driver program for protoMOMxx
+ */
 
-#include <iostream>
 #include "MOM.h"
+#include <iostream>
 
 int main() {
 
-    std::cout << "Hello C++ world. This is protoMOMxx!" << std::endl;
+  std::cout << "Hello C++ world. This is protoMOMxx!" << std::endl;
 
-    MOM mom;
+  MOM mom;
 
-    return 0;
+  return 0;
 }

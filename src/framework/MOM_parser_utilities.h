@@ -8,28 +8,18 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <string_view>
-#include <vector>
 #include <variant>
-#include <cstdint>
-
+#include <vector>
 
 namespace mom_parser_utilities {
 
 /// @brief A type alias for the supported parameter value types.
-using ParamValue = std::variant<
-  bool,
-  std::int64_t,
-  double,
-  std::string,
-  std::vector<bool>,
-  std::vector<std::int64_t>,
-  std::vector<double>,
-  std::vector<std::string>
->;
+using ParamValue = std::variant<bool, std::int64_t, double, std::string, std::vector<bool>, std::vector<std::int64_t>,
+                                std::vector<double>, std::vector<std::string>>;
 static const ParamValue NotFound{};
-
 
 /// @brief Find the first occurrence of a character that is not inside quotes. Handles both single and double quotes.
 /// @param s The string to search through.
@@ -43,6 +33,6 @@ std::size_t find_unquoted(std::string_view s, char ch);
 /// @param path The file path for error reporting.
 /// @param fortran_style If true, uses Fortran-style boolean parsing (.true./.false.).
 /// @return The parsed value as a ParamValue variant, which may be a scalar or a vector of scalars.
-ParamValue get_value(std::string_view raw, std::size_t line_no, const std::string& path, bool fortran_style = false);
+ParamValue get_value(std::string_view raw, std::size_t line_no, const std::string &path, bool fortran_style = false);
 
 } // namespace mom_parser_utilities

@@ -3,7 +3,7 @@
  * @brief Lightweight parser for Fortran namelist files.
  *
  * @details
- * Provides robust parsing of Fortran namelist files with support for comments and detailed 
+ * Provides robust parsing of Fortran namelist files with support for comments and detailed
  * error reporting. Supported value types:
  * - Scalars: bool, int64, double, string
  * - Homogeneous comma-separated lists of the above types
@@ -38,12 +38,15 @@
 
 #pragma once
 
+#include "MOM_parser_utilities.h"
+#include "MOM_string_functions.h"
 #include <algorithm>
 #include <cctype>
 #include <charconv>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <map>
 #include <stdexcept>
 #include <string>
@@ -51,37 +54,34 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <iostream>
-#include "MOM_string_functions.h"
-#include "MOM_parser_utilities.h"
 
 using mom_parser_utilities::ParamValue;
 
 class NamelistParams {
 public:
-  explicit NamelistParams(const std::string& path);
+  explicit NamelistParams(const std::string &path);
 
   /// @brief Get a parameter value from a namelist
   /// @param key The parameter key
   /// @param namelist The namelist name
   /// @return The parameter value as a ParamValue
   /// @throws std::out_of_range if the namelist or key does not exist
-  const ParamValue& get(const std::string& key, const std::string& namelist = "") const;
+  const ParamValue &get(const std::string &key, const std::string &namelist = "") const;
 
-  template<typename T>
+  template <typename T>
   /// @brief Get a parameter value as a specific type.
   /// @tparam T The expected type of the parameter value.
   /// @param key The parameter key
   /// @param namelist The namelist name (empty string for global scope)
   /// @return The parameter value as type T
   /// @throws std::runtime_error if the parameter is not of type T
-  T get_as(const std::string& key, const std::string& namelist = "") const;
+  T get_as(const std::string &key, const std::string &namelist = "") const;
 
   /// @brief Check if a parameter exists
   /// @param key The parameter key
   /// @param namelist The namelist name
   /// @return true if the parameter exists, false otherwise
-  bool has_param(const std::string& key, const std::string& namelist = "") const;
+  bool has_param(const std::string &key, const std::string &namelist = "") const;
 
   /// @brief Get all namelists
   /// @return A vector of namelist names

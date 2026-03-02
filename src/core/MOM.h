@@ -5,13 +5,10 @@
 
 class MOM {
 public:
-  explicit MOM(
-      int ensemble_num = -1
-  );
+  explicit MOM(int ensemble_num = -1);
 
   std::unique_ptr<RuntimeParams> params;
 
 private:
   bool verbosity_ = false;
-
 };

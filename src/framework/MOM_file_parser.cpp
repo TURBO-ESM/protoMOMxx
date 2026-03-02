@@ -24,10 +24,8 @@ struct ParsedTarget {
 /// @param line_no Current line number for diagnostics.
 /// @param path File path for diagnostics.
 /// @return ParsedTarget containing resolved module and key.
-static ParsedTarget parse_target(std::string_view lhs,
-                                 std::string_view curr_module,
-                                 std::size_t line_no,
-                                 const std::string& path) {
+static ParsedTarget parse_target(std::string_view lhs, std::string_view curr_module, std::size_t line_no,
+                                 const std::string &path) {
   lhs = trim(lhs);
   if (lhs.empty()) {
     throw std::runtime_error(path + ":" + std::to_string(line_no) + ": empty key");
@@ -39,18 +37,21 @@ static ParsedTarget parse_target(std::string_view lhs,
   auto pct = lhs.find('%');
   if (pct != std::string_view::npos) {
     if (!curr_module.empty()) {
-      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": cannot use module%key inside an open module: '" + std::string(lhs) + "'");
+      throw std::runtime_error(path + ":" + std::to_string(line_no) +
+                               ": cannot use module%key inside an open module: '" + std::string(lhs) + "'");
     }
 
     auto mod = trim(lhs.substr(0, pct));
     auto key = trim(lhs.substr(pct + 1));
 
     if (key.find('%') != std::string_view::npos) {
-      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": only one '%' allowed in module%key: '" + std::string(lhs) + "'");
+      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": only one '%' allowed in module%key: '" +
+                               std::string(lhs) + "'");
     }
 
     if (!is_valid_identifier(mod) || !is_valid_identifier(key)) {
-      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": invalid module%key syntax: '" + std::string(lhs) + "'");
+      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": invalid module%key syntax: '" +
+                               std::string(lhs) + "'");
     }
 
     out.module = std::string(mod);
@@ -77,7 +78,7 @@ static ParsedTarget parse_target(std::string_view lhs,
 ///        inside a C-style block comment. This value is updated by the function
 ///        and must be preserved across successive calls.
 /// @return The input line with comments removed.
-static std::string strip_comments(std::string_view line, bool& in_block) {
+static std::string strip_comments(std::string_view line, bool &in_block) {
   std::string out;
   out.reserve(line.size());
 
@@ -114,8 +115,7 @@ static std::string strip_comments(std::string_view line, bool& in_block) {
     }
 
     // Start of block comment? (only if not in quotes)
-    if (!in_sq && !in_dq &&
-        c == '/' && (i + 1) < line.size() && line[i + 1] == '*') {
+    if (!in_sq && !in_dq && c == '/' && (i + 1) < line.size() && line[i + 1] == '*') {
       in_block = true;
       i += 2;
       continue;
@@ -135,11 +135,10 @@ static std::string strip_comments(std::string_view line, bool& in_block) {
 
 /// @brief Parse a runtime parameter file and add its contents to the provided table.
 /// @param path The file path of the runtime parameter file to parse.
-/// @param table The table to which parsed parameters will be added. This is a map from module names to maps of key-value pairs.
-static void add_data_from_file(
-  const std::string& path,
-  std::unordered_map<std::string, std::unordered_map<std::string, ParamValue>>& table
-) {
+/// @param table The table to which parsed parameters will be added. This is a map from module names to maps of
+/// key-value pairs.
+static void add_data_from_file(const std::string &path,
+                               std::unordered_map<std::string, std::unordered_map<std::string, ParamValue>> &table) {
   namespace fs = std::filesystem;
 
   std::cout << "  Reading parameter file: " << path << std::endl;
@@ -162,11 +161,8 @@ static void add_data_from_file(
   std::string raw_line;
   std::size_t line_no = 0;
 
-  auto assign_param = [&](const std::string& module,
-                          const std::string& key,
-                          ParamValue value,
-                          bool is_override) {
-    auto& mod_table = table[module];
+  auto assign_param = [&](const std::string &module, const std::string &key, ParamValue value, bool is_override) {
+    auto &mod_table = table[module];
     auto it = mod_table.find(key);
 
     if (is_override) {
@@ -198,13 +194,15 @@ static void add_data_from_file(
     std::string line = strip_comments(raw_line, in_block_comment);
     std::string_view sv = trim(line);
 
-    if (sv.empty()) continue;
+    if (sv.empty())
+      continue;
 
     // Module open: name%
     if (sv.back() == '%' && sv.front() != '%') {
       auto name = trim(sv.substr(0, sv.size() - 1));
       if (!is_valid_identifier(name)) {
-        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": invalid module name: '" + std::string(name) + "'");
+        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": invalid module name: '" + std::string(name) +
+                                 "'");
       }
       if (!curr_module.empty()) {
         throw std::runtime_error(path + ":" + std::to_string(line_no) + ": cannot open module '" + std::string(name) +
@@ -218,7 +216,8 @@ static void add_data_from_file(
     if (sv.front() == '%' && sv.size() >= 2) {
       auto name = trim(sv.substr(1));
       if (!is_valid_identifier(name)) {
-        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": invalid module close: '%" + std::string(name) + "'");
+        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": invalid module close: '%" +
+                                 std::string(name) + "'");
       }
       if (curr_module != name) {
         throw std::runtime_error(path + ":" + std::to_string(line_no) + ": module mismatch: closing '" +
@@ -233,24 +232,27 @@ static void add_data_from_file(
     if (sv.front() == '#') {
       auto rest = trim(sv.substr(1));
       if (rest.empty()) {
-        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": malformed directive: '" + std::string(sv) + "'");
+        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": malformed directive: '" + std::string(sv) +
+                                 "'");
       }
       auto cmd_end = rest.find_first_of(" \t");
       std::string cmd = lowercase(trim(cmd_end == std::string_view::npos ? rest : rest.substr(0, cmd_end)));
       auto args = trim(cmd_end == std::string_view::npos ? std::string_view{} : rest.substr(cmd_end + 1));
       if (args.empty()) {
-        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": directive '#" + std::string(cmd) + "' requires arguments");
+        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": directive '#" + std::string(cmd) +
+                                 "' requires arguments");
       }
-      
+
       auto lhs_end = args.find_first_of(" \t\r");
       auto lhs = trim(lhs_end == std::string_view::npos ? args : args.substr(0, lhs_end));
       if (lhs.empty()) {
-        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": directive '#" + std::string(cmd) + "' requires a key");
+        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": directive '#" + std::string(cmd) +
+                                 "' requires a key");
       }
       auto target = parse_target(lhs, curr_module, line_no, path);
 
       auto rhs = trim(lhs_end == std::string_view::npos ? std::string_view{} : args.substr(lhs_end + 1));
-      
+
       if (cmd == "define") {
         if (rhs.empty()) {
           // #define key  (no value) means set bool to true
@@ -267,12 +269,14 @@ static void add_data_from_file(
         // if a value was already provided, it must be "true":
         auto it = table[target.module].find(target.key);
         if (it != table[target.module].end()) {
-          const auto& existing_val = it->second;
+          const auto &existing_val = it->second;
           if (!std::holds_alternative<bool>(existing_val) || !std::get<bool>(existing_val)) {
-            throw std::runtime_error(path + ":" + std::to_string(line_no) + ": #undef can only be applied to keys that are currently defined as true; use #override to change other values");
+            throw std::runtime_error(path + ":" + std::to_string(line_no) +
+                                     ": #undef can only be applied to keys that are currently defined as true; use "
+                                     "#override to change other values");
           }
           is_override = true;
-        } 
+        }
         assign_param(target.module, target.key, ParamValue(false), is_override);
         continue;
       }
@@ -282,20 +286,23 @@ static void add_data_from_file(
           throw std::runtime_error(path + ":" + std::to_string(line_no) + ": #override requires a value");
         }
         if (rhs.front() != '=') {
-          throw std::runtime_error(path + ":" + std::to_string(line_no) + ": expected '=' after key in #override directive");
+          throw std::runtime_error(path + ":" + std::to_string(line_no) +
+                                   ": expected '=' after key in #override directive");
         }
         rhs.remove_prefix(1); // remove '='
         assign_param(target.module, target.key, get_value(rhs, line_no, path), true);
         continue;
       }
 
-      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": unknown directive '#" + std::string(cmd) + "'");
+      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": unknown directive '#" + std::string(cmd) +
+                               "'");
     }
 
     // key = value (find '=' not in quotes)
     auto eq = find_unquoted(sv, '=');
     if (eq == std::string_view::npos) {
-      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": expected 'key = value' but got: '" + std::string(sv) + "'");
+      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": expected 'key = value' but got: '" +
+                               std::string(sv) + "'");
     }
 
     auto lhs = trim(sv.substr(0, eq));
@@ -317,18 +324,15 @@ static void add_data_from_file(
   }
 }
 
-RuntimeParams::RuntimeParams(const std::string& path) : path_(path) {
-  add_data_from_file(path, table_);
-}
+RuntimeParams::RuntimeParams(const std::string &path) : path_(path) { add_data_from_file(path, table_); }
 
-RuntimeParams::RuntimeParams(const std::vector<std::string>& paths) {
-  for (const auto& path : paths) {
+RuntimeParams::RuntimeParams(const std::vector<std::string> &paths) {
+  for (const auto &path : paths) {
     add_data_from_file(path, table_);
   }
 }
 
-bool RuntimeParams::has_param(const std::string& key, 
-                              const std::string& module) const {
+bool RuntimeParams::has_param(const std::string &key, const std::string &module) const {
   auto mod_it = table_.find(module);
   if (mod_it == table_.end()) {
     return false;
@@ -339,7 +343,7 @@ bool RuntimeParams::has_param(const std::string& key,
 std::vector<std::string> RuntimeParams::get_modules() const {
   std::vector<std::string> modules;
   modules.reserve(table_.size());
-  for (const auto& pair : table_) {
+  for (const auto &pair : table_) {
     modules.push_back(pair.first);
   }
   return modules;
@@ -347,38 +351,38 @@ std::vector<std::string> RuntimeParams::get_modules() const {
 
 size_t RuntimeParams::get_num_parameters() const {
   size_t count = 0;
-  for (const auto& mod_pair : table_) {
+  for (const auto &mod_pair : table_) {
     count += mod_pair.second.size();
   }
   return count;
 }
 
-const ParamValue& RuntimeParams::get_variant(const std::string& key, const std::string& module) const {
+const ParamValue &RuntimeParams::get_variant(const std::string &key, const std::string &module) const {
   auto mod_it = table_.find(module);
   if (mod_it == table_.end()) {
     throw std::out_of_range("Module not found: " + module);
   }
-  
+
   auto key_it = mod_it->second.find(key);
   if (key_it == mod_it->second.end()) {
     throw std::out_of_range("Key not found in module " + module + ": " + key);
   }
-  
+
   return key_it->second;
 }
 
-template<typename T>
-bool RuntimeParams::get(const std::string& key, T& value, const ParamGetOptions<T>& options) const {
+template <typename T>
+bool RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions<T> &options) const {
   bool stat = false;
   try {
-    const auto& val = get_variant(key, options.module);
+    const auto &val = get_variant(key, options.module);
     if (std::holds_alternative<T>(val)) {
       value = std::get<T>(val);
       stat = true;
     } else {
       throw std::runtime_error("Parameter " + options.module + ":" + key + " is not of the requested type");
     }
-  } catch (const std::out_of_range&) {
+  } catch (const std::out_of_range &) {
     if (options.fail_if_missing) {
       throw std::out_of_range("Key not found in module " + options.module + ": " + key);
     }
@@ -394,20 +398,24 @@ bool RuntimeParams::get(const std::string& key, T& value, const ParamGetOptions<
     doc_opts.layout_param = options.layout_param;
     doc_opts.debugging_param = options.debugging_param;
     doc_opts.module = options.module;
-    doc_->doc_param(key, options.desc, options.units, value,
-                    options.default_value, doc_opts);
+    doc_->doc_param(key, options.desc, options.units, value, options.default_value, doc_opts);
   }
 
   return stat;
 }
 
-
 // Explicit template instantiations for get
-template bool RuntimeParams::get<bool>(const std::string&, bool&, const ParamGetOptions<bool>&) const;
-template bool RuntimeParams::get<std::int64_t>(const std::string&, std::int64_t&, const ParamGetOptions<std::int64_t>&) const;
-template bool RuntimeParams::get<double>(const std::string&, double&, const ParamGetOptions<double>&) const;
-template bool RuntimeParams::get<std::string>(const std::string&, std::string&, const ParamGetOptions<std::string>&) const;
-template bool RuntimeParams::get<std::vector<bool>>(const std::string&, std::vector<bool>&, const ParamGetOptions<std::vector<bool>>&) const;
-template bool RuntimeParams::get<std::vector<std::int64_t>>(const std::string&, std::vector<std::int64_t>&, const ParamGetOptions<std::vector<std::int64_t>>&) const;
-template bool RuntimeParams::get<std::vector<double>>(const std::string&, std::vector<double>&, const ParamGetOptions<std::vector<double>>&) const;
-template bool RuntimeParams::get<std::vector<std::string>>(const std::string&, std::vector<std::string>&, const ParamGetOptions<std::vector<std::string>>&) const;
+template bool RuntimeParams::get<bool>(const std::string &, bool &, const ParamGetOptions<bool> &) const;
+template bool RuntimeParams::get<std::int64_t>(const std::string &, std::int64_t &,
+                                               const ParamGetOptions<std::int64_t> &) const;
+template bool RuntimeParams::get<double>(const std::string &, double &, const ParamGetOptions<double> &) const;
+template bool RuntimeParams::get<std::string>(const std::string &, std::string &,
+                                              const ParamGetOptions<std::string> &) const;
+template bool RuntimeParams::get<std::vector<bool>>(const std::string &, std::vector<bool> &,
+                                                    const ParamGetOptions<std::vector<bool>> &) const;
+template bool RuntimeParams::get<std::vector<std::int64_t>>(const std::string &, std::vector<std::int64_t> &,
+                                                            const ParamGetOptions<std::vector<std::int64_t>> &) const;
+template bool RuntimeParams::get<std::vector<double>>(const std::string &, std::vector<double> &,
+                                                      const ParamGetOptions<std::vector<double>> &) const;
+template bool RuntimeParams::get<std::vector<std::string>>(const std::string &, std::vector<std::string> &,
+                                                           const ParamGetOptions<std::vector<std::string>> &) const;

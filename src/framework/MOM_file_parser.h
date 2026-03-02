@@ -3,7 +3,7 @@
  * @brief Lightweight parser for MOM runtime parameter files.
  *
  * @details
- * Provides robust parsing of MOM runtime parameter files with support for C-style block comments, 
+ * Provides robust parsing of MOM runtime parameter files with support for C-style block comments,
  * Fortran-style line comments, quoted strings, and detailed error reporting. Supported value types:
  * - Scalars: bool, int64, double, string
  * - Homogeneous comma-separated lists of the above types
@@ -41,26 +41,26 @@
 
 #pragma once
 
+#include "MOM_document.h"
+#include "MOM_get_input.h"
+#include "MOM_parser_utilities.h"
+#include "MOM_string_functions.h"
 #include <algorithm>
 #include <cctype>
 #include <charconv>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <memory>
-#include <unordered_map>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
-#include <iostream>
-#include <optional>
-#include "MOM_string_functions.h"
-#include "MOM_parser_utilities.h"
-#include "MOM_document.h"
-#include "MOM_get_input.h"
 
 using mom_parser_utilities::ParamValue;
 
@@ -70,8 +70,7 @@ using mom_parser_utilities::ParamValue;
 /// output, and error handling behavior for RuntimeParams::get().
 ///
 /// @tparam T The type of the parameter value being retrieved.
-template<typename T>
-struct ParamGetOptions {
+template <typename T> struct ParamGetOptions {
   std::optional<T> default_value; ///< The default value of the parameter
   std::string module = "";        ///< The name of the calling module
   std::string desc = "";          ///< A description of this variable;
@@ -82,30 +81,29 @@ struct ParamGetOptions {
                                   ///< although it may be logged.
   bool do_not_log = false;        ///< If true, do not log this parameter to a doc file.
   bool layout_param = false;      ///< If true, this parameter is logged in the layout parameter file.
-  bool debugging_param = false;   ///< If true, this parameter is logged in the debugging parameter file. 
+  bool debugging_param = false;   ///< If true, this parameter is logged in the debugging parameter file.
 };
 
 class RuntimeParams {
 public:
-  explicit RuntimeParams(const std::string& path);
-  explicit RuntimeParams(const std::vector<std::string>& paths);  
+  explicit RuntimeParams(const std::string &path);
+  explicit RuntimeParams(const std::vector<std::string> &paths);
 
-
-  template<typename T>
-  bool get(const std::string& key, T& value, const ParamGetOptions<T>& options = ParamGetOptions<T>{}) const;
+  template <typename T>
+  bool get(const std::string &key, T &value, const ParamGetOptions<T> &options = ParamGetOptions<T>{}) const;
 
   /// @brief Get a parameter value from a module
   /// @param key The parameter key
   /// @param module The module name
   /// @return The parameter value as a ParamValue
   /// @throws std::out_of_range if the module or key does not exist
-  const ParamValue& get_variant(const std::string& key, const std::string& module = "") const;
+  const ParamValue &get_variant(const std::string &key, const std::string &module = "") const;
 
   /// @brief Check if a parameter exists
   /// @param key The parameter key
   /// @param module The module name
   /// @return true if the parameter exists, false otherwise
-  bool has_param(const std::string& key, const std::string& module = "") const;
+  bool has_param(const std::string &key, const std::string &module = "") const;
 
   /// @brief Get all modules
   /// @return A vector of module names
@@ -121,20 +119,20 @@ public:
   std::shared_ptr<DocFileWriter> get_doc() const { return doc_; }
 
   /// @brief Document a module header.
-  void doc_module(const std::string& modname, const std::string& desc,
-                  bool layout_mod = false, bool debugging_mod = false,
-                  bool all_default = false) {
-    if (doc_) doc_->doc_module(modname, desc, layout_mod, debugging_mod, all_default);
+  void doc_module(const std::string &modname, const std::string &desc, bool layout_mod = false,
+                  bool debugging_mod = false, bool all_default = false) {
+    if (doc_)
+      doc_->doc_module(modname, desc, layout_mod, debugging_mod, all_default);
   }
 
   /// @brief Close a module (write closing block).
   void close_module() {
-    if (doc_) doc_->close_module();
+    if (doc_)
+      doc_->close_module();
   }
 
 private:
-
   std::string path_;
   std::unordered_map<std::string, std::unordered_map<std::string, ParamValue>> table_;
-  std::shared_ptr<DocFileWriter> doc_;  ///< Optional documentation writer
+  std::shared_ptr<DocFileWriter> doc_; ///< Optional documentation writer
 };
