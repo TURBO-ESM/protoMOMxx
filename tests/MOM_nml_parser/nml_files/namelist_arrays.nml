@@ -1,0 +1,9 @@
+! Test file with lists/arrays
+&ARRAY_TEST
+  INT_SCALAR = 42
+  INT_ARRAY = 1, 2, 3, 4, 5
+  REAL_ARRAY = 1.0, 2.0, 3.0
+  STRING_ARRAY = 'file1.nc', 'file2.nc', 'file3.nc'
+  BOOL_ARRAY = .true., .false., .true.
+  TRAILING_COMMA = 10, 20, 30,
+/

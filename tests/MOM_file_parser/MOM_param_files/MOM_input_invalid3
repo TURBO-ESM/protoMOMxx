@@ -1,0 +1,4 @@
+! Unterminated module
+
+MODULEX%
+  abc = "foo"
