@@ -1,0 +1,10 @@
+! This is an invalid MOM input file because it contains nested modules.
+
+MOD1%
+ FOO = "BAR"
+
+ MOD2%
+  A = 1, 2
+ %MOD2
+%MOD1
+  

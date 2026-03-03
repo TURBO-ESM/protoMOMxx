@@ -1,0 +1,9 @@
+! Test file with comments and formatting
+&TEST_COMMENTS
+  ! This is a full line comment
+  VAR1 = 100  ! This is an inline comment
+  VAR2 = 'test string'  ! Comment after string
+  VAR3 = .true.
+  ! Another comment
+  VAR4 = 3.14159
+/
