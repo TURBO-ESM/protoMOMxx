@@ -46,7 +46,7 @@ TEST(MOMFileParserTest, ParseMOMInputSimple) {
   rp.get("REENTRANT_X", reentrant_x);
   EXPECT_FALSE(reentrant_x);
 
-  int64_t dt_therm;
+  int dt_therm;
   rp.get("DT_THERM", dt_therm);
   EXPECT_EQ(dt_therm, 3600);
 
@@ -69,10 +69,10 @@ TEST(MOMFileParserTest, ParseMOMInputDirective) {
 
   bool Foo;
   rp.get("Foo", Foo);
-  std::int64_t Bar;
+  int Bar;
   rp.get("Bar", Bar);
   double PI;
-  rp.get("PI", PI);
+  rp.get("PI", PI, {.units = ""});
   std::string Baz;
   rp.get("Baz", Baz);
 
@@ -82,7 +82,7 @@ TEST(MOMFileParserTest, ParseMOMInputDirective) {
   EXPECT_EQ(Baz, "Hello, World!");
 
   double Alpha;
-  rp.get("ALPHA", Alpha);
+  rp.get("ALPHA", Alpha, {.units = ""});
   EXPECT_EQ(Alpha, 0.1); // Check that #define ALPHA takes effect
 
   bool Delta;
@@ -110,20 +110,20 @@ TEST(MOMFileParserTest, ParseMOMInputLarge1) {
 
   // check that attempting to read niglobal as a double throws an error
   double niglobal_double;
-  EXPECT_THROW(rp.get("NIGLOBAL", niglobal_double), std::runtime_error);
+  EXPECT_THROW(rp.get("NIGLOBAL", niglobal_double, {.units = ""}), std::runtime_error);
 
-  std::int64_t niglobal;
+  int niglobal;
   rp.get("NIGLOBAL", niglobal);
   EXPECT_EQ(niglobal, 540);
 
-  std::int64_t njglobal;
+  int njglobal;
   rp.get("NJGLOBAL", njglobal);
   EXPECT_EQ(njglobal, 480);
 
   EXPECT_TRUE(check_double_value(rp.get_variant("MLD_DECAYING_TFILTER", "MLE"), 2592000.0));
 
   double mld_decaying_tfilter;
-  rp.get("MLD_DECAYING_TFILTER", mld_decaying_tfilter, {.module = "MLE"});
+  rp.get("MLD_DECAYING_TFILTER", mld_decaying_tfilter, {.units = "", .module = "MLE"});
   EXPECT_EQ(mld_decaying_tfilter, 2592000.0);
 
   // Check that all 54 of the parameters in the file are present
@@ -142,7 +142,7 @@ TEST(MOMFileParserTest, ParseMOMInputModules) {
   // Attemping to read D as a double should throw an error since D is a bool
   double D_double;
   try {
-    rp.get("D", D_double);
+    rp.get("D", D_double, {.units = ""});
     FAIL() << "Expected std::runtime_error when trying to read D as double";
   } catch (const std::runtime_error &e) {
     EXPECT_TRUE(std::string(e.what()).find("not of the requested type") != std::string::npos);
@@ -175,14 +175,14 @@ TEST(MOMFileParserTest, ParseMOMInputModules) {
   EXPECT_EQ(
       [&] {
         double G;
-        rp.get("G", G);
+        rp.get("G", G, {.units = ""});
         return G;
       }(),
       1e-3);
   EXPECT_EQ(
       [&] {
         double H;
-        rp.get("H", H);
+        rp.get("H", H, {.units = ""});
         return H;
       }(),
       1e-3);
@@ -196,7 +196,7 @@ TEST(MOMFileParserTest, ParseMOMInputModules) {
 
   // Now check the parameters in module blocks
   try {
-    std::int64_t N_SMOOTH;
+    int N_SMOOTH;
     rp.get("N_SMOOTH", N_SMOOTH, {.fail_if_missing = true});
     FAIL() << "Expected std::out_of_range when trying to read N_SMOOTH without specifying module, but no exception was "
               "thrown";
@@ -208,7 +208,7 @@ TEST(MOMFileParserTest, ParseMOMInputModules) {
   }
   EXPECT_EQ(
       [&] {
-        std::int64_t N_SMOOTH;
+        int N_SMOOTH;
         rp.get("N_SMOOTH", N_SMOOTH, {.module = "KPP"});
         return N_SMOOTH;
       }(),
@@ -236,37 +236,37 @@ TEST(MOMFileParserTest, ParseMOMInputLists) {
   RuntimeParams rp(test_file_path.string());
 
   // Check that A, B, C are parsed as lists of ints
-  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get_variant("A")));
-  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get_variant("B")));
-  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get_variant("C")));
+  EXPECT_TRUE(is_vector_of<int>(rp.get_variant("A")));
+  EXPECT_TRUE(is_vector_of<int>(rp.get_variant("B")));
+  EXPECT_TRUE(is_vector_of<int>(rp.get_variant("C")));
   EXPECT_EQ(
       [&] {
-        std::vector<std::int64_t> A;
+        std::vector<int> A;
         rp.get("A", A);
         return A;
       }(),
-      std::vector<std::int64_t>({1, 2}));
+      std::vector<int>({1, 2}));
   EXPECT_EQ(
       [&] {
-        std::vector<std::int64_t> B;
+        std::vector<int> B;
         rp.get("B", B);
         return B;
       }(),
-      std::vector<std::int64_t>({3, 4}));
+      std::vector<int>({3, 4}));
   EXPECT_EQ(
       [&] {
-        std::vector<std::int64_t> C;
+        std::vector<int> C;
         rp.get("C", C);
         return C;
       }(),
-      std::vector<std::int64_t>({5, 6, 7, 8}));
+      std::vector<int>({5, 6, 7, 8}));
 
   // Check that D is parsed as a list of doubles
   EXPECT_TRUE(is_vector_of<double>(rp.get_variant("D")));
   EXPECT_EQ(
       [&] {
         std::vector<double> D;
-        rp.get("D", D);
+        rp.get("D", D, {.units = ""});
         return D;
       }(),
       std::vector<double>({1.0, 2.0, 3.0}));
@@ -289,55 +289,55 @@ TEST(MOMFileParserTest, ParseMOMInputScalars) {
   RuntimeParams rp(test_file_path.string());
 
   // Check that X and Y are parsed as scalar ints
-  EXPECT_TRUE(std::holds_alternative<std::int64_t>(rp.get_variant("X")));
-  EXPECT_TRUE(std::holds_alternative<std::int64_t>(rp.get_variant("Y")));
+  EXPECT_TRUE(std::holds_alternative<int>(rp.get_variant("X")));
+  EXPECT_TRUE(std::holds_alternative<int>(rp.get_variant("Y")));
   EXPECT_EQ(
       [&] {
-        std::int64_t X;
+        int X;
         rp.get("X", X);
         return X;
       }(),
       1);
   EXPECT_EQ(
       [&] {
-        std::int64_t Y;
+        int Y;
         rp.get("Y", Y);
         return Y;
       }(),
       3);
 
   // Check that A, B, C are parsed as lists of ints
-  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get_variant("A")));
-  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get_variant("B")));
-  EXPECT_TRUE(is_vector_of<std::int64_t>(rp.get_variant("C")));
+  EXPECT_TRUE(is_vector_of<int>(rp.get_variant("A")));
+  EXPECT_TRUE(is_vector_of<int>(rp.get_variant("B")));
+  EXPECT_TRUE(is_vector_of<int>(rp.get_variant("C")));
   EXPECT_EQ(
       [&] {
-        std::vector<std::int64_t> A;
+        std::vector<int> A;
         rp.get("A", A);
         return A;
       }(),
-      std::vector<std::int64_t>({1, 2}));
+      std::vector<int>({1, 2}));
   EXPECT_EQ(
       [&] {
-        std::vector<std::int64_t> B;
+        std::vector<int> B;
         rp.get("B", B);
         return B;
       }(),
-      std::vector<std::int64_t>({3, 4}));
+      std::vector<int>({3, 4}));
   EXPECT_EQ(
       [&] {
-        std::vector<std::int64_t> C;
+        std::vector<int> C;
         rp.get("C", C);
         return C;
       }(),
-      std::vector<std::int64_t>({5, 6, 7, 8}));
+      std::vector<int>({5, 6, 7, 8}));
 
   // Check that D is parsed as a list of doubles
   EXPECT_TRUE(is_vector_of<double>(rp.get_variant("D")));
   EXPECT_EQ(
       [&] {
         std::vector<double> D;
-        rp.get("D", D);
+        rp.get("D", D, {.units = ""});
         return D;
       }(),
       std::vector<double>({1.0, 2.0, 3.0}));
@@ -470,10 +470,10 @@ TEST(MOMFileParserTest, OverrideModules) {
   RuntimeParams rp(paths);
   // Check that the override file successfully overrides some values from the first file
   double H;
-  rp.get("H", H);
+  rp.get("H", H, {.units = ""});
   EXPECT_EQ(H, 1e-5); // H should be overridden to 1e-5
 
-  std::int64_t N_SMOOTH;
+  int N_SMOOTH;
   rp.get("N_SMOOTH", N_SMOOTH, {.module = "KPP"});
   EXPECT_EQ(N_SMOOTH, 5); // N_SMOOTH in KPP should be overridden to 5
 
@@ -494,7 +494,7 @@ TEST(MOMFileParserTest, OverrideModules) {
   rp.get("D", D);
   EXPECT_EQ(D, true);
   double G;
-  rp.get("G", G);
+  rp.get("G", G, {.units = ""});
   EXPECT_EQ(G, 1e-3);
   std::string F;
   rp.get("F", F);

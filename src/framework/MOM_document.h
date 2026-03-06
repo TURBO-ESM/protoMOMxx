@@ -25,7 +25,7 @@
 #include <vector>
 
 /// @brief Supported parameter value types for documentation.
-using DocValue = std::variant<bool, std::int64_t, double, std::string, std::vector<bool>, std::vector<std::int64_t>,
+using DocValue = std::variant<bool, int, double, std::string, std::vector<bool>, std::vector<int>,
                               std::vector<double>, std::vector<std::string>>;
 
 /// @brief Options controlling how a parameter is documented.
@@ -81,8 +81,8 @@ public:
   /// @param val The value of the parameter.
   /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short file).
   /// @param opts Additional options controlling documentation behavior (e.g. which files to write to).
-  void doc_param(const std::string &varname, const std::string &desc, const std::string &units, std::int64_t val,
-                 std::optional<std::int64_t> default_val = std::nullopt, const DocParamOptions &opts = {});
+  void doc_param(const std::string &varname, const std::string &desc, const std::string &units, int val,
+                 std::optional<int> default_val = std::nullopt, const DocParamOptions &opts = {});
 
   /// @brief Document a real (double) parameter.
   /// @param varname The name of the parameter variable.
@@ -123,8 +123,8 @@ public:
   /// @param default_val The default value of the parameter (optional; used to determine whether to write to the .short file).
   /// @param opts Additional options controlling documentation behavior (e.g. which files to write to).
   void doc_param(const std::string &varname, const std::string &desc, const std::string &units,
-                 const std::vector<std::int64_t> &vals,
-                 std::optional<std::vector<std::int64_t>> default_val = std::nullopt, const DocParamOptions &opts = {});
+                 const std::vector<int> &vals,
+                 std::optional<std::vector<int>> default_val = std::nullopt, const DocParamOptions &opts = {});
 
   /// @brief Document a vector-of-double parameter.
   /// @param varname The name of the parameter variable.
@@ -213,7 +213,7 @@ private:
   static std::string real_string(double val);
 
   /// @brief Format an integer as a string.
-  static std::string int_string(std::int64_t val);
+  static std::string int_string(int val);
 
   // ---- Data members ----
 

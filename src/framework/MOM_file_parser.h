@@ -5,7 +5,7 @@
  * @details
  * Provides robust parsing of MOM runtime parameter files with support for C-style block comments,
  * Fortran-style line comments, quoted strings, and detailed error reporting. Supported value types:
- * - Scalars: bool, int64, double, string
+ * - Scalars: bool, int, double, string
  * - Homogeneous comma-separated lists of the above types
  *
  * MOM6 Runtime Parameter syntax:
@@ -86,7 +86,7 @@ template <typename T> struct ParamGetOptions {
 
 /// @brief The RuntimeParams class provides an interface for parsing MOM runtime parameter files and retrieving values.
 /// 
-/// Supported value types include scalars (bool, int64, double, string) and homogeneous comma-separated lists of the
+/// Supported value types include scalars (bool, int, double, string) and homogeneous comma-separated lists of the
 /// above types. It supports C-style block comments, Fortran-style line comments, quoted strings, and error reporting.
 /// Example usage:
 /// @code

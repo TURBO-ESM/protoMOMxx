@@ -406,15 +406,15 @@ bool RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions<
 
 // Explicit template instantiations for get
 template bool RuntimeParams::get<bool>(const std::string &, bool &, const ParamGetOptions<bool> &) const;
-template bool RuntimeParams::get<std::int64_t>(const std::string &, std::int64_t &,
-                                               const ParamGetOptions<std::int64_t> &) const;
+template bool RuntimeParams::get<int>(const std::string &, int &,
+                                               const ParamGetOptions<int> &) const;
 template bool RuntimeParams::get<double>(const std::string &, double &, const ParamGetOptions<double> &) const;
 template bool RuntimeParams::get<std::string>(const std::string &, std::string &,
                                               const ParamGetOptions<std::string> &) const;
 template bool RuntimeParams::get<std::vector<bool>>(const std::string &, std::vector<bool> &,
                                                     const ParamGetOptions<std::vector<bool>> &) const;
-template bool RuntimeParams::get<std::vector<std::int64_t>>(const std::string &, std::vector<std::int64_t> &,
-                                                            const ParamGetOptions<std::vector<std::int64_t>> &) const;
+template bool RuntimeParams::get<std::vector<int>>(const std::string &, std::vector<int> &,
+                                                            const ParamGetOptions<std::vector<int>> &) const;
 template bool RuntimeParams::get<std::vector<double>>(const std::string &, std::vector<double> &,
                                                       const ParamGetOptions<std::vector<double>> &) const;
 template bool RuntimeParams::get<std::vector<std::string>>(const std::string &, std::vector<std::string> &,

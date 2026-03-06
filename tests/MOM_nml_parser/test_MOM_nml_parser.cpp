@@ -43,7 +43,7 @@ TEST(MOMNmlParserTest, ParseNamelistSimple) {
   EXPECT_TRUE(nml.has_param("COORD_TYPE", "OCEAN"));
   EXPECT_TRUE(nml.has_param("GRAVITY", "OCEAN"));
 
-  EXPECT_EQ(nml.get_as<std::int64_t>("DT", "OCEAN"), 3600);
+  EXPECT_EQ(nml.get_as<int>("DT", "OCEAN"), 3600);
   EXPECT_FALSE(nml.get_as<bool>("REENTRANT_X", "OCEAN"));
   EXPECT_TRUE(nml.get_as<bool>("REENTRANT_Y", "OCEAN"));
   EXPECT_EQ(nml.get_as<std::string>("COORD_TYPE", "OCEAN"), "ALE");
@@ -64,9 +64,9 @@ TEST(MOMNmlParserTest, ParseNamelistModules) {
   EXPECT_EQ(namelists.size(), 3);
 
   // Check OCEAN_PARAMS namelist
-  EXPECT_EQ(nml.get_as<std::int64_t>("NIGLOBAL", "OCEAN_PARAMS"), 540);
-  EXPECT_EQ(nml.get_as<std::int64_t>("NJGLOBAL", "OCEAN_PARAMS"), 480);
-  EXPECT_EQ(nml.get_as<std::int64_t>("NK", "OCEAN_PARAMS"), 75);
+  EXPECT_EQ(nml.get_as<int>("NIGLOBAL", "OCEAN_PARAMS"), 540);
+  EXPECT_EQ(nml.get_as<int>("NJGLOBAL", "OCEAN_PARAMS"), 480);
+  EXPECT_EQ(nml.get_as<int>("NK", "OCEAN_PARAMS"), 75);
   EXPECT_TRUE(nml.get_as<bool>("TRIPOLAR_N", "OCEAN_PARAMS"));
 
   // Check MLE_PARAMS namelist
@@ -75,9 +75,9 @@ TEST(MOMNmlParserTest, ParseNamelistModules) {
   EXPECT_TRUE(nml.get_as<bool>("KHTH_USE_EBT_STRUCT", "MLE_PARAMS"));
 
   // Check KPP_PARAMS namelist
-  EXPECT_EQ(nml.get_as<std::int64_t>("N_SMOOTH", "KPP_PARAMS"), 3);
+  EXPECT_EQ(nml.get_as<int>("N_SMOOTH", "KPP_PARAMS"), 3);
   EXPECT_TRUE(check_double_value(nml.get("RI_CRIT", "KPP_PARAMS"), 0.3));
-  EXPECT_EQ(nml.get_as<std::int64_t>("ENHANCE", "KPP_PARAMS"), 1);
+  EXPECT_EQ(nml.get_as<int>("ENHANCE", "KPP_PARAMS"), 1);
 
   // Verify parameters are in the correct namelist
   EXPECT_THROW(nml.get("NIGLOBAL", "MLE_PARAMS"), std::out_of_range);
@@ -94,13 +94,13 @@ TEST(MOMNmlParserTest, ParseNamelistArrays) {
   NamelistParams nml(test_file_path.string());
 
   // Check scalar
-  EXPECT_TRUE(std::holds_alternative<std::int64_t>(nml.get("INT_SCALAR", "ARRAY_TEST")));
-  EXPECT_EQ(nml.get_as<std::int64_t>("INT_SCALAR", "ARRAY_TEST"), 42);
+  EXPECT_TRUE(std::holds_alternative<int>(nml.get("INT_SCALAR", "ARRAY_TEST")));
+  EXPECT_EQ(nml.get_as<int>("INT_SCALAR", "ARRAY_TEST"), 42);
 
   // Check integer array
-  EXPECT_TRUE(is_vector_of<std::int64_t>(nml.get("INT_ARRAY", "ARRAY_TEST")));
-  auto int_array = nml.get_as<std::vector<std::int64_t>>("INT_ARRAY", "ARRAY_TEST");
-  EXPECT_EQ(int_array, std::vector<std::int64_t>({1, 2, 3, 4, 5}));
+  EXPECT_TRUE(is_vector_of<int>(nml.get("INT_ARRAY", "ARRAY_TEST")));
+  auto int_array = nml.get_as<std::vector<int>>("INT_ARRAY", "ARRAY_TEST");
+  EXPECT_EQ(int_array, std::vector<int>({1, 2, 3, 4, 5}));
 
   // Check real array
   EXPECT_TRUE(is_vector_of<double>(nml.get("REAL_ARRAY", "ARRAY_TEST")));
@@ -122,9 +122,9 @@ TEST(MOMNmlParserTest, ParseNamelistArrays) {
   }
 
   // Check trailing comma handling
-  EXPECT_TRUE(is_vector_of<std::int64_t>(nml.get("TRAILING_COMMA", "ARRAY_TEST")));
-  auto trailing_array = nml.get_as<std::vector<std::int64_t>>("TRAILING_COMMA", "ARRAY_TEST");
-  EXPECT_EQ(trailing_array, std::vector<std::int64_t>({10, 20, 30}));
+  EXPECT_TRUE(is_vector_of<int>(nml.get("TRAILING_COMMA", "ARRAY_TEST")));
+  auto trailing_array = nml.get_as<std::vector<int>>("TRAILING_COMMA", "ARRAY_TEST");
+  EXPECT_EQ(trailing_array, std::vector<int>({10, 20, 30}));
 }
 
 TEST(MOMNmlParserTest, ParseNamelistComments) {
@@ -134,7 +134,7 @@ TEST(MOMNmlParserTest, ParseNamelistComments) {
   NamelistParams nml(test_file_path.string());
 
   // Verify all variables are parsed correctly despite comments
-  EXPECT_EQ(nml.get_as<std::int64_t>("VAR1", "TEST_COMMENTS"), 100);
+  EXPECT_EQ(nml.get_as<int>("VAR1", "TEST_COMMENTS"), 100);
   EXPECT_EQ(nml.get_as<std::string>("VAR2", "TEST_COMMENTS"), "test string");
   EXPECT_TRUE(nml.get_as<bool>("VAR3", "TEST_COMMENTS"));
   EXPECT_TRUE(check_double_value(nml.get("VAR4", "TEST_COMMENTS"), 3.14159));
@@ -191,7 +191,7 @@ TEST(MOMNmlParserTest, TypeMismatch) {
   EXPECT_THROW(nml.get_as<double>("DT", "OCEAN"), std::runtime_error);
 
   // REENTRANT_X is a bool, trying to get as int should throw
-  EXPECT_THROW(nml.get_as<std::int64_t>("REENTRANT_X", "OCEAN"), std::runtime_error);
+  EXPECT_THROW(nml.get_as<int>("REENTRANT_X", "OCEAN"), std::runtime_error);
 }
 
 // Read in double_gyre_input.nml and check that the expected parameters are present and correct:
@@ -278,7 +278,7 @@ TEST(TestsNml, Input3) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 2);
 
-  EXPECT_EQ(nml.get_as<std::int64_t>("a", "FOO"), 4);
+  EXPECT_EQ(nml.get_as<int>("a", "FOO"), 4);
   EXPECT_EQ(nml.get_as<std::string>("b", "FOO"), "a string");
 }
 
@@ -291,7 +291,7 @@ TEST(TestsNml, Input4) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 2);
 
-  EXPECT_EQ(nml.get_as<std::int64_t>("c", "FOO"), 4);
+  EXPECT_EQ(nml.get_as<int>("c", "FOO"), 4);
   EXPECT_EQ(nml.get_as<std::string>("d", "FOO"), "a string");
 }
 
@@ -304,7 +304,7 @@ TEST(TestsNml, Input5) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 2);
 
-  EXPECT_EQ(nml.get_as<std::int64_t>("a", "FOO"), 4);
+  EXPECT_EQ(nml.get_as<int>("a", "FOO"), 4);
   EXPECT_EQ(nml.get_as<std::string>("b", "FOO"), "/scratch/dennis/foo.nc");
 }
 
@@ -317,7 +317,7 @@ TEST(TestsNml, Input6) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 2);
 
-  EXPECT_EQ(nml.get_as<std::int64_t>("a", "FOO"), 4);
+  EXPECT_EQ(nml.get_as<int>("a", "FOO"), 4);
   EXPECT_EQ(nml.get_as<std::string>("b", "FOO"), "/scratch/dennis/foo.nc");
 }
 
@@ -331,7 +331,7 @@ TEST(TestsNml, Input7) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 2);
 
-  EXPECT_EQ(nml.get_as<std::int64_t>("a", "FOO"), 4);
+  EXPECT_EQ(nml.get_as<int>("a", "FOO"), 4);
   EXPECT_EQ(nml.get_as<std::string>("b", "FOO"), "/scratch/dennis/foo.nc");
 }
 
@@ -344,7 +344,7 @@ TEST(TestsNml, Input8) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 2);
 
-  EXPECT_EQ(nml.get_as<std::int64_t>("a", "FOO_NML"), 4);
+  EXPECT_EQ(nml.get_as<int>("a", "FOO_NML"), 4);
   EXPECT_EQ(nml.get_as<std::string>("b", "FOO_NML"), "/scratch/dennis/foo.nc");
 }
 
@@ -367,7 +367,7 @@ TEST(TestsNml, Input10) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 2);
 
-  EXPECT_EQ(nml.get_as<std::int64_t>("a", "FOO"), 4);
+  EXPECT_EQ(nml.get_as<int>("a", "FOO"), 4);
   EXPECT_EQ(nml.get_as<std::string>("b", "FOO"), "a string");
 }
 
@@ -380,7 +380,7 @@ TEST(TestsNml, Input11) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 2);
 
-  EXPECT_EQ(nml.get_as<std::int64_t>("a", "FOO"), 4);
+  EXPECT_EQ(nml.get_as<int>("a", "FOO"), 4);
   EXPECT_EQ(nml.get_as<std::string>("b", "FOO"), "a string");
 }
 
@@ -395,24 +395,24 @@ TEST(TestsNml, Input12) {
   EXPECT_EQ(nml.get_num_parameters(), 4);
 
   // &bar  b = 4
-  EXPECT_EQ(nml.get_as<std::int64_t>("b", "BAR"), 4);
+  EXPECT_EQ(nml.get_as<int>("b", "BAR"), 4);
 
   // &bart  b = 2,3,4
   {
-    auto arr = nml.get_as<std::vector<std::int64_t>>("b", "BART");
-    EXPECT_EQ(arr, std::vector<std::int64_t>({2, 3, 4}));
+    auto arr = nml.get_as<std::vector<int>>("b", "BART");
+    EXPECT_EQ(arr, std::vector<int>({2, 3, 4}));
   }
 
   // &var  a = 3, (next line) 9
   {
-    auto arr = nml.get_as<std::vector<std::int64_t>>("a", "VAR");
-    EXPECT_EQ(arr, std::vector<std::int64_t>({3, 9}));
+    auto arr = nml.get_as<std::vector<int>>("a", "VAR");
+    EXPECT_EQ(arr, std::vector<int>({3, 9}));
   }
 
   // &varn  a = 3, (next line) 9  (with inline comments)
   {
-    auto arr = nml.get_as<std::vector<std::int64_t>>("a", "VARN");
-    EXPECT_EQ(arr, std::vector<std::int64_t>({3, 9}));
+    auto arr = nml.get_as<std::vector<int>>("a", "VARN");
+    EXPECT_EQ(arr, std::vector<int>({3, 9}));
   }
 }
 
@@ -426,8 +426,8 @@ TEST(TestsNml, Input13) {
   EXPECT_EQ(nml.get_num_parameters(), 2);
 
   {
-    auto arr = nml.get_as<std::vector<std::int64_t>>("a", "FOO");
-    EXPECT_EQ(arr, std::vector<std::int64_t>({4, 1, 3}));
+    auto arr = nml.get_as<std::vector<int>>("a", "FOO");
+    EXPECT_EQ(arr, std::vector<int>({4, 1, 3}));
   }
   EXPECT_EQ(nml.get_as<std::string>("b", "FOO"), "a string");
 }
@@ -442,7 +442,7 @@ TEST(TestsNml, Input14) {
   EXPECT_EQ(nml.get_num_parameters(), 2);
 
   // "a = 4," after comment strip; trailing comma with single value → scalar 4
-  EXPECT_EQ(nml.get_as<std::int64_t>("a", "FOO"), 4);
+  EXPECT_EQ(nml.get_as<int>("a", "FOO"), 4);
   EXPECT_EQ(nml.get_as<std::string>("b", "FOO"), "a string");
 }
 
@@ -490,8 +490,8 @@ TEST(TestsNml, Input18) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 1);
 
-  auto arr = nml.get_as<std::vector<std::int64_t>>("bar", "BAR_NML");
-  EXPECT_EQ(arr, std::vector<std::int64_t>({2, 4}));
+  auto arr = nml.get_as<std::vector<int>>("bar", "BAR_NML");
+  EXPECT_EQ(arr, std::vector<int>({2, 4}));
 }
 
 // input.19 – &foo with comments and blank lines, then "&var /" on the last line.
@@ -514,8 +514,8 @@ TEST(TestsNml, Input20) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 1);
 
-  auto arr = nml.get_as<std::vector<std::int64_t>>("c", "FOO");
-  EXPECT_EQ(arr, std::vector<std::int64_t>({1, 3}));
+  auto arr = nml.get_as<std::vector<int>>("c", "FOO");
+  EXPECT_EQ(arr, std::vector<int>({1, 3}));
 }
 
 // input.21 – &bar with single scalar, inline /.
@@ -527,7 +527,7 @@ TEST(TestsNml, Input21) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 1);
 
-  EXPECT_EQ(nml.get_as<std::int64_t>("b", "BAR"), 4);
+  EXPECT_EQ(nml.get_as<int>("b", "BAR"), 4);
 }
 
 // input.22 – &var_nml with two-element integer array, inline /.
@@ -539,8 +539,8 @@ TEST(TestsNml, Input22) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 1);
 
-  auto arr = nml.get_as<std::vector<std::int64_t>>("a", "VAR_NML");
-  EXPECT_EQ(arr, std::vector<std::int64_t>({3, 4}));
+  auto arr = nml.get_as<std::vector<int>>("a", "VAR_NML");
+  EXPECT_EQ(arr, std::vector<int>({3, 4}));
 }
 
 // input.23 – &var_nml with trailing-comma scalar, / on next line.
@@ -553,7 +553,7 @@ TEST(TestsNml, Input23) {
   EXPECT_EQ(nml.get_num_parameters(), 1);
 
   // "a = 3," with trailing comma; single value after stripping empty → scalar 3
-  EXPECT_EQ(nml.get_as<std::int64_t>("a", "VAR_NML"), 3);
+  EXPECT_EQ(nml.get_as<int>("a", "VAR_NML"), 3);
 }
 
 // input.24 – &var_nml with multiline integer array (trailing comma continuation).
@@ -565,8 +565,8 @@ TEST(TestsNml, Input24) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 1);
 
-  auto arr = nml.get_as<std::vector<std::int64_t>>("a", "VAR_NML");
-  EXPECT_EQ(arr, std::vector<std::int64_t>({3, 4}));
+  auto arr = nml.get_as<std::vector<int>>("a", "VAR_NML");
+  EXPECT_EQ(arr, std::vector<int>({3, 4}));
 }
 
 // input.25 – &bar with two-element integer array, inline /.
@@ -578,8 +578,8 @@ TEST(TestsNml, Input25) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 1);
 
-  auto arr = nml.get_as<std::vector<std::int64_t>>("b", "BAR");
-  EXPECT_EQ(arr, std::vector<std::int64_t>({4, 3}));
+  auto arr = nml.get_as<std::vector<int>>("b", "BAR");
+  EXPECT_EQ(arr, std::vector<int>({4, 3}));
 }
 
 // input.26 – &bart with three-element integer array, inline /.
@@ -591,8 +591,8 @@ TEST(TestsNml, Input26) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 1);
 
-  auto arr = nml.get_as<std::vector<std::int64_t>>("b", "BART");
-  EXPECT_EQ(arr, std::vector<std::int64_t>({2, 3, 4}));
+  auto arr = nml.get_as<std::vector<int>>("b", "BART");
+  EXPECT_EQ(arr, std::vector<int>({2, 3, 4}));
 }
 
 // input.27 – &bar (scalar) followed by &var (multiline int array with inline comment).
@@ -604,10 +604,10 @@ TEST(TestsNml, Input27) {
   EXPECT_EQ(nml.get_namelists().size(), 2);
   EXPECT_EQ(nml.get_num_parameters(), 2);
 
-  EXPECT_EQ(nml.get_as<std::int64_t>("b", "BAR"), 4);
+  EXPECT_EQ(nml.get_as<int>("b", "BAR"), 4);
 
-  auto arr = nml.get_as<std::vector<std::int64_t>>("a", "VAR");
-  EXPECT_EQ(arr, std::vector<std::int64_t>({3, 9}));
+  auto arr = nml.get_as<std::vector<int>>("a", "VAR");
+  EXPECT_EQ(arr, std::vector<int>({3, 9}));
 }
 
 int main(int argc, char **argv) {

@@ -97,7 +97,7 @@ TEST_F(DocTestFixture, DocParamBool) {
 TEST_F(DocTestFixture, DocParamInt) {
   {
     DocFileWriter doc(base_path_.string());
-    doc.doc_param("COUNT", "Number of items", "count", std::int64_t(42));
+    doc.doc_param("COUNT", "Number of items", "count", int(42));
   }
   std::string content = read_file(base_path_.string() + ".all");
   EXPECT_NE(content.find("COUNT = 42"), std::string::npos);
@@ -124,7 +124,7 @@ TEST_F(DocTestFixture, DocParamString) {
 TEST_F(DocTestFixture, DocParamIntVector) {
   {
     DocFileWriter doc(base_path_.string());
-    std::vector<std::int64_t> vals = {1, 2, 3};
+    std::vector<int> vals = {1, 2, 3};
     doc.doc_param("INDICES", "A list of indices", "count", vals);
   }
   std::string content = read_file(base_path_.string() + ".all");
@@ -228,7 +228,7 @@ TEST_F(DocTestFixture, BlockOpenClose) {
     doc.doc_openBlock("KPP", "KPP mixing parameterization");
     EXPECT_EQ(doc.block_prefix(), "KPP%");
 
-    doc.doc_param("N_SMOOTH", "Number of smoothing passes", "count", std::int64_t(3));
+    doc.doc_param("N_SMOOTH", "Number of smoothing passes", "count", int(3));
     doc.doc_closeBlock("KPP");
     EXPECT_EQ(doc.block_prefix(), "");
   }

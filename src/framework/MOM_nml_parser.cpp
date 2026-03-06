@@ -258,11 +258,11 @@ size_t NamelistParams::get_num_parameters() const {
 
 // Explicit template instantiations for get_as
 template bool NamelistParams::get_as<bool>(const std::string &, const std::string &) const;
-template std::int64_t NamelistParams::get_as<std::int64_t>(const std::string &, const std::string &) const;
+template int NamelistParams::get_as<int>(const std::string &, const std::string &) const;
 template double NamelistParams::get_as<double>(const std::string &, const std::string &) const;
 template std::string NamelistParams::get_as<std::string>(const std::string &, const std::string &) const;
 template std::vector<bool> NamelistParams::get_as<std::vector<bool>>(const std::string &, const std::string &) const;
-template std::vector<std::int64_t> NamelistParams::get_as<std::vector<std::int64_t>>(const std::string &,
+template std::vector<int> NamelistParams::get_as<std::vector<int>>(const std::string &,
                                                                                      const std::string &) const;
 template std::vector<double> NamelistParams::get_as<std::vector<double>>(const std::string &,
                                                                          const std::string &) const;

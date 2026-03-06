@@ -89,7 +89,7 @@ void DocFileWriter::open_files() {
 // Formatting helpers
 // ---------------------------------------------------------------------------
 
-std::string DocFileWriter::int_string(std::int64_t val) { return std::to_string(val); }
+std::string DocFileWriter::int_string(int val) { return std::to_string(val); }
 
 std::string DocFileWriter::real_string(double val) {
   if (val == 0.0)
@@ -337,7 +337,7 @@ void DocFileWriter::doc_param(const std::string &varname, const std::string &des
 }
 
 void DocFileWriter::doc_param(const std::string &varname, const std::string &desc, const std::string &units,
-                              std::int64_t val, std::optional<std::int64_t> default_val, const DocParamOptions &opts) {
+                              int val, std::optional<int> default_val, const DocParamOptions &opts) {
   open_files();
   if (!files_are_open_)
     return;
@@ -451,8 +451,8 @@ void DocFileWriter::doc_param(const std::string &varname, const std::string &des
 }
 
 void DocFileWriter::doc_param(const std::string &varname, const std::string &desc, const std::string &units,
-                              const std::vector<std::int64_t> &vals,
-                              std::optional<std::vector<std::int64_t>> default_val, const DocParamOptions &opts) {
+                              const std::vector<int> &vals,
+                              std::optional<std::vector<int>> default_val, const DocParamOptions &opts) {
   open_files();
   if (!files_are_open_)
     return;

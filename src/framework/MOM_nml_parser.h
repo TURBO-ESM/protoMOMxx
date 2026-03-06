@@ -5,7 +5,7 @@
  * @details
  * Provides robust parsing of Fortran namelist files with support for comments and detailed
  * error reporting. Supported value types:
- * - Scalars: bool, int64, double, string
+ * - Scalars: bool, int, double, string
  * - Homogeneous comma-separated lists of the above types
  *
  * Fortran Namelist syntax:

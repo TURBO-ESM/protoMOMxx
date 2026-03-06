@@ -85,16 +85,16 @@ static bool try_parse_bool(std::string_view s, bool &out, bool fortran_style) {
 
 /// @brief Try to parse a string as a 64-bit integer using std::from_chars.
 /// @param s The input string view to parse.
-/// @param out Reference to a std::int64_t variable where the parsed value will be stored if parsing is successful.
+/// @param out Reference to a int variable where the parsed value will be stored if parsing is successful.
 /// @return true if parsing was successful and out was set, false otherwise.
-static bool try_parse_int64(std::string_view s, std::int64_t &out) {
+static bool try_parse_int(std::string_view s, int &out) {
   s = trim(s);
   if (s.empty())
     return false;
   // from_chars doesn't accept leading '+' reliably across old libs; handle explicitly:
   if (s.front() == '+')
     s.remove_prefix(1);
-  std::int64_t v{};
+  int v{};
   auto *b = s.data();
   auto *e = s.data() + s.size();
   auto res = std::from_chars(b, e, v, 10);
@@ -126,7 +126,7 @@ static bool try_parse_double(std::string_view s, double &out) {
   }
 }
 
-/// @brief Parse a scalar value from a string, trying bool, int64, double, and quoted string (in that order).
+/// @brief Parse a scalar value from a string, trying bool, int, double, and quoted string (in that order).
 /// @param s The input string view to parse.
 /// @param line_no The line number for error reporting.
 /// @param path The file path for error reporting.
@@ -150,8 +150,8 @@ static mom_parser_utilities::ParamValue parse_scalar(std::string_view s, std::si
     return b;
 
   // Int
-  std::int64_t i{};
-  if (try_parse_int64(s, i))
+  int i{};
+  if (try_parse_int(s, i))
     return i;
 
   // Double
@@ -234,11 +234,11 @@ ParamValue get_value(std::string_view raw, std::size_t line_no, const std::strin
       out.push_back(std::get<bool>(v));
     return out;
   }
-  case 1: { // int64
-    std::vector<std::int64_t> out;
+  case 1: { // int
+    std::vector<int> out;
     out.reserve(scalars.size());
     for (auto &v : scalars)
-      out.push_back(std::get<std::int64_t>(v));
+      out.push_back(std::get<int>(v));
     return out;
   }
   case 2: { // double

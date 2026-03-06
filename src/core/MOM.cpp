@@ -40,7 +40,7 @@ MOM::MOM(int ensemble_num) {
   params->get("REENTRANT_X", REENTRANT_X,
               {.default_value = true, .desc = "If true, the domain is zonally reentrant", .units = "nondim"});
 
-  std::int64_t N_SMOOTH = 0;
+  int N_SMOOTH = 0;
   params->get("N_SMOOTH", N_SMOOTH,
               {.default_value = 0,
                .module = "KPP",

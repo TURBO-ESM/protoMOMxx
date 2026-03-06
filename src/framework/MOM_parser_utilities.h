@@ -17,7 +17,7 @@
 namespace mom_parser_utilities {
 
 /// @brief A type alias for the supported parameter value types.
-using ParamValue = std::variant<bool, std::int64_t, double, std::string, std::vector<bool>, std::vector<std::int64_t>,
+using ParamValue = std::variant<bool, int, double, std::string, std::vector<bool>, std::vector<int>,
                                 std::vector<double>, std::vector<std::string>>;
 static const ParamValue NotFound{};
 
