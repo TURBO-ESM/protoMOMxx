@@ -71,7 +71,7 @@ using mom_parser_utilities::ParamValue;
 ///
 /// @tparam T The type of the parameter value being retrieved.
 template <typename T> struct ParamGetOptions {
-  std::optional<T> default_value; ///< The default value of the parameter
+  std::optional<ParamValue> default_value; ///< The default value of the parameter
   std::string module = "";        ///< The name of the calling module
   std::string desc = "";          ///< A description of this variable;
                                   ///< If empty, this parameter is not written to a doc file.

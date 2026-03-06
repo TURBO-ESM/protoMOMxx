@@ -15,7 +15,7 @@ MOM::MOM(int ensemble_num) {
   // Document the MOM module
   params->doc_module("MOM", "Main MOM ocean model module");
 
-  bool verbosity = false;
+  int verbosity = false;
   params->get("VERBOSITY", verbosity,
               {.default_value = 2,
                .desc = "Integer controlling level of messaging\n"

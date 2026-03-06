@@ -387,7 +387,10 @@ bool RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions<
       throw std::out_of_range("Key not found in module " + options.module + ": " + key);
     }
     if (options.default_value.has_value()) {
-      value = options.default_value.value();
+      if (!std::holds_alternative<T>(options.default_value.value())) {
+        throw std::runtime_error("Default value for " + options.module + ":" + key + " is not of the requested type");
+      }
+      value = std::get<T>(options.default_value.value());
       stat = true;
     }
   }
@@ -398,7 +401,14 @@ bool RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions<
     doc_opts.layout_param = options.layout_param;
     doc_opts.debugging_param = options.debugging_param;
     doc_opts.module = options.module;
-    doc_->doc_param(key, options.desc, options.units, value, options.default_value, doc_opts);
+
+    // Convert ParamValue variant to the appropriate typed optional
+    std::optional<T> typed_default;
+    if (options.default_value.has_value() && std::holds_alternative<T>(options.default_value.value())) {
+      typed_default = std::get<T>(options.default_value.value());
+    }
+
+    doc_->doc_param(key, options.desc, options.units, value, typed_default, doc_opts);
   }
 
   return stat;
