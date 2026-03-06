@@ -372,7 +372,7 @@ const ParamValue &RuntimeParams::get_variant(const std::string &key, const std::
 }
 
 template <typename T>
-void RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions<T> &options) const {
+void RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions &options) const {
   bool value_was_set = false;
   try {
     const auto &val = get_variant(key, options.module);
@@ -413,17 +413,16 @@ void RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions<
 }
 
 // Explicit template instantiations for get
-template void RuntimeParams::get<bool>(const std::string &, bool &, const ParamGetOptions<bool> &) const;
-template void RuntimeParams::get<int>(const std::string &, int &,
-                                               const ParamGetOptions<int> &) const;
-template void RuntimeParams::get<double>(const std::string &, double &, const ParamGetOptions<double> &) const;
+template void RuntimeParams::get<bool>(const std::string &, bool &, const ParamGetOptions &) const;
+template void RuntimeParams::get<int>(const std::string &, int &, const ParamGetOptions &) const;
+template void RuntimeParams::get<double>(const std::string &, double &, const ParamGetOptions &) const;
 template void RuntimeParams::get<std::string>(const std::string &, std::string &,
-                                              const ParamGetOptions<std::string> &) const;
+                                              const ParamGetOptions &) const;
 template void RuntimeParams::get<std::vector<bool>>(const std::string &, std::vector<bool> &,
-                                                    const ParamGetOptions<std::vector<bool>> &) const;
+                                                    const ParamGetOptions &) const;
 template void RuntimeParams::get<std::vector<int>>(const std::string &, std::vector<int> &,
-                                                            const ParamGetOptions<std::vector<int>> &) const;
+                                                            const ParamGetOptions &) const;
 template void RuntimeParams::get<std::vector<double>>(const std::string &, std::vector<double> &,
-                                                      const ParamGetOptions<std::vector<double>> &) const;
+                                                      const ParamGetOptions &) const;
 template void RuntimeParams::get<std::vector<std::string>>(const std::string &, std::vector<std::string> &,
-                                                           const ParamGetOptions<std::vector<std::string>> &) const;
+                                                           const ParamGetOptions &) const;

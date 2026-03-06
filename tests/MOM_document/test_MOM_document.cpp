@@ -307,7 +307,7 @@ TEST_F(DocTestFixture, RuntimeParamsDocIntegration) {
   rp.set_doc(doc);
 
   bool reentrant_x;
-  rp.get("REENTRANT_X", reentrant_x, ParamGetOptions<bool>{.desc = "Reentrant x-axis", .units = "bool"});
+  rp.get("REENTRANT_X", reentrant_x, ParamGetOptions{.desc = "Reentrant x-axis", .units = "bool"});
 
   rp.set_doc(nullptr);
   doc.reset();
@@ -326,7 +326,7 @@ TEST_F(DocTestFixture, RuntimeParamsNoDocByDefault) {
   // Not setting a doc writer
 
   bool reentrant_x;
-  rp.get("REENTRANT_X", reentrant_x, ParamGetOptions<bool>{.desc = "Reentrant x-axis"});
+  rp.get("REENTRANT_X", reentrant_x, ParamGetOptions{.desc = "Reentrant x-axis"});
 
   // Should not have created any documentation files
   EXPECT_FALSE(fs::exists(base_path_.string() + ".all"));
@@ -343,7 +343,7 @@ TEST_F(DocTestFixture, RuntimeParamsDoNotLog) {
   rp.set_doc(doc);
 
   bool reentrant_x;
-  rp.get("REENTRANT_X", reentrant_x, ParamGetOptions<bool>{.desc = "Reentrant x-axis", .do_not_log = true});
+  rp.get("REENTRANT_X", reentrant_x, ParamGetOptions{.desc = "Reentrant x-axis", .do_not_log = true});
 
   rp.set_doc(nullptr);
   doc.reset();
@@ -364,7 +364,7 @@ TEST_F(DocTestFixture, RuntimeParamsEmptyDescSkipsDoc) {
 
   bool reentrant_x;
   rp.get("REENTRANT_X", reentrant_x,
-         ParamGetOptions<bool>{
+         ParamGetOptions{
              .desc = "" // Empty description
          });
 

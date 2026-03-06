@@ -68,9 +68,7 @@ using mom_parser_utilities::ParamValue;
 ///
 /// @details Controls default value fallback, module attribution, documentation
 /// output, and error handling behavior for RuntimeParams::get().
-///
-/// @tparam T The type of the parameter value being retrieved.
-template <typename T> struct ParamGetOptions {
+struct ParamGetOptions {
   std::optional<ParamValue> default_value; ///< The default value of the parameter
   std::string module = "";        ///< The name of the calling module
   std::string desc = "";          ///< A description of this variable;
@@ -112,7 +110,7 @@ public:
   /// @param value An output reference to store the retrieved parameter value.
   /// @param options A ParamGetOptions struct controlling default fallback, documentation, and error handling behavior.
   template <typename T>
-  void get(const std::string &key, T &value, const ParamGetOptions<T> &options = ParamGetOptions<T>{}) const;
+  void get(const std::string &key, T &value, const ParamGetOptions &options = ParamGetOptions{}) const;
 
   /// @brief Get a parameter value from a module
   /// @param key The parameter key
