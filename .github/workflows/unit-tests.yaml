@@ -1,0 +1,24 @@
+name: Run protoMOMxx unit tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure test build
+        run: cmake -S . -B buildtest
+
+      - name: Build tests
+        run: cmake --build buildtest -j
+
+      - name: Run unit tests
+        run: ctest --test-dir buildtest --output-on-failure
