@@ -372,13 +372,13 @@ const ParamValue &RuntimeParams::get_variant(const std::string &key, const std::
 }
 
 template <typename T>
-bool RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions<T> &options) const {
-  bool stat = false;
+void RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions<T> &options) const {
+  bool value_was_set = false;
   try {
     const auto &val = get_variant(key, options.module);
     if (std::holds_alternative<T>(val)) {
       value = std::get<T>(val);
-      stat = true;
+      value_was_set = true;
     } else {
       throw std::runtime_error("Parameter " + options.module + ":" + key + " is not of the requested type");
     }
@@ -391,12 +391,12 @@ bool RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions<
         throw std::runtime_error("Default value for " + options.module + ":" + key + " is not of the requested type");
       }
       value = std::get<T>(options.default_value.value());
-      stat = true;
+      value_was_set = true;
     }
   }
 
   // Document the parameter if a doc writer is attached and desc is provided
-  if (stat && doc_ && !options.do_not_log && !options.desc.empty()) {
+  if (value_was_set && doc_ && !options.do_not_log && !options.desc.empty()) {
     DocParamOptions doc_opts;
     doc_opts.layout_param = options.layout_param;
     doc_opts.debugging_param = options.debugging_param;
@@ -410,22 +410,20 @@ bool RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions<
 
     doc_->doc_param(key, options.desc, options.units, value, typed_default, doc_opts);
   }
-
-  return stat;
 }
 
 // Explicit template instantiations for get
-template bool RuntimeParams::get<bool>(const std::string &, bool &, const ParamGetOptions<bool> &) const;
-template bool RuntimeParams::get<int>(const std::string &, int &,
+template void RuntimeParams::get<bool>(const std::string &, bool &, const ParamGetOptions<bool> &) const;
+template void RuntimeParams::get<int>(const std::string &, int &,
                                                const ParamGetOptions<int> &) const;
-template bool RuntimeParams::get<double>(const std::string &, double &, const ParamGetOptions<double> &) const;
-template bool RuntimeParams::get<std::string>(const std::string &, std::string &,
+template void RuntimeParams::get<double>(const std::string &, double &, const ParamGetOptions<double> &) const;
+template void RuntimeParams::get<std::string>(const std::string &, std::string &,
                                               const ParamGetOptions<std::string> &) const;
-template bool RuntimeParams::get<std::vector<bool>>(const std::string &, std::vector<bool> &,
+template void RuntimeParams::get<std::vector<bool>>(const std::string &, std::vector<bool> &,
                                                     const ParamGetOptions<std::vector<bool>> &) const;
-template bool RuntimeParams::get<std::vector<int>>(const std::string &, std::vector<int> &,
+template void RuntimeParams::get<std::vector<int>>(const std::string &, std::vector<int> &,
                                                             const ParamGetOptions<std::vector<int>> &) const;
-template bool RuntimeParams::get<std::vector<double>>(const std::string &, std::vector<double> &,
+template void RuntimeParams::get<std::vector<double>>(const std::string &, std::vector<double> &,
                                                       const ParamGetOptions<std::vector<double>> &) const;
-template bool RuntimeParams::get<std::vector<std::string>>(const std::string &, std::vector<std::string> &,
+template void RuntimeParams::get<std::vector<std::string>>(const std::string &, std::vector<std::string> &,
                                                            const ParamGetOptions<std::vector<std::string>> &) const;

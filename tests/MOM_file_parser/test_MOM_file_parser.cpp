@@ -123,7 +123,7 @@ TEST(MOMFileParserTest, ParseMOMInputLarge1) {
   EXPECT_TRUE(check_double_value(rp.get_variant("MLD_DECAYING_TFILTER", "MLE"), 2592000.0));
 
   double mld_decaying_tfilter;
-  rp.get("MLD_DECAYING_TFILTER", mld_decaying_tfilter, {.units = "", .module = "MLE"});
+  rp.get("MLD_DECAYING_TFILTER", mld_decaying_tfilter, {.module = "MLE", .units = ""});
   EXPECT_EQ(mld_decaying_tfilter, 2592000.0);
 
   // Check that all 54 of the parameters in the file are present

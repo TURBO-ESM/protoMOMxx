@@ -111,9 +111,8 @@ public:
   /// @param key The parameter key to look up.
   /// @param value An output reference to store the retrieved parameter value.
   /// @param options A ParamGetOptions struct controlling default fallback, documentation, and error handling behavior.
-  /// @return 
   template <typename T>
-  bool get(const std::string &key, T &value, const ParamGetOptions<T> &options = ParamGetOptions<T>{}) const;
+  void get(const std::string &key, T &value, const ParamGetOptions<T> &options = ParamGetOptions<T>{}) const;
 
   /// @brief Get a parameter value from a module
   /// @param key The parameter key
