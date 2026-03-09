@@ -1,12 +1,12 @@
-#include "MOM_logger.hpp"
+#include "MOM_logger.h"
 #include <cstdlib>
-#include <iostream>
 
 namespace MOM_logger::detail {
 
   LogLevel      log_level  = LogLevel::CALLTREE;
   std::ostream* log_stream = &std::cout;
   std::ostream* err_stream = &std::cerr;
+  int           call_tree_depth = 0;
 
   void log(LogLevel level, const std::string& message) {
     if (level == LogLevel::FATAL || level == LogLevel::WARNING) {
@@ -30,6 +30,32 @@ namespace MOM_logger {
   void set_stream(std::ostream& log_stream, std::ostream& err_stream) {
     detail::log_stream = &log_stream;
     detail::err_stream = &err_stream;
+  }
+
+  bool callTree_showQuery() {
+    return detail::log_level >= LogLevel::CALLTREE;
+  }
+
+  void callTree_waypoint(std::string_view mesg) {
+    if (detail::log_level < LogLevel::CALLTREE) return;
+    std::string indent(3 * detail::call_tree_depth, ' ');
+    detail::log(LogLevel::CALLTREE, "callTree: " + indent + "o " + std::string(mesg));
+  }
+
+  CallTree::CallTree(std::string_view mesg) : mesg_(mesg) {
+    detail::call_tree_depth++;
+    if (detail::log_level < LogLevel::CALLTREE) return;
+    std::string indent(3 * (detail::call_tree_depth - 1), ' ');
+    detail::log(LogLevel::CALLTREE, "callTree: " + indent + "---> " + mesg_);
+  }
+
+  CallTree::~CallTree() {
+    if (detail::call_tree_depth < 1)
+      detail::log(LogLevel::FATAL, "callTree: depth underflow at " + mesg_);
+    detail::call_tree_depth--;
+    if (detail::log_level < LogLevel::CALLTREE) return;
+    std::string indent(3 * detail::call_tree_depth, ' ');
+    detail::log(LogLevel::CALLTREE, "callTree: " + indent + "<--- " + mesg_);
   }
 
 } // namespace MOM_logger

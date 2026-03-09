@@ -1,5 +1,5 @@
 /**
- * @file MOM_logger.hpp
+ * @file MOM_logger.h
  * @brief Logging utility for protoMOMxx.
  *
  * Provides logging and error handling. Intended to mirror the behavior
@@ -38,7 +38,7 @@ enum class LogLevel {
   WARNING   = 1,  ///< Important warning. Always logs to err_stream.
   NOTE      = 2,  ///< Notable but non-critical information.
   INFO      = 3,  ///< General progress information.
-  CALLTREE  = 6,  ///< Call tree tracing (not yet implemented).
+  CALLTREE  = 6,  ///< Call tree tracing.
   DEBUG     = 9   ///< Detailed diagnostic output.
 };
 
@@ -97,5 +97,35 @@ inline void info(Args&&... args)    { log(LogLevel::INFO,    std::forward<Args>(
 /// @param args The components of the message to log. These will be streamed together into a single message.
 template<typename... Args>
 inline void debug(Args&&... args)   { log(LogLevel::DEBUG,   std::forward<Args>(args)...); }
+
+/// @brief Returns true if the current verbosity level includes call tree output.
+bool callTree_showQuery();
+
+/// @brief Record a milestone within a subroutine in the call tree.
+/// @param mesg Description of the milestone.
+void callTree_waypoint(std::string_view mesg);
+
+/// @brief RAII guard for call tree tracing.
+/// 
+/// Logs entry on construction and exit on destruction.
+/// 
+/// @code
+///   void MOM_step() {
+///     MOM_logger::CallTree scope("MOM_step");
+///     MOM_logger::callTree_waypoint("before btstep");
+///     // ... scope exits and logs "<--- MOM_step" automatically
+///   }
+/// @endcode
+class CallTree {
+public:
+  explicit CallTree(std::string_view mesg);
+  ~CallTree();
+  CallTree(const CallTree&)            = delete;
+  CallTree& operator=(const CallTree&) = delete;
+private:
+  std::string mesg_;
+};
+
+
 
 } // namespace MOM_logger
