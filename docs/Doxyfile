@@ -1,0 +1,36 @@
+# Project
+PROJECT_NAME           = "protoMOMxx"
+PROJECT_BRIEF          = "Experimental prototype of the Modular Ocean Model (MOM) in C++ and AMReX"
+OUTPUT_DIRECTORY       = docs/build
+
+# Input
+INPUT                  = README.md src config_src
+RECURSIVE              = YES
+FILE_PATTERNS          = *.c *.cc *.cxx *.cpp *.c++ *.h *.hpp *.hxx *.h++
+EXCLUDE_PATTERNS       = */build/* */test/* */tests/*
+USE_MDFILE_AS_MAINPAGE = README.md
+
+# Parsing
+JAVADOC_AUTOBRIEF      = YES
+BUILTIN_STL_SUPPORT    = YES
+STRIP_CODE_COMMENTS    = NO
+
+# Warnings
+WARN_NO_PARAMDOC       = YES
+WARN_AS_ERROR          = YES
+WARN_FORMAT            = "$file:$line: $text"
+
+# HTML output
+GENERATE_HTML          = YES
+GENERATE_TREEVIEW      = YES
+HTML_TIMESTAMP         = YES
+HTML_COLORSTYLE        = LIGHT
+DOT_IMAGE_FORMAT       = svg
+GENERATE_LATEX         = NO
+
+# Cross-references
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+
+# Subdirectories (needed for large projects to avoid filesystem limits)
+CREATE_SUBDIRS         = YES

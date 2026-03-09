@@ -27,3 +27,11 @@ cmake -S . -B buildtest -DTESTS=ON
 cmake --build buildtest -j
 ctest --test-dir buildtest
 ```
+
+# Contributing
+
+To run the doxygen documentation check, install doxygen and graphviz (via conda or your package manager), then run:
+
+```bash
+doxygen docs/Doxyfile
+```

@@ -25,14 +25,13 @@
 #include <ostream>
 #include <sstream>
 
-/**
- * @brief Log severity levels, ordered from most to least severe.
- *
- * Numeric gaps are intentional to allow future levels to be inserted
- * without renumbering existing ones. CALLTREE logging is not yet implemented.
- */
+/// @brief Log severity levels, ordered from most to least severe.
+///
+/// Numeric gaps are intentional to allow future levels to be inserted
+/// without renumbering existing ones. CALLTREE logging is not yet implemented.
 namespace MOM_logger {
 
+/// @brief Log levels for controlling message severity and verbosity.
 enum class LogLevel {
   FATAL     = 0,  ///< Unrecoverable error. Logs to err_stream then exits.
   WARNING   = 1,  ///< Important warning. Always logs to err_stream.
@@ -46,6 +45,10 @@ namespace detail {
   extern LogLevel       log_level;
   extern std::ostream*  log_stream;
   extern std::ostream*  err_stream;
+  
+  /// @brief Core logging function that routes messages based on log level and current verbosity.
+  /// @param level The severity level of the message being logged.
+  /// @param message The complete message to log, already formatted as a single string.
   void log(LogLevel level, const std::string& message);
 } // namespace detail
 
@@ -99,6 +102,7 @@ template<typename... Args>
 inline void debug(Args&&... args)   { log(LogLevel::DEBUG,   std::forward<Args>(args)...); }
 
 /// @brief Returns true if the current verbosity level includes call tree output.
+/// @return True if call tree output is enabled, false otherwise.
 bool callTree_showQuery();
 
 /// @brief Record a milestone within a subroutine in the call tree.
@@ -118,6 +122,8 @@ void callTree_waypoint(std::string_view mesg);
 /// @endcode
 class CallTree {
 public:
+  /// @brief Construct a CallTree scope with the given message. Logs entry if CALLTREE level is enabled.
+  /// @param mesg Description of the scope (e.g. function name).
   explicit CallTree(std::string_view mesg);
   ~CallTree();
   CallTree(const CallTree&)            = delete;
