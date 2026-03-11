@@ -15,7 +15,7 @@ public:
   explicit Model(int ensemble_num = -1);
 
 private:
-  int ensemble_num_;
+  const int ensemble_num_;
 };
 
 } // namespace MOM
