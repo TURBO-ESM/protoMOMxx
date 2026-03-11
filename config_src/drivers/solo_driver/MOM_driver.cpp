@@ -14,7 +14,7 @@ int main() {
     MOM::logger::info("Hello C++ world. This is protoMOMxx!");
 
     // Initialize the core MOM object
-    MOM::Model mom;
+    const MOM::Model mom;
 
     return 0;
 
