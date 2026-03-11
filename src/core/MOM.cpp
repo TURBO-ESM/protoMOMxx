@@ -3,7 +3,7 @@
 
 namespace MOM {
 
-Model::Model(int ensemble_num)
+Model::Model(const int ensemble_num)
   : ensemble_num_(ensemble_num) {
 
   // todo: read VERBOSITY param instead of hardcoding it below
