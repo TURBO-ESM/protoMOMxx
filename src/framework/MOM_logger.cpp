@@ -1,7 +1,7 @@
 #include "MOM_logger.h"
 #include <cstdlib>
 
-namespace MOM_logger::detail {
+namespace MOM::logger::detail {
 
   LogLevel      log_level  = LogLevel::CALLTREE;
   std::ostream* log_stream = &std::cout;
@@ -21,9 +21,9 @@ namespace MOM_logger::detail {
     }
   }
 
-} // namespace MOM_logger::detail
+} // namespace MOM::logger::detail
 
-namespace MOM_logger {
+namespace MOM::logger {
 
   void set_verbosity(LogLevel level) { detail::log_level = level; }
   LogLevel get_verbosity()           { return detail::log_level;  }
@@ -63,4 +63,4 @@ namespace MOM_logger {
     detail::log(LogLevel::CALLTREE, "callTree: " + indent + "<--- " + mesg_);
   }
 
-} // namespace MOM_logger
+} // namespace MOM::logger

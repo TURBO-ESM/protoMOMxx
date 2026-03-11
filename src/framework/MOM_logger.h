@@ -7,16 +7,16 @@
  *
  * ## Usage
  * @code
- *   MOM_logger::set_verbosity(MOM_logger::LogLevel::DEBUG);
- *   MOM_logger::info("Starting timestep ", n, " dt=", dt);
- *   MOM_logger::warning("CFL condition approaching limit: dt=", dt);
+ *   MOM::logger::set_verbosity(MOM::logger::LogLevel::DEBUG);
+ *   MOM::logger::info("Starting timestep ", n, " dt=", dt);
+ *   MOM::logger::warning("CFL condition approaching limit: dt=", dt);
  * @endcode
  *
  * ## Log routing
  *   - FATAL and WARNING always write to err_stream (default: std::cerr)
  *   - All other levels write to log_stream (default: std::cout) if they
  *     are at or below the current verbosity level
- *   - FATAL logs to err_stream and throws MOM_logger::FatalError
+ *   - FATAL logs to err_stream and throws MOM::logger::FatalError
  */
 
 
@@ -30,7 +30,7 @@
 ///
 /// Numeric gaps are intentional to allow future levels to be inserted
 /// without renumbering existing ones. CALLTREE logging is not yet implemented.
-namespace MOM_logger {
+namespace MOM::logger {
 
 /// @brief Log levels for controlling message severity and verbosity.
 enum class LogLevel {
@@ -118,8 +118,8 @@ void callTree_waypoint(std::string_view mesg);
 /// 
 /// @code
 ///   void MOM_step() {
-///     MOM_logger::CallTree scope("MOM_step");
-///     MOM_logger::callTree_waypoint("before btstep");
+///     MOM::logger::CallTree scope("MOM_step");
+///     MOM::logger::callTree_waypoint("before btstep");
 ///     // ... scope exits and logs "<--- MOM_step" automatically
 ///   }
 /// @endcode
@@ -137,4 +137,4 @@ private:
 
 
 
-} // namespace MOM_logger
+} // namespace MOM::logger

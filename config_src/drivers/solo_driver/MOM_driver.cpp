@@ -11,14 +11,14 @@
 int main() {
   try {
 
-    MOM_logger::info("Hello C++ world. This is protoMOMxx!");
+    MOM::logger::info("Hello C++ world. This is protoMOMxx!");
 
     // Initialize the core MOM object
-    MOM mom;
+    MOM::Model mom;
 
     return 0;
 
-  } catch (const MOM_logger::FatalError&) {
+  } catch (const MOM::logger::FatalError&) {
     return EXIT_FAILURE;
   }
 }
