@@ -92,11 +92,7 @@ TEST_F(MOMLoggerTest, CallTreeShowQuery) {
   EXPECT_FALSE(MOM_logger::callTree_showQuery());
 }
 
-// 10. FATAL calls std::exit
-TEST_F(MOMLoggerTest, FatalExits) {
-  EXPECT_EXIT(
-    MOM_logger::fatal("crash now"),
-    ::testing::ExitedWithCode(EXIT_FAILURE),
-    ""
-  );
+// 10. FATAL throws FatalError
+TEST_F(MOMLoggerTest, FatalThrowsFatalError) {
+  EXPECT_THROW(MOM_logger::fatal("crash now"), MOM_logger::FatalError);
 }

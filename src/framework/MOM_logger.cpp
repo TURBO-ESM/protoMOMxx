@@ -16,7 +16,8 @@ namespace MOM_logger::detail {
     }
     if (level == LogLevel::FATAL) {
       err_stream->flush();
-      std::exit(EXIT_FAILURE);
+      log_stream->flush();
+      throw FatalError(message);
     }
   }
 
@@ -50,8 +51,12 @@ namespace MOM_logger {
   }
 
   CallTree::~CallTree() {
-    if (detail::call_tree_depth < 1)
-      detail::log(LogLevel::FATAL, "callTree: depth underflow at " + mesg_);
+    if (detail::call_tree_depth < 1) {
+      (*detail::err_stream) << "FATAL: callTree depth underflow at " << mesg_ << '\n';
+      detail::err_stream->flush();
+      detail::log_stream->flush();
+      std::abort();
+    }
     detail::call_tree_depth--;
     if (detail::log_level < LogLevel::CALLTREE) return;
     std::string indent(3 * detail::call_tree_depth, ' ');

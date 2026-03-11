@@ -16,7 +16,7 @@
  *   - FATAL and WARNING always write to err_stream (default: std::cerr)
  *   - All other levels write to log_stream (default: std::cout) if they
  *     are at or below the current verbosity level
- *   - FATAL flushes err_stream and calls std::exit(EXIT_FAILURE)
+ *   - FATAL logs to err_stream and throws MOM_logger::FatalError
  */
 
 
@@ -24,6 +24,7 @@
 #include <iostream>
 #include <ostream>
 #include <sstream>
+#include <stdexcept>
 
 /// @brief Log severity levels, ordered from most to least severe.
 ///
@@ -33,12 +34,17 @@ namespace MOM_logger {
 
 /// @brief Log levels for controlling message severity and verbosity.
 enum class LogLevel {
-  FATAL     = 0,  ///< Unrecoverable error. Logs to err_stream then exits.
+  FATAL     = 0,  ///< Unrecoverable error. Logs to err_stream then throws FatalError.
   WARNING   = 1,  ///< Important warning. Always logs to err_stream.
   NOTE      = 2,  ///< Notable but non-critical information.
   INFO      = 3,  ///< General progress information.
   CALLTREE  = 6,  ///< Call tree tracing.
   DEBUG     = 9   ///< Detailed diagnostic output.
+};
+
+/// @brief Exception thrown by fatal() to signal an unrecoverable error.
+class FatalError : public std::runtime_error {
+  using std::runtime_error::runtime_error;
 };
 
 namespace detail {
@@ -76,8 +82,9 @@ inline void log(LogLevel level, Args&&... args) {
   detail::log(level, oss.str());
 }
 
-/// @brief Log a message at the FATAL log level and terminate.
+/// @brief Log a message at the FATAL log level and throw FatalError.
 /// @param args The components of the message to log. These will be streamed together into a single message.
+/// @throws FatalError Always thrown after logging the message.
 template<typename... Args>
 inline void fatal(Args&&... args)   { log(LogLevel::FATAL,   std::forward<Args>(args)...); }
 
