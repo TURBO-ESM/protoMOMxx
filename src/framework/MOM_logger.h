@@ -48,10 +48,6 @@ class FatalError : public std::runtime_error {
 };
 
 namespace detail {
-  extern LogLevel       log_level;
-  extern std::ostream*  log_stream;
-  extern std::ostream*  err_stream;
-  
   /// @brief Core logging function that routes messages based on log level and current verbosity.
   /// @param level The severity level of the message being logged.
   /// @param message The complete message to log, already formatted as a single string.
