@@ -8,7 +8,7 @@ namespace MOM_logger::detail {
   std::ostream* err_stream = &std::cerr;
   int           call_tree_depth = 0;
 
-  void log(LogLevel level, const std::string& message) {
+  void log(LogLevel level, std::string_view message) {
     if (level == LogLevel::FATAL || level == LogLevel::WARNING) {
       (*err_stream) << message << '\n';
     } else if (level <= log_level) {
@@ -17,7 +17,7 @@ namespace MOM_logger::detail {
     if (level == LogLevel::FATAL) {
       err_stream->flush();
       log_stream->flush();
-      throw FatalError(message);
+      throw FatalError(std::string(message));
     }
   }
 

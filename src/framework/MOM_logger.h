@@ -51,7 +51,7 @@ namespace detail {
   /// @brief Core logging function that routes messages based on log level and current verbosity.
   /// @param level The severity level of the message being logged.
   /// @param message The complete message to log, already formatted as a single string.
-  void log(LogLevel level, const std::string& message);
+  void log(LogLevel level, std::string_view message);
 } // namespace detail
 
 /// @brief Redirect log output streams.
