@@ -12,9 +12,7 @@ if(NOT GTest_FOUND)
 endif()
 enable_testing()
 
-file(GLOB MOM_LOGGER_TESTS "MOM_logger/*.cpp")
-
-add_executable(test_MOM_logger ${MOM_LOGGER_TESTS})
+add_executable(test_MOM_logger MOM_logger/test_MOM_logger.cpp)
 target_link_libraries(test_MOM_logger GTest::gtest_main MOM_src_framework)
 
 include(GoogleTest)
