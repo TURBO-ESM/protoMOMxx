@@ -12,7 +12,7 @@ public:
 
   /// @brief Model constructor that initializes the model with the given ensemble number.
   /// @param ensemble_num The ensemble number for the model run; default is -1 (indicating no ensemble).
-  explicit Model(int ensemble_num = -1);
+  explicit Model(const int ensemble_num = -1);
 
 private:
   const int ensemble_num_;
