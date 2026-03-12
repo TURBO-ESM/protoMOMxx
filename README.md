@@ -23,7 +23,7 @@ This will create the `protoMOMxx` executable in the `build` directory. To run th
 To run the unit tests:
 
 ```bash
-cmake -S . -B buildtest -DTESTS=ON
+cmake -S . -B buildtest -DPROTOMOM_TESTS=ON
 cmake --build buildtest -j
 ctest --test-dir buildtest
 ```

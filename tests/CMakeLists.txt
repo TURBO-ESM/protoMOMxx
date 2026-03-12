@@ -1,14 +1,19 @@
-project(protoMOMxx_tests)
-
 find_package(GTest QUIET)
 if(NOT GTest_FOUND)
-  include(FetchContent)
-  FetchContent_Declare(
-    googletest
-    URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-  )
-  FetchContent_MakeAvailable(googletest)
+  if(PROTOMOM_FETCH_DEPS)
+    include(FetchContent)
+    FetchContent_Declare(
+      googletest
+      URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+      DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+    FetchContent_MakeAvailable(googletest)
+  else()
+    message(FATAL_ERROR
+      "GTest not found. Install GoogleTest or set CMAKE_PREFIX_PATH "
+      "to include its install location, or configure with "
+      "-DPROTOMOM_FETCH_DEPS=ON to download it automatically.")
+  endif()
 endif()
 enable_testing()
 
