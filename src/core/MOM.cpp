@@ -8,7 +8,6 @@ Model::Model(const int ensemble_num)
 
   // todo: read VERBOSITY param instead of hardcoding it below
   logger::set_verbosity(logger::LogLevel::DEBUG);
-  logger::CallTree scope("MOM::Model::Model");
 
   logger::info("Initializing protoMOMxx...");
   if (ensemble_num_ >= 0) {

@@ -41,7 +41,6 @@ public:
     WARNING   = 1,  ///< Important warning. Always logs to err_stream.
     NOTE      = 2,  ///< Notable but non-critical information.
     INFO      = 3,  ///< General progress information.
-    CALLTREE  = 6,  ///< Call tree tracing.
     DEBUG     = 9   ///< Detailed diagnostic output.
   };
 
@@ -100,45 +99,13 @@ public:
   template<typename... Args>
   static void debug(Args&&... args)   { log(LogLevel::DEBUG,   std::forward<Args>(args)...); }
 
-  /// @brief Returns true if the current verbosity level includes call tree output.
-  /// @return True if call tree output is enabled, false otherwise.
-  static bool callTree_showQuery();
-
-  /// @brief Record a milestone within a subroutine in the call tree.
-  /// @param mesg Description of the milestone.
-  static void callTree_waypoint(std::string_view mesg);
-
-  /// @brief RAII guard for call tree tracing.
-  ///
-  /// Logs entry on construction and exit on destruction.
-  ///
-  /// @code
-  ///   void MOM_step() {
-  ///     MOM::logger::CallTree scope("MOM_step");
-  ///     MOM::logger::callTree_waypoint("before btstep");
-  ///     // ... scope exits and logs "<--- MOM_step" automatically
-  ///   }
-  /// @endcode
-  class CallTree {
-  public:
-    /// @brief Construct a CallTree scope with the given message. Logs entry if CALLTREE level is enabled.
-    /// @param mesg Description of the scope (e.g. function name).
-    explicit CallTree(std::string_view mesg);
-    ~CallTree();
-    CallTree(const CallTree&)            = delete;
-    CallTree& operator=(const CallTree&) = delete;
-  private:
-    std::string mesg_;
-  };
-
 private:
   /// @brief Core logging function that routes messages based on log level and current verbosity.
   static void log_impl(LogLevel level, std::string_view message);
 
-  inline static LogLevel      log_level_       = LogLevel::CALLTREE;
+  inline static LogLevel      log_level_       = LogLevel::INFO;
   inline static std::ostream* log_stream_      = &std::cout;
   inline static std::ostream* err_stream_      = &std::cerr;
-  inline static int           call_tree_depth_ = 0;
 };
 
 } // namespace MOM

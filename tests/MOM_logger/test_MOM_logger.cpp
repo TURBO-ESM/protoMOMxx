@@ -16,7 +16,7 @@ protected:
 
   void TearDown() override {
     MOM::logger::set_stream(std::cout, std::cerr);
-    MOM::logger::set_verbosity(MOM::logger::LogLevel::CALLTREE);
+    MOM::logger::set_verbosity(MOM::logger::LogLevel::DEBUG);
   }
 };
 
@@ -63,36 +63,7 @@ TEST_F(MOMLoggerTest, MultiArgConcatenation) {
   EXPECT_NE(log_out.str().find("a1b"), std::string::npos);
 }
 
-// 7. CallTree entry/exit markers
-TEST_F(MOMLoggerTest, CallTreeEntryExit) {
-  {
-    MOM::logger::CallTree scope("myFunc");
-    // After construction, should have ---> marker
-    EXPECT_NE(log_out.str().find("---> myFunc"), std::string::npos);
-  }
-  // After destruction, should have <--- marker
-  EXPECT_NE(log_out.str().find("<--- myFunc"), std::string::npos);
-}
-
-// 8. callTree_waypoint marker
-TEST_F(MOMLoggerTest, CallTreeWaypoint) {
-  MOM::logger::callTree_waypoint("checkpoint");
-  EXPECT_NE(log_out.str().find("o checkpoint"), std::string::npos);
-}
-
-// 9. callTree_showQuery based on verbosity
-TEST_F(MOMLoggerTest, CallTreeShowQuery) {
-  MOM::logger::set_verbosity(MOM::logger::LogLevel::CALLTREE);
-  EXPECT_TRUE(MOM::logger::callTree_showQuery());
-
-  MOM::logger::set_verbosity(MOM::logger::LogLevel::DEBUG);
-  EXPECT_TRUE(MOM::logger::callTree_showQuery());
-
-  MOM::logger::set_verbosity(MOM::logger::LogLevel::INFO);
-  EXPECT_FALSE(MOM::logger::callTree_showQuery());
-}
-
-// 10. FATAL throws FatalError
+// 7. FATAL throws FatalError
 TEST_F(MOMLoggerTest, FatalThrowsFatalError) {
   EXPECT_THROW(MOM::logger::fatal("crash now"), MOM::logger::FatalError);
 }
