@@ -49,10 +49,13 @@ public:
     using std::runtime_error::runtime_error;
   };
 
-  /// @brief Redirect log output streams.
+  /// @brief Redirect log output stream.
   /// @param log_stream Destination for INFO/NOTE/DEBUG messages (default: std::cout).
+  static void set_log_stream(std::ostream& log_stream);
+
+  /// @brief Redirect error output stream.
   /// @param err_stream Destination for WARNING/FATAL messages (default: std::cerr).
-  static void set_stream(std::ostream& log_stream, std::ostream& err_stream = std::cerr);
+  static void set_err_stream(std::ostream& err_stream);
 
   /// @brief Set the minimum verbosity level. Messages above this level are suppressed.
   /// @param level The new verbosity threshold.

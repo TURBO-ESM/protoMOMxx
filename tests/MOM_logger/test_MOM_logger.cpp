@@ -10,12 +10,14 @@ protected:
   void SetUp() override {
     log_out.str("");
     err_out.str("");
-    MOM::logger::set_stream(log_out, err_out);
+    MOM::logger::set_log_stream(log_out);
+    MOM::logger::set_err_stream(err_out);
     MOM::logger::set_verbosity(MOM::logger::LogLevel::DEBUG);
   }
 
   void TearDown() override {
-    MOM::logger::set_stream(std::cout, std::cerr);
+    MOM::logger::set_log_stream(std::cout);
+    MOM::logger::set_err_stream(std::cerr);
     MOM::logger::set_verbosity(MOM::logger::LogLevel::DEBUG);
   }
 };
