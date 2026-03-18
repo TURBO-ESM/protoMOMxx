@@ -30,4 +30,9 @@ static const ParamValue NotFound{}; /// A sentinel value representing a missing 
 /// @return The parsed value as a ParamValue variant, which may be a scalar or a vector of scalars.
 ParamValue get_value(std::string_view raw, std::size_t line_no, const std::string &path);
 
+/// @brief Strip comments from a line (Fortran-style ! only).
+/// @param line The input string view containing the line to strip comments from.
+/// @return A string_view with comments removed.
+std::string_view strip_comments(std::string_view line);
+
 } // namespace mom_parser_utilities

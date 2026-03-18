@@ -6,45 +6,7 @@ using MOM::string_utils::find_unquoted;
 using MOM::string_utils::lowercase;
 using MOM::string_utils::trim;
 using mom_parser_utilities::get_value;
-
-namespace {
-
-/// @brief Strip comments from a line (Fortran-style ! only).
-static std::string strip_comments(std::string_view line) {
-  std::string out;
-  out.reserve(line.size());
-
-  bool in_sq = false;
-  bool in_dq = false;
-
-  for (std::size_t i = 0; i < line.size(); ++i) {
-    char c = line[i];
-
-    // Update quote state
-    if (!in_dq && c == '\'') {
-      in_sq = !in_sq;
-      out.push_back(c);
-      continue;
-    }
-
-    if (!in_sq && c == '"') {
-      in_dq = !in_dq;
-      out.push_back(c);
-      continue;
-    }
-
-    // Inline '!' comment? (only if not in quotes)
-    if (!in_sq && !in_dq && c == '!') {
-      break; // ignore rest of line
-    }
-
-    out.push_back(c);
-  }
-
-  return out;
-}
-
-} // namespace
+using mom_parser_utilities::strip_comments;
 
 NamelistParams::NamelistParams(const std::string &path) : path_(path) {
   namespace fs = std::filesystem;
@@ -87,8 +49,7 @@ NamelistParams::NamelistParams(const std::string &path) : path_(path) {
     ++line_no;
 
     // Strip comments
-    std::string line = strip_comments(raw_line);
-    std::string_view sv = trim(line);
+    std::string_view sv = trim(strip_comments(raw_line));
 
     if (sv.empty())
       continue;

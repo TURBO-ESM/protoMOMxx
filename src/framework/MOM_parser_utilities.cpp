@@ -197,4 +197,18 @@ ParamValue get_value(std::string_view raw, std::size_t line_no, const std::strin
   }
 }
 
+std::string_view strip_comments(std::string_view line) {
+    bool in_sq = false;
+    bool in_dq = false;
+
+    for (std::size_t i = 0; i < line.size(); ++i) {
+        char c = line[i];
+        if (!in_dq && c == '\'') { in_sq = !in_sq; continue; }
+        if (!in_sq && c == '"') { in_dq = !in_dq; continue; }
+        if (!in_sq && !in_dq && c == '!') return line.substr(0, i); // view up to '!'
+    }
+
+    return line; // no comment found
+}
+
 } // namespace mom_parser_utilities
