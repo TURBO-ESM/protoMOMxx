@@ -3,7 +3,7 @@
  * @brief Lightweight parser for Fortran namelist files.
  *
  * @details
- * Provides robust parsing of Fortran namelist files with support for comments and detailed
+ * Provides parsing of Fortran namelist files with support for comments and detailed
  * error reporting. Supported value types:
  * - Scalars: bool, int, double, string
  * - Homogeneous comma-separated lists of the above types
@@ -47,7 +47,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -96,5 +96,5 @@ public:
 
 private:
   std::string path_;
-  std::map<std::string, std::map<std::string, ParamValue>> table_;
+  std::unordered_map<std::string, std::unordered_map<std::string, ParamValue>> table_;
 };

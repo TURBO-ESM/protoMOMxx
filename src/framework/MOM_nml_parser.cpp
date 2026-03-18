@@ -61,17 +61,12 @@ NamelistParams::NamelistParams(const std::string &path) : path_(path) {
                                  ": nested namelists not allowed (missing '/' for namelist '" + curr_namelist + "')");
       }
 
-      auto name = trim(sv.substr(1));
-      if (name.empty()) {
+      auto nml_name = lowercase(trim(sv.substr(1)));
+      if (nml_name.empty()) {
         throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": empty namelist name");
       }
 
-      std::string namelist_name(name);
-      for (char &c : namelist_name) {
-        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-      }
-
-      curr_namelist = namelist_name;
+      curr_namelist = nml_name;
       in_namelist = true;
       accumulated_line.clear();
       continue;
@@ -80,21 +75,20 @@ NamelistParams::NamelistParams(const std::string &path) : path_(path) {
     // Helper: flush the current accumulated assignment into the table.
     // Called before closing '/' and before starting a new 'key = ...' line.
     auto flush_accumulated = [&]() {
-      if (accumulated_line.empty())
-        return;
+      if (accumulated_line.empty()) return;
+    
       std::string_view acc_sv = trim(accumulated_line);
-      auto eq = find_unquoted(acc_sv, '=');
-      if (eq != std::string_view::npos) {
+      if (auto eq = find_unquoted(acc_sv, '='); eq != std::string_view::npos) {
         auto lhs = trim(acc_sv.substr(0, eq));
         auto rhs = trim(acc_sv.substr(eq + 1));
-        if (lhs.empty()) {
+        if (lhs.empty())
           throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": empty variable name");
-        }
-        std::string key(lowercase(lhs));
-        assign_param(curr_namelist, key, get_value(rhs, line_no, path_));
+        
+        assign_param(curr_namelist, lowercase(std::string(lhs)), get_value(rhs, line_no, path_));
       }
       accumulated_line.clear();
     };
+
 
     // Check for unquoted '/' anywhere in the line (Fortran allows the closing
     // delimiter on the same line as the last value, e.g.  value = 'x' / ).
@@ -205,16 +199,16 @@ bool NamelistParams::has_param(const std::string &key, const std::string &nameli
 std::vector<std::string> NamelistParams::get_namelists() const {
   std::vector<std::string> namelists;
   namelists.reserve(table_.size());
-  for (const auto &pair : table_) {
-    namelists.push_back(pair.first);
+  for (const auto& [name, _] : table_) {
+    namelists.push_back(name);
   }
   return namelists;
 }
 
 size_t NamelistParams::get_num_parameters() const {
   size_t count = 0;
-  for (const auto &nml_pair : table_) {
-    count += nml_pair.second.size();
+  for (const auto& [_, params] : table_) {
+    count += params.size();
   }
   return count;
 }
@@ -225,9 +219,6 @@ template int NamelistParams::get<int>(const std::string &, const std::string &) 
 template double NamelistParams::get<double>(const std::string &, const std::string &) const;
 template std::string NamelistParams::get<std::string>(const std::string &, const std::string &) const;
 template std::vector<bool> NamelistParams::get<std::vector<bool>>(const std::string &, const std::string &) const;
-template std::vector<int> NamelistParams::get<std::vector<int>>(const std::string &,
-                                                                                     const std::string &) const;
-template std::vector<double> NamelistParams::get<std::vector<double>>(const std::string &,
-                                                                         const std::string &) const;
-template std::vector<std::string> NamelistParams::get<std::vector<std::string>>(const std::string &,
-                                                                                   const std::string &) const;
+template std::vector<int> NamelistParams::get<std::vector<int>>(const std::string &, const std::string &) const;
+template std::vector<double> NamelistParams::get<std::vector<double>>(const std::string &, const std::string &) const;
+template std::vector<std::string> NamelistParams::get<std::vector<std::string>>(const std::string &, const std::string &) const;
