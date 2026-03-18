@@ -20,7 +20,8 @@ namespace mom_parser_utilities {
 /// std::monostate is the first alternative, used to represent "not found" / unset values.
 using ParamValue = std::variant<std::monostate, bool, int, double, std::string, std::vector<bool>,
                                 std::vector<int>, std::vector<double>, std::vector<std::string>>;
-static const ParamValue NotFound{};
+
+static const ParamValue NotFound{}; /// A sentinel value representing a missing parameter
 
 /// @brief Parse a value which can be either a scalar or a comma-separated list of scalars.
 /// @param raw The input string view containing the raw value to parse.
