@@ -38,8 +38,8 @@
 
 #pragma once
 
-#include "MOM_parser_utilities.h"
-#include "MOM_string_functions.h"
+#include "MOM_parser_utils.h"
+#include "MOM_string_utils.h"
 #include <algorithm>
 #include <cctype>
 #include <charconv>
@@ -55,7 +55,9 @@
 #include <variant>
 #include <vector>
 
-using mom_parser_utilities::ParamValue;
+namespace MOM {
+
+using parser_utils::ParamValue;
 
 /// @brief The NamelistParams class provides an interface for parsing Fortran namelist files and retrieving values.
 class NamelistParams {
@@ -98,3 +100,5 @@ private:
   std::string path_;
   std::unordered_map<std::string, std::unordered_map<std::string, ParamValue>> table_;
 };
+
+} // namespace MOM

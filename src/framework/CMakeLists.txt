@@ -1,7 +1,7 @@
 # CMake configuration file for src/framework
 add_library(MOM_src_framework
   MOM_logger.cpp
-  MOM_parser_utilities.cpp
+  MOM_parser_utils.cpp
   MOM_nml_parser.cpp
 )
 

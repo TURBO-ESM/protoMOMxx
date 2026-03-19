@@ -1,5 +1,5 @@
-#include "MOM_parser_utilities.h"
-#include "MOM_string_functions.h"
+#include "MOM_parser_utils.h"
+#include "MOM_string_utils.h"
 #include <charconv>
 #include <stdexcept>
 #include <optional>
@@ -12,7 +12,7 @@ using MOM::string_utils::lowercase;
 using MOM::string_utils::trim;
 using MOM::string_utils::split_unquoted;
 
-namespace mom_parser_utilities {
+namespace MOM::parser_utils {
 
 namespace {
 
@@ -146,7 +146,7 @@ std::vector<T> convert_vector(const std::vector<ParamValue>& scalars) {
 } // anonymous namespace
 
 // -----------------------------------------------------------------------------
-// Public mom_parser_utilities API definitions
+// Public mom_parser_utils API definitions
 // -----------------------------------------------------------------------------
 
 ParamValue get_value(std::string_view raw, std::size_t line_no, const std::string &path) {
@@ -211,4 +211,4 @@ std::string_view strip_comments(std::string_view line) {
     return line; // no comment found
 }
 
-} // namespace mom_parser_utilities
+} // namespace MOM::parser_utils

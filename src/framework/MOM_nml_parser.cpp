@@ -1,13 +1,15 @@
 #include "MOM_nml_parser.h"
-#include "MOM_parser_utilities.h"
-#include "MOM_string_functions.h"
+#include "MOM_parser_utils.h"
+#include "MOM_string_utils.h"
 
-using MOM::string_utils::find_unquoted;
-using MOM::string_utils::lowercase;
-using MOM::string_utils::trim;
-using MOM::string_utils::is_valid_identifier;
-using mom_parser_utilities::get_value;
-using mom_parser_utilities::strip_comments;
+namespace MOM {
+
+using string_utils::find_unquoted;
+using string_utils::lowercase;
+using string_utils::trim;
+using string_utils::is_valid_identifier;
+using parser_utils::get_value;
+using parser_utils::strip_comments;
 
 NamelistParams::NamelistParams(const std::string &path) : path_(path) {
   namespace fs = std::filesystem;
@@ -272,3 +274,5 @@ template std::vector<bool> NamelistParams::get<std::vector<bool>>(const std::str
 template std::vector<int> NamelistParams::get<std::vector<int>>(const std::string &, const std::string &) const;
 template std::vector<double> NamelistParams::get<std::vector<double>>(const std::string &, const std::string &) const;
 template std::vector<std::string> NamelistParams::get<std::vector<std::string>>(const std::string &, const std::string &) const;
+
+} // namespace MOM

@@ -1,5 +1,5 @@
 /**
- * @file MOM_parser_utilities.h
+ * @file MOM_parser_utils.h
  * @brief Common parsing utilities for MOM runtime parameter and namelist parsers.
  *
  * This header contains shared parsing functions used by both MOM_file_parser and MOM_nml_parser
@@ -14,7 +14,7 @@
 #include <variant>
 #include <vector>
 
-namespace mom_parser_utilities {
+namespace MOM::parser_utils {
 
 /// @brief A type alias for the supported parameter value types.
 /// std::monostate is the first alternative, used to represent "not found" / unset values.
@@ -35,4 +35,4 @@ ParamValue get_value(std::string_view raw, std::size_t line_no, const std::strin
 /// @return A string_view with comments removed.
 std::string_view strip_comments(std::string_view line);
 
-} // namespace mom_parser_utilities
+} // namespace MOM::parser_utils

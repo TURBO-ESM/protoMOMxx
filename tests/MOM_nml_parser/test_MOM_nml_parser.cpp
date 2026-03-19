@@ -9,6 +9,8 @@
 
 #include "MOM_nml_parser.h"
 
+using namespace MOM;
+
 // Helper function to get the absolute path to the test data directory
 std::filesystem::path get_test_data_dir() { return std::filesystem::path(__FILE__).parent_path() / "nml_files"; }
 

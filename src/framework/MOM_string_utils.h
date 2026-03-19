@@ -4,9 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace MOM{
-
-namespace string_utils {
+namespace MOM::string_utils {
 
 /// @brief Trim leading and trailing whitespace from a string_view.
 /// @param s The input string_view to trim.
@@ -117,6 +115,4 @@ inline std::vector<std::string_view> split_unquoted(std::string_view s, const ch
 }
 
 
-} // namespace string_utils
- 
-} // namespace MOM
+} // namespace MOM::string_utils
