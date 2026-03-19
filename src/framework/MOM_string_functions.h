@@ -37,21 +37,21 @@ inline std::string lowercase(std::string_view sv) {
 /// @return true if the string_view is a valid identifier, false otherwise.
 inline bool is_valid_identifier(std::string_view s) {
   s = trim(s);
-  if (s.empty())
-    return false;
+  if (s.empty()) return false;
 
-  auto it = s.begin();
-  unsigned char first = static_cast<unsigned char>(*it);
-  if (!(std::isalpha(first) || first == '_'))
-    return false;
+  auto is_first = [&]() {
+    return std::isalpha(s.front()) || s.front() == '_';
+  };
 
-  for (++it; it != s.end(); ++it) {
-    unsigned char c = static_cast<unsigned char>(*it);
-    if (!(std::isalnum(c) || c == '_'))
-      return false;
-  }
+  auto is_rest = [](unsigned char c) {
+    return std::isalnum(c) || c == '_';
+  };
 
-  return true;
+  unsigned char first = static_cast<unsigned char>(s.front());
+  return is_first() &&
+         std::ranges::all_of(s.substr(1), [&](char c) {
+           return is_rest(static_cast<unsigned char>(c));
+         });
 }
 
 /// @brief Find the first occurrence of a character in a string_view, ignoring characters inside quotes.

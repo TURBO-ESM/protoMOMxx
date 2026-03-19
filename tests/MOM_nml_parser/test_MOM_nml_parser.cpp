@@ -352,11 +352,21 @@ TEST(MOMNmlParserTest, ParseArrayTrailingComma) {
   EXPECT_EQ(arr, std::vector<int>({2, 4}));
 }
 
-TEST(MOMNmlParserTest, InvalidInlineCloseNml) {
+TEST(MOMNmlParserTest, ParseInlineCloseNml) {
   auto path = get_test_data_dir() / "invalid_inline_close_nml.nml";
   ASSERT_TRUE(std::filesystem::exists(path)) << path;
 
-  EXPECT_THROW(NamelistParams nml(path.string()), std::runtime_error);
+  // &var / on a single line is a valid empty namelist in Fortran.
+  NamelistParams nml(path.string());
+  // &var / is an empty namelist, so only &foo is stored
+  EXPECT_EQ(nml.get_namelists().size(), 1);
+
+  // &foo namelist has 3 parameters
+  EXPECT_EQ(nml.get<int>("b", "FOO"), 3);
+  auto a_arr = nml.get<std::vector<int>>("a", "FOO");
+  EXPECT_EQ(a_arr, std::vector<int>({4, 4}));
+  auto c_arr = nml.get<std::vector<int>>("c", "FOO");
+  EXPECT_EQ(c_arr, std::vector<int>({1, 3}));
 }
 
 TEST(MOMNmlParserTest, ParseArrayInlineClose) {
@@ -393,6 +403,18 @@ TEST(MOMNmlParserTest, ParseArrayMultiline) {
 
   auto arr = nml.get<std::vector<int>>("a", "VAR_NML");
   EXPECT_EQ(arr, std::vector<int>({3, 4}));
+}
+
+TEST(MOMNmlParserTest, ParseOneline) {
+  auto path = get_test_data_dir() / "oneline.nml";
+  ASSERT_TRUE(std::filesystem::exists(path)) << path;
+
+  NamelistParams nml(path.string());
+  EXPECT_EQ(nml.get_namelists().size(), 1);
+  EXPECT_EQ(nml.get_num_parameters(), 2);
+
+  EXPECT_EQ(nml.get<int>("a", "FOO"), 3);
+  EXPECT_EQ(nml.get<std::string>("b", "FOO"), "bar");
 }
 
 TEST(MOMNmlParserTest, ParseArrayTwoElement) {
