@@ -18,7 +18,10 @@ endif()
 enable_testing()
 
 add_executable(test_MOM_logger MOM_logger/test_MOM_logger.cpp)
+add_executable(test_MOM_nml_parser MOM_nml_parser/test_MOM_nml_parser.cpp)
 target_link_libraries(test_MOM_logger GTest::gtest_main MOM_src_framework)
+target_link_libraries(test_MOM_nml_parser GTest::gtest_main MOM_src_framework)
 
 include(GoogleTest)
 gtest_discover_tests(test_MOM_logger)
+gtest_discover_tests(test_MOM_nml_parser)

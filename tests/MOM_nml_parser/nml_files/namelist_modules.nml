@@ -1,0 +1,19 @@
+! Test file with multiple namelists
+&OCEAN_PARAMS
+  NIGLOBAL = 540
+  NJGLOBAL = 480
+  NK = 75
+  TRIPOLAR_N = .true.
+/
+
+&MLE_PARAMS  
+  USE_BODNER23 = .false.
+  MLD_DECAYING_TFILTER = 2592000.0
+  KHTH_USE_EBT_STRUCT = .true.
+/
+
+&KPP_PARAMS
+  N_SMOOTH = 3
+  RI_CRIT = 0.3
+  ENHANCE = 1
+/
