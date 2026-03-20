@@ -473,6 +473,59 @@ TEST(MOMFileParserTest, OverrideModules) {
   EXPECT_EQ(BAR, "t.nc");
 }
 
+TEST(MOMFileParserTest, GetWithDefaultFallback) {
+  auto test_file_path = get_test_data_dir() / "MOM_input_simple";
+  RuntimeParams rp(test_file_path.string());
+
+  // Key exists — default should be ignored, actual value returned
+  bool reentrant_x = true;
+  rp.get("REENTRANT_X", reentrant_x, {.default_value = ParamValue(true)});
+  EXPECT_FALSE(reentrant_x); // file has False, not the default True
+
+  // Key missing — default should be used
+  int missing_param = 0;
+  rp.get("NO_SUCH_PARAM", missing_param, {.default_value = ParamValue(42)});
+  EXPECT_EQ(missing_param, 42);
+
+  // Key missing, no default, fail_if_missing = true — should throw
+  int another_missing = 0;
+  EXPECT_THROW(rp.get("NO_SUCH_PARAM", another_missing, {.fail_if_missing = true}), std::out_of_range);
+
+  // Key missing, no default, fail_if_missing = false — value unchanged
+  int untouched = 99;
+  rp.get("NO_SUCH_PARAM", untouched);
+  EXPECT_EQ(untouched, 99);
+}
+
+TEST(MOMFileParserTest, GetWithDoNotRead) {
+  auto test_file_path = get_test_data_dir() / "MOM_input_simple";
+  RuntimeParams rp(test_file_path.string());
+
+  // do_not_read = true: even though the key exists, it should not be read;
+  // the default value should be used instead.
+  int dt_therm = 0;
+  rp.get("DT_THERM", dt_therm, {.default_value = ParamValue(999), .do_not_read = true});
+  EXPECT_EQ(dt_therm, 999);
+
+  // do_not_read = true with no default: value should remain unchanged
+  int dt_therm2 = 77;
+  rp.get("DT_THERM", dt_therm2, {.do_not_read = true});
+  EXPECT_EQ(dt_therm2, 77);
+}
+
+TEST(MOMFileParserTest, GetTypeMismatchThrows) {
+  auto test_file_path = get_test_data_dir() / "MOM_input_simple";
+  RuntimeParams rp(test_file_path.string());
+
+  // REENTRANT_X is a bool; reading as int should throw
+  int wrong_type = 0;
+  EXPECT_THROW(rp.get("REENTRANT_X", wrong_type), std::runtime_error);
+
+  // Default value type mismatch should also throw
+  bool missing = false;
+  EXPECT_THROW(rp.get("NO_SUCH_PARAM", missing, {.default_value = ParamValue(42)}), std::runtime_error);
+}
+
 TEST(MOMNmlParserTest, InvalidOverride) {
   std::vector<std::string> paths = {(get_test_data_dir() / "MOM_input_modules").string(),
                                     (get_test_data_dir() / "MOM_override_invalid").string()};

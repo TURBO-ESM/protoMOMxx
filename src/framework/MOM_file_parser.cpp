@@ -1,8 +1,8 @@
 #include "MOM_file_parser.h"
+#include "MOM_logger.h"
 #include "MOM_string_utils.h"
 #include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <stdexcept>
 #include <string_view>
 #include <utility>
@@ -149,7 +149,7 @@ std::string strip_block_comments(std::string_view line, bool &in_block) {
 void add_data_from_file(const std::string &path, ParamTable &table) {
   namespace fs = std::filesystem;
 
-  std::cout << "  Reading parameter file: " << path << std::endl;
+  logger::info("  Reading parameter file: ", path);
 
   if (!fs::exists(path)) {
     throw std::runtime_error("Runtime parameter file not found: " + path);
