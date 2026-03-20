@@ -35,11 +35,11 @@ public:
   /// duplicate only if the value matches exactly. Throws on conflicting duplicates.
   /// When is_override is true, requires the key to already exist and replaces its value.
   ///
-  /// @param group The group (module/namelist) name.
   /// @param key The parameter key.
+  /// @param group The group (module/namelist) name.
   /// @param value The parameter value.
   /// @param is_override If true, override an existing key (throws if key is missing).
-  void insert(const std::string &group, const std::string &key, ParamValue value, bool is_override = false);
+  void insert(const std::string &key, const std::string &group, ParamValue value, bool is_override = false);
 
   /// @brief Look up a parameter value.
   /// @param key The parameter key.

@@ -30,7 +30,7 @@ NamelistParams::NamelistParams(const std::string &path) : path_(path) {
 
   auto assign_param = [&](const std::string &namelist, const std::string &key, ParamValue value) {
     try {
-      table_.insert(namelist, key, std::move(value));
+      table_.insert(key, namelist, std::move(value));
     } catch (const std::runtime_error &e) {
       throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": " + e.what());
     }

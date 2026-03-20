@@ -18,3 +18,7 @@ BETA = 0.01
 
 #define GAMMA
 #undef GAMMA
+
+! Test #define with module%key syntax outside a module block
+#define MyMod%ENABLED
+#define MyMod%SCALE 2.5

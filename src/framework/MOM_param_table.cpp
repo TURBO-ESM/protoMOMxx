@@ -12,7 +12,7 @@ std::string ParamTable::normalize(const std::string &s) const {
   return case_insensitive_ ? lowercase(s) : s;
 }
 
-void ParamTable::insert(const std::string &group, const std::string &key, ParamValue value, bool is_override) {
+void ParamTable::insert(const std::string &key, const std::string &group, ParamValue value, bool is_override) {
   auto norm_group = normalize(group);
   auto norm_key = normalize(key);
 

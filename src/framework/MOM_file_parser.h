@@ -149,7 +149,6 @@ public:
   }
 
 private:
-  std::string path_;
   ParamTable table_{false}; // case-sensitive
   std::shared_ptr<DocFileWriter> doc_; ///< Optional documentation writer
 };

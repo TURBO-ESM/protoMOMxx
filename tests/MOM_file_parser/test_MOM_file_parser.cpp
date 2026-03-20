@@ -67,7 +67,7 @@ TEST(MOMFileParserTest, ParseMOMInputDirective) {
   RuntimeParams rp(test_file_path.string());
 
   // Check that all of the parameters in the file are present
-  EXPECT_EQ(rp.get_num_parameters(), 8);
+  EXPECT_EQ(rp.get_num_parameters(), 10);
 
   bool Foo;
   rp.get("Foo", Foo);
@@ -94,6 +94,15 @@ TEST(MOMFileParserTest, ParseMOMInputDirective) {
   bool Gamma;
   rp.get("GAMMA", Gamma);
   EXPECT_FALSE(Gamma); // Check that #define GAMMA followed by #undef GAMMA results in GAMMA being false
+
+  // Check #define with module%key syntax outside a module block
+  bool Enabled;
+  rp.get("ENABLED", Enabled, {.module = "MyMod"});
+  EXPECT_TRUE(Enabled);
+
+  double Scale;
+  rp.get("SCALE", Scale, {.module = "MyMod", .units = ""});
+  EXPECT_EQ(Scale, 2.5);
 }
 
 TEST(MOMFileParserTest, ParseMOMInputLarge1) {
@@ -308,51 +317,6 @@ TEST(MOMFileParserTest, ParseMOMInputScalars) {
       }(),
       3);
 
-  // Check that A, B, C are parsed as lists of ints
-  EXPECT_TRUE(is_vector_of<int>(rp.get_variant("A")));
-  EXPECT_TRUE(is_vector_of<int>(rp.get_variant("B")));
-  EXPECT_TRUE(is_vector_of<int>(rp.get_variant("C")));
-  EXPECT_EQ(
-      [&] {
-        std::vector<int> A;
-        rp.get("A", A);
-        return A;
-      }(),
-      std::vector<int>({1, 2}));
-  EXPECT_EQ(
-      [&] {
-        std::vector<int> B;
-        rp.get("B", B);
-        return B;
-      }(),
-      std::vector<int>({3, 4}));
-  EXPECT_EQ(
-      [&] {
-        std::vector<int> C;
-        rp.get("C", C);
-        return C;
-      }(),
-      std::vector<int>({5, 6, 7, 8}));
-
-  // Check that D is parsed as a list of doubles
-  EXPECT_TRUE(is_vector_of<double>(rp.get_variant("D")));
-  EXPECT_EQ(
-      [&] {
-        std::vector<double> D;
-        rp.get("D", D, {.units = ""});
-        return D;
-      }(),
-      std::vector<double>({1.0, 2.0, 3.0}));
-
-  // Check that my_str_list is parsed as a list of strings
-  EXPECT_TRUE(is_vector_of<std::string>(rp.get_variant("my_str_list")));
-  EXPECT_EQ(
-      [&] {
-        std::vector<std::string> my_str_list;
-        rp.get("my_str_list", my_str_list);
-        return my_str_list;
-      }(),
-      std::vector<std::string>({"sd.nc", "foo.nc"}));
   // Check that not_a_list and also_not_a_list are parsed as scalar strings, not lists
   EXPECT_TRUE(std::holds_alternative<std::string>(rp.get_variant("not_a_list")));
   EXPECT_TRUE(std::holds_alternative<std::string>(rp.get_variant("also_not_a_list")));

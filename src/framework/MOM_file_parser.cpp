@@ -77,7 +77,7 @@ ParsedTarget parse_target(std::string_view lhs, std::string_view curr_module, st
   return out;
 }
 
-/// @brief Strip comments from a line in a quote-aware manner.
+/// @brief Strip block and line comments from a line in a quote-aware manner.
 ///
 /// Handles:
 /// - C-style block comments (`/* ... */`)
@@ -88,7 +88,7 @@ ParsedTarget parse_target(std::string_view lhs, std::string_view curr_module, st
 ///        inside a C-style block comment. This value is updated by the function
 ///        and must be preserved across successive calls.
 /// @return The input line with comments removed.
-std::string strip_comments(std::string_view line, bool &in_block) {
+std::string strip_block_comments(std::string_view line, bool &in_block) {
   std::string out;
   out.reserve(line.size());
 
@@ -171,7 +171,7 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
 
   auto assign_param = [&](const std::string &module, const std::string &key, ParamValue value, bool is_override) {
     try {
-      table.insert(module, key, std::move(value), is_override);
+      table.insert(key, module, std::move(value), is_override);
     } catch (const std::runtime_error &e) {
       throw std::runtime_error(path + ":" + std::to_string(line_no) + ": " + e.what());
     }
@@ -180,8 +180,8 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
   while (std::getline(infile, raw_line)) {
     ++line_no;
 
-    // Strip comments in a quote-aware way (handles /*...*/ across lines + ! inline).
-    std::string line = strip_comments(raw_line, in_block_comment);
+    // Strip block and line comments in a quote-aware way (handles /*...*/ across lines + ! inline).
+    std::string line = strip_block_comments(raw_line, in_block_comment);
     std::string_view sv = trim(line);
 
     if (sv.empty())
@@ -325,7 +325,7 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
 
 } // anonymous namespace
 
-RuntimeParams::RuntimeParams(const std::string &path) : path_(path) { add_data_from_file(path, table_); }
+RuntimeParams::RuntimeParams(const std::string &path) { add_data_from_file(path, table_); }
 
 RuntimeParams::RuntimeParams(const std::vector<std::string> &paths) {
   for (const auto &path : paths) {
@@ -360,7 +360,7 @@ void RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions 
         value = std::get<T>(val);
         value_was_set = true;
       } else {
-        throw std::runtime_error("Parameter " + options.module + "%" + key + " is not of the requested type");
+        throw std::runtime_error("Parameter " + (options.module.empty() ? key : options.module + "%" + key) + " is not of the requested type");
       }
     } catch (const std::out_of_range &) {
       if (options.fail_if_missing) {
@@ -371,7 +371,7 @@ void RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions 
 
   if (!value_was_set && options.default_value.has_value()) {
     if (!std::holds_alternative<T>(options.default_value.value())) {
-      throw std::runtime_error("Default value for " + options.module + "%" + key + " is not of the requested type");
+      throw std::runtime_error("Default value for " + (options.module.empty() ? key : options.module + "%" + key) + " is not of the requested type");
     }
     value = std::get<T>(options.default_value.value());
     value_was_set = true;
