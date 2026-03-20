@@ -45,10 +45,18 @@ TEST(MOMNmlParserTest, ParseNamelistSimple) {
   EXPECT_TRUE(nml.has_param("COORD_TYPE", "OCEAN"));
   EXPECT_TRUE(nml.has_param("GRAVITY", "OCEAN"));
 
-  EXPECT_EQ(nml.get<int>("DT", "OCEAN"), 3600);
-  EXPECT_FALSE(nml.get<bool>("REENTRANT_X", "OCEAN"));
-  EXPECT_TRUE(nml.get<bool>("REENTRANT_Y", "OCEAN"));
-  EXPECT_EQ(nml.get<std::string>("COORD_TYPE", "OCEAN"), "ALE");
+  int dt;
+  nml.get("DT", dt, "OCEAN");
+  EXPECT_EQ(dt, 3600);
+  bool reentrant_x;
+  nml.get("REENTRANT_X", reentrant_x, "OCEAN");
+  EXPECT_FALSE(reentrant_x);
+  bool reentrant_y;
+  nml.get("REENTRANT_Y", reentrant_y, "OCEAN");
+  EXPECT_TRUE(reentrant_y);
+  std::string coord_type;
+  nml.get("COORD_TYPE", coord_type, "OCEAN");
+  EXPECT_EQ(coord_type, "ALE");
   EXPECT_TRUE(check_double_value(nml.get_variant("GRAVITY", "OCEAN"), 9.81));
 
   // Check that all 5 parameters in the file are present
@@ -66,20 +74,36 @@ TEST(MOMNmlParserTest, ParseNamelistModules) {
   EXPECT_EQ(namelists.size(), 3);
 
   // Check OCEAN_PARAMS namelist
-  EXPECT_EQ(nml.get<int>("NIGLOBAL", "OCEAN_PARAMS"), 540);
-  EXPECT_EQ(nml.get<int>("NJGLOBAL", "OCEAN_PARAMS"), 480);
-  EXPECT_EQ(nml.get<int>("NK", "OCEAN_PARAMS"), 75);
-  EXPECT_TRUE(nml.get<bool>("TRIPOLAR_N", "OCEAN_PARAMS"));
+  int niglobal;
+  nml.get("NIGLOBAL", niglobal, "OCEAN_PARAMS");
+  EXPECT_EQ(niglobal, 540);
+  int njglobal;
+  nml.get("NJGLOBAL", njglobal, "OCEAN_PARAMS");
+  EXPECT_EQ(njglobal, 480);
+  int nk;
+  nml.get("NK", nk, "OCEAN_PARAMS");
+  EXPECT_EQ(nk, 75);
+  bool tripolar_n;
+  nml.get("TRIPOLAR_N", tripolar_n, "OCEAN_PARAMS");
+  EXPECT_TRUE(tripolar_n);
 
   // Check MLE_PARAMS namelist
-  EXPECT_FALSE(nml.get<bool>("USE_BODNER23", "MLE_PARAMS"));
+  bool use_bodner23;
+  nml.get("USE_BODNER23", use_bodner23, "MLE_PARAMS");
+  EXPECT_FALSE(use_bodner23);
   EXPECT_TRUE(check_double_value(nml.get_variant("MLD_DECAYING_TFILTER", "MLE_PARAMS"), 2592000.0));
-  EXPECT_TRUE(nml.get<bool>("KHTH_USE_EBT_STRUCT", "MLE_PARAMS"));
+  bool khth_use_ebt_struct;
+  nml.get("KHTH_USE_EBT_STRUCT", khth_use_ebt_struct, "MLE_PARAMS");
+  EXPECT_TRUE(khth_use_ebt_struct);
 
   // Check KPP_PARAMS namelist
-  EXPECT_EQ(nml.get<int>("N_SMOOTH", "KPP_PARAMS"), 3);
+  int n_smooth;
+  nml.get("N_SMOOTH", n_smooth, "KPP_PARAMS");
+  EXPECT_EQ(n_smooth, 3);
   EXPECT_TRUE(check_double_value(nml.get_variant("RI_CRIT", "KPP_PARAMS"), 0.3));
-  EXPECT_EQ(nml.get<int>("ENHANCE", "KPP_PARAMS"), 1);
+  int enhance;
+  nml.get("ENHANCE", enhance, "KPP_PARAMS");
+  EXPECT_EQ(enhance, 1);
 
   // Verify parameters are in the correct namelist
   EXPECT_THROW(nml.get_variant("NIGLOBAL", "MLE_PARAMS"), std::out_of_range);
@@ -97,26 +121,32 @@ TEST(MOMNmlParserTest, ParseNamelistArrays) {
 
   // Check scalar
   EXPECT_TRUE(std::holds_alternative<int>(nml.get_variant("INT_SCALAR", "ARRAY_TEST")));
-  EXPECT_EQ(nml.get<int>("INT_SCALAR", "ARRAY_TEST"), 42);
+  int int_scalar;
+  nml.get("INT_SCALAR", int_scalar, "ARRAY_TEST");
+  EXPECT_EQ(int_scalar, 42);
 
   // Check integer array
   EXPECT_TRUE(is_vector_of<int>(nml.get_variant("INT_ARRAY", "ARRAY_TEST")));
-  auto int_array = nml.get<std::vector<int>>("INT_ARRAY", "ARRAY_TEST");
+  std::vector<int> int_array;
+  nml.get("INT_ARRAY", int_array, "ARRAY_TEST");
   EXPECT_EQ(int_array, std::vector<int>({1, 2, 3, 4, 5}));
 
   // Check real array
   EXPECT_TRUE(is_vector_of<double>(nml.get_variant("REAL_ARRAY", "ARRAY_TEST")));
-  auto real_array = nml.get<std::vector<double>>("REAL_ARRAY", "ARRAY_TEST");
+  std::vector<double> real_array;
+  nml.get("REAL_ARRAY", real_array, "ARRAY_TEST");
   EXPECT_EQ(real_array, std::vector<double>({1.0, 2.0, 3.0}));
 
   // Check string array
   EXPECT_TRUE(is_vector_of<std::string>(nml.get_variant("STRING_ARRAY", "ARRAY_TEST")));
-  auto string_array = nml.get<std::vector<std::string>>("STRING_ARRAY", "ARRAY_TEST");
+  std::vector<std::string> string_array;
+  nml.get("STRING_ARRAY", string_array, "ARRAY_TEST");
   EXPECT_EQ(string_array, std::vector<std::string>({"file1.nc", "file2.nc", "file3.nc"}));
 
   // Check boolean array
   EXPECT_TRUE(is_vector_of<bool>(nml.get_variant("BOOL_ARRAY", "ARRAY_TEST")));
-  auto bool_array = nml.get<std::vector<bool>>("BOOL_ARRAY", "ARRAY_TEST");
+  std::vector<bool> bool_array;
+  nml.get("BOOL_ARRAY", bool_array, "ARRAY_TEST");
   std::vector<bool> expected_bool = {true, false, true};
   EXPECT_EQ(bool_array.size(), expected_bool.size());
   for (size_t i = 0; i < bool_array.size(); ++i) {
@@ -125,7 +155,8 @@ TEST(MOMNmlParserTest, ParseNamelistArrays) {
 
   // Check trailing comma handling
   EXPECT_TRUE(is_vector_of<int>(nml.get_variant("TRAILING_COMMA", "ARRAY_TEST")));
-  auto trailing_array = nml.get<std::vector<int>>("TRAILING_COMMA", "ARRAY_TEST");
+  std::vector<int> trailing_array;
+  nml.get("TRAILING_COMMA", trailing_array, "ARRAY_TEST");
   EXPECT_EQ(trailing_array, std::vector<int>({10, 20, 30}));
 }
 
@@ -136,9 +167,15 @@ TEST(MOMNmlParserTest, ParseNamelistComments) {
   NamelistParams nml(test_file_path.string());
 
   // Verify all variables are parsed correctly despite comments
-  EXPECT_EQ(nml.get<int>("VAR1", "TEST_COMMENTS"), 100);
-  EXPECT_EQ(nml.get<std::string>("VAR2", "TEST_COMMENTS"), "test string");
-  EXPECT_TRUE(nml.get<bool>("VAR3", "TEST_COMMENTS"));
+  int var1;
+  nml.get("VAR1", var1, "TEST_COMMENTS");
+  EXPECT_EQ(var1, 100);
+  std::string var2;
+  nml.get("VAR2", var2, "TEST_COMMENTS");
+  EXPECT_EQ(var2, "test string");
+  bool var3;
+  nml.get("VAR3", var3, "TEST_COMMENTS");
+  EXPECT_TRUE(var3);
   EXPECT_TRUE(check_double_value(nml.get_variant("VAR4", "TEST_COMMENTS"), 3.14159));
 
   EXPECT_EQ(nml.get_num_parameters(), 4);
@@ -190,10 +227,12 @@ TEST(MOMNmlParserTest, TypeMismatch) {
   NamelistParams nml(test_file_path.string());
 
   // DT is an integer, trying to get as double should throw
-  EXPECT_THROW(nml.get<double>("DT", "OCEAN"), std::runtime_error);
+  double tmp_double;
+  EXPECT_THROW(nml.get("DT", tmp_double, "OCEAN"), std::runtime_error);
 
   // REENTRANT_X is a bool, trying to get as int should throw
-  EXPECT_THROW(nml.get<int>("REENTRANT_X", "OCEAN"), std::runtime_error);
+  int tmp_int;
+  EXPECT_THROW(nml.get("REENTRANT_X", tmp_int, "OCEAN"), std::runtime_error);
 }
 
 // Read in double_gyre_input.nml and check that the expected parameters are present and correct:
@@ -202,10 +241,18 @@ TEST(MOMNmlParserTest, ParseDoubleGyreInput) {
   ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";
   NamelistParams nml(test_file_path.string());
 
-  EXPECT_EQ(nml.get<std::string>("output_directory", "MOM_input_nml"), "./");
-  EXPECT_EQ(nml.get<std::string>("input_filename", "MOM_INPUT_NML"), "n");
-  EXPECT_EQ(nml.get<std::string>("restart_input_dir", "MOM_INPUT_NML"), "INPUT/");
-  EXPECT_EQ(nml.get<std::string>("restart_output_dir", "MOM_INPUT_NML"), "RESTART/");
+  std::string output_directory;
+  nml.get("output_directory", output_directory, "MOM_input_nml");
+  EXPECT_EQ(output_directory, "./");
+  std::string input_filename;
+  nml.get("input_filename", input_filename, "MOM_INPUT_NML");
+  EXPECT_EQ(input_filename, "n");
+  std::string restart_input_dir;
+  nml.get("restart_input_dir", restart_input_dir, "MOM_INPUT_NML");
+  EXPECT_EQ(restart_input_dir, "INPUT/");
+  std::string restart_output_dir;
+  nml.get("restart_output_dir", restart_output_dir, "MOM_INPUT_NML");
+  EXPECT_EQ(restart_output_dir, "RESTART/");
   EXPECT_TRUE(nml.has_param("parameter_filename", "MOM_INPUT_NML"));
   const auto &param_val = nml.get_variant("parameter_filename", "MOM_INPUT_NML");
   EXPECT_TRUE(std::holds_alternative<std::vector<std::string>>(param_val));
@@ -221,10 +268,18 @@ void validate_mom_input_nml_5params(const NamelistParams &nml) {
   EXPECT_EQ(nml.get_namelists().size(), 1) << "Only mom_input_nml should be present (empty namelists are not stored)";
   EXPECT_EQ(nml.get_num_parameters(), 5);
 
-  EXPECT_EQ(nml.get<std::string>("output_directory", "MOM_INPUT_NML"), "./");
-  EXPECT_EQ(nml.get<std::string>("input_filename", "MOM_INPUT_NML"), "n");
-  EXPECT_EQ(nml.get<std::string>("restart_input_dir", "MOM_INPUT_NML"), "INPUT/");
-  EXPECT_EQ(nml.get<std::string>("restart_output_dir", "MOM_INPUT_NML"), "RESTART/");
+  std::string output_directory;
+  nml.get("output_directory", output_directory, "MOM_INPUT_NML");
+  EXPECT_EQ(output_directory, "./");
+  std::string input_filename;
+  nml.get("input_filename", input_filename, "MOM_INPUT_NML");
+  EXPECT_EQ(input_filename, "n");
+  std::string restart_input_dir;
+  nml.get("restart_input_dir", restart_input_dir, "MOM_INPUT_NML");
+  EXPECT_EQ(restart_input_dir, "INPUT/");
+  std::string restart_output_dir;
+  nml.get("restart_output_dir", restart_output_dir, "MOM_INPUT_NML");
+  EXPECT_EQ(restart_output_dir, "RESTART/");
 
   EXPECT_TRUE(nml.has_param("parameter_filename", "MOM_INPUT_NML"));
   const auto &pf = nml.get_variant("parameter_filename", "MOM_INPUT_NML");
@@ -251,8 +306,12 @@ TEST(MOMNmlParserTest, ParseScalarIntAndString) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 2);
 
-  EXPECT_EQ(nml.get<int>("c", "FOO"), 4);
-  EXPECT_EQ(nml.get<std::string>("d", "FOO"), "a string");
+  int c;
+  nml.get("c", c, "FOO");
+  EXPECT_EQ(c, 4);
+  std::string d;
+  nml.get("d", d, "FOO");
+  EXPECT_EQ(d, "a string");
 }
 
 TEST(MOMNmlParserTest, ParseFilepathStringEmptyNml) {
@@ -263,8 +322,12 @@ TEST(MOMNmlParserTest, ParseFilepathStringEmptyNml) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 2);
 
-  EXPECT_EQ(nml.get<int>("a", "FOO_NML"), 4);
-  EXPECT_EQ(nml.get<std::string>("b", "FOO_NML"), "/foo/bar/baz.nc");
+  int a;
+  nml.get("a", a, "FOO_NML");
+  EXPECT_EQ(a, 4);
+  std::string b;
+  nml.get("b", b, "FOO_NML");
+  EXPECT_EQ(b, "/foo/bar/baz.nc");
 }
 
 TEST(MOMNmlParserTest, ParseInlineClose) {
@@ -275,8 +338,12 @@ TEST(MOMNmlParserTest, ParseInlineClose) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 2);
 
-  EXPECT_EQ(nml.get<int>("a", "FOO"), 4);
-  EXPECT_EQ(nml.get<std::string>("b", "FOO"), "a string");
+  int a_val;
+  nml.get("a", a_val, "FOO");
+  EXPECT_EQ(a_val, 4);
+  std::string b_val;
+  nml.get("b", b_val, "FOO");
+  EXPECT_EQ(b_val, "a string");
 }
 
 TEST(MOMNmlParserTest, ParseSeparateClose) {
@@ -287,8 +354,12 @@ TEST(MOMNmlParserTest, ParseSeparateClose) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 2);
 
-  EXPECT_EQ(nml.get<int>("a", "FOO"), 4);
-  EXPECT_EQ(nml.get<std::string>("b", "FOO"), "a string");
+  int a_val;
+  nml.get("a", a_val, "FOO");
+  EXPECT_EQ(a_val, 4);
+  std::string b_val;
+  nml.get("b", b_val, "FOO");
+  EXPECT_EQ(b_val, "a string");
 }
 
 TEST(MOMNmlParserTest, ParseMultiNmlArraysComments) {
@@ -300,23 +371,28 @@ TEST(MOMNmlParserTest, ParseMultiNmlArraysComments) {
   EXPECT_EQ(nml.get_num_parameters(), 4);
 
   // &bar  b = 4
-  EXPECT_EQ(nml.get<int>("b", "BAR"), 4);
+  int b_bar;
+  nml.get("b", b_bar, "BAR");
+  EXPECT_EQ(b_bar, 4);
 
   // &bart  b = 2,3,4
   {
-    auto arr = nml.get<std::vector<int>>("b", "BART");
+    std::vector<int> arr;
+    nml.get("b", arr, "BART");
     EXPECT_EQ(arr, std::vector<int>({2, 3, 4}));
   }
 
   // &var  a = 3, (next line) 9
   {
-    auto arr = nml.get<std::vector<int>>("a", "VAR");
+    std::vector<int> arr;
+    nml.get("a", arr, "VAR");
     EXPECT_EQ(arr, std::vector<int>({3, 9}));
   }
 
   // &varn  a = 3, (next line) 9  (with inline comments)
   {
-    auto arr = nml.get<std::vector<int>>("a", "VARN");
+    std::vector<int> arr;
+    nml.get("a", arr, "VARN");
     EXPECT_EQ(arr, std::vector<int>({3, 9}));
   }
 }
@@ -330,8 +406,12 @@ TEST(MOMNmlParserTest, ParseTrailingCommaWithComments) {
   EXPECT_EQ(nml.get_num_parameters(), 2);
 
   // "a = 4," after comment strip; trailing comma with single value → scalar 4
-  EXPECT_EQ(nml.get<int>("a", "FOO"), 4);
-  EXPECT_EQ(nml.get<std::string>("b", "FOO"), "a string");
+  int a_val;
+  nml.get("a", a_val, "FOO");
+  EXPECT_EQ(a_val, 4);
+  std::string b_val;
+  nml.get("b", b_val, "FOO");
+  EXPECT_EQ(b_val, "a string");
 }
 
 TEST(MOMNmlParserTest, ParseMomInputNmlInlineComments) {
@@ -350,7 +430,8 @@ TEST(MOMNmlParserTest, ParseArrayTrailingComma) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 1);
 
-  auto arr = nml.get<std::vector<int>>("bar", "BAR_NML");
+  std::vector<int> arr;
+  nml.get("bar", arr, "BAR_NML");
   EXPECT_EQ(arr, std::vector<int>({2, 4}));
 }
 
@@ -364,10 +445,14 @@ TEST(MOMNmlParserTest, ParseInlineCloseNml) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
 
   // &foo namelist has 3 parameters
-  EXPECT_EQ(nml.get<int>("b", "FOO"), 3);
-  auto a_arr = nml.get<std::vector<int>>("a", "FOO");
+  int b_foo;
+  nml.get("b", b_foo, "FOO");
+  EXPECT_EQ(b_foo, 3);
+  std::vector<int> a_arr;
+  nml.get("a", a_arr, "FOO");
   EXPECT_EQ(a_arr, std::vector<int>({4, 4}));
-  auto c_arr = nml.get<std::vector<int>>("c", "FOO");
+  std::vector<int> c_arr;
+  nml.get("c", c_arr, "FOO");
   EXPECT_EQ(c_arr, std::vector<int>({1, 3}));
 }
 
@@ -379,7 +464,8 @@ TEST(MOMNmlParserTest, ParseArrayInlineClose) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 1);
 
-  auto arr = nml.get<std::vector<int>>("a", "VAR_NML");
+  std::vector<int> arr;
+  nml.get("a", arr, "VAR_NML");
   EXPECT_EQ(arr, std::vector<int>({3, 4}));
 }
 
@@ -392,7 +478,9 @@ TEST(MOMNmlParserTest, ParseScalarTrailingComma) {
   EXPECT_EQ(nml.get_num_parameters(), 1);
 
   // "a = 3," with trailing comma; single value after stripping empty → scalar 3
-  EXPECT_EQ(nml.get<int>("a", "VAR_NML"), 3);
+  int a_val;
+  nml.get("a", a_val, "VAR_NML");
+  EXPECT_EQ(a_val, 3);
 }
 
 TEST(MOMNmlParserTest, ParseArrayMultiline) {
@@ -403,7 +491,8 @@ TEST(MOMNmlParserTest, ParseArrayMultiline) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 1);
 
-  auto arr = nml.get<std::vector<int>>("a", "VAR_NML");
+  std::vector<int> arr;
+  nml.get("a", arr, "VAR_NML");
   EXPECT_EQ(arr, std::vector<int>({3, 4}));
 }
 
@@ -415,8 +504,12 @@ TEST(MOMNmlParserTest, ParseOneline) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 2);
 
-  EXPECT_EQ(nml.get<int>("a", "FOO"), 3);
-  EXPECT_EQ(nml.get<std::string>("b", "FOO"), "bar");
+  int a_val;
+  nml.get("a", a_val, "FOO");
+  EXPECT_EQ(a_val, 3);
+  std::string b_val;
+  nml.get("b", b_val, "FOO");
+  EXPECT_EQ(b_val, "bar");
 }
 
 TEST(MOMNmlParserTest, ParseArrayTwoElement) {
@@ -427,7 +520,8 @@ TEST(MOMNmlParserTest, ParseArrayTwoElement) {
   EXPECT_EQ(nml.get_namelists().size(), 1);
   EXPECT_EQ(nml.get_num_parameters(), 1);
 
-  auto arr = nml.get<std::vector<int>>("b", "BAR");
+  std::vector<int> arr;
+  nml.get("b", arr, "BAR");
   EXPECT_EQ(arr, std::vector<int>({4, 3}));
 }
 

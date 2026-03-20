@@ -228,9 +228,12 @@ auto process_assignments = [&](std::string_view sv) {
 }
 
 template <typename T>
-T NamelistParams::get(const std::string &key, const std::string &namelist) const {
+void NamelistParams::get(const std::string &key, T &value, const std::string &namelist) const {
   const auto &val = get_variant(key, namelist);
-  if (std::holds_alternative<T>(val)) return std::get<T>(val);
+  if (std::holds_alternative<T>(val)) {
+    value = std::get<T>(val);
+    return;
+  }
   throw std::runtime_error("Parameter " + namelist + ":" + key + " is not of the requested type");
 }
 
@@ -266,13 +269,13 @@ size_t NamelistParams::get_num_parameters() const {
 }
 
 // Explicit template instantiations
-template bool NamelistParams::get<bool>(const std::string &, const std::string &) const;
-template int NamelistParams::get<int>(const std::string &, const std::string &) const;
-template double NamelistParams::get<double>(const std::string &, const std::string &) const;
-template std::string NamelistParams::get<std::string>(const std::string &, const std::string &) const;
-template std::vector<bool> NamelistParams::get<std::vector<bool>>(const std::string &, const std::string &) const;
-template std::vector<int> NamelistParams::get<std::vector<int>>(const std::string &, const std::string &) const;
-template std::vector<double> NamelistParams::get<std::vector<double>>(const std::string &, const std::string &) const;
-template std::vector<std::string> NamelistParams::get<std::vector<std::string>>(const std::string &, const std::string &) const;
+template void NamelistParams::get<bool>(const std::string &, bool &, const std::string &) const;
+template void NamelistParams::get<int>(const std::string &, int &, const std::string &) const;
+template void NamelistParams::get<double>(const std::string &, double &, const std::string &) const;
+template void NamelistParams::get<std::string>(const std::string &, std::string &, const std::string &) const;
+template void NamelistParams::get<std::vector<bool>>(const std::string &, std::vector<bool> &, const std::string &) const;
+template void NamelistParams::get<std::vector<int>>(const std::string &, std::vector<int> &, const std::string &) const;
+template void NamelistParams::get<std::vector<double>>(const std::string &, std::vector<double> &, const std::string &) const;
+template void NamelistParams::get<std::vector<std::string>>(const std::string &, std::vector<std::string> &, const std::string &) const;
 
 } // namespace MOM

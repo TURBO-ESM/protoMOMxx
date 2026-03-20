@@ -32,7 +32,8 @@
  * Example usage:
  * @code
  *   NamelistParams params("path/to/namelist.nml");
- *   bool value = params.get<bool>("LOGICAL_VAR", "NAMELIST_NAME");
+ *   bool value;
+ *   params.get("LOGICAL_VAR", value, "NAMELIST_NAME");
  * @endcode
  */
 
@@ -76,11 +77,11 @@ public:
   /// @brief Get a parameter value as a specific type.
   /// @tparam T The expected type of the parameter value.
   /// @param key The parameter key
+  /// @param value An output reference to store the retrieved parameter value.
   /// @param namelist The namelist name (empty string for global scope)
-  /// @return The parameter value as type T
   /// @throws std::runtime_error if the parameter is not of type T
   template <typename T>
-  T get(const std::string &key, const std::string &namelist = "") const;
+  void get(const std::string &key, T &value, const std::string &namelist = "") const;
 
   /// @brief Check if a parameter exists
   /// @param key The parameter key

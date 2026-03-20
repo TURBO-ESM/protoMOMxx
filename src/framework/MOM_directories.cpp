@@ -21,10 +21,11 @@ Directories::Directories(int ensemble_num) {
   const std::string nml_group = "MOM_INPUT_NML";
 
   auto get_MOM_input_nml_param = [&](const std::string& param_name) -> std::string {
+    std::string value;
     if (nml.has_param(param_name, nml_group)) {
-      return nml.get<std::string>(param_name, nml_group);
+      nml.get(param_name, value, nml_group);
     }
-    return "";
+    return value;
   };
 
   output_directory_   = io::ensembler(get_MOM_input_nml_param("OUTPUT_DIRECTORY"), ensemble_num);
