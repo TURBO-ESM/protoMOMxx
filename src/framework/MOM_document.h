@@ -146,16 +146,10 @@ public:
 private:
   // ---- Internal helpers ----
 
-  /// @brief Handle module transitions (open new module if needed).
-  /// @param new_module The name of the new module being accessed.
-  /// @param layout Whether the new module is a layout module.
-  /// @param debugging Whether the new module is a debugging module.
-  void handle_module_transition(std::string_view new_module, bool layout = false, bool debugging = false);
-
   /// @brief Lazily open the documentation files.
   void open_files();
 
-  /// @brief Common preamble for doc_param overloads: open files and handle module transition.
+  /// @brief Common preamble for doc_param overloads: open files.
   /// @return true if files are open and writing can proceed, false otherwise.
   bool prepare_doc(const DocParamOptions &opts);
 

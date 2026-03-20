@@ -143,9 +143,9 @@ TEST_F(DocFileWriterTest, ModulesBlocksAndDedup) {
 
   std::string content = read_file(base_path() + ".all");
 
-  // Module markers
+  // Module markers (comment-style headers, no closing %Module markers)
   EXPECT_NE(content.find("=== module MOM_dynamics ==="), std::string::npos);
-  EXPECT_NE(content.find("%MOM_dynamics"), std::string::npos);
+  EXPECT_EQ(content.find("%MOM_dynamics"), std::string::npos);
   EXPECT_NE(content.find("=== module MOM_thermo ==="), std::string::npos);
 
   // Block markers

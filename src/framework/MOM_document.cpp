@@ -355,7 +355,6 @@ bool DocFileWriter::prepare_doc(const DocParamOptions &opts) {
   open_files();
   if (!files_are_open_)
     return false;
-  handle_module_transition(opts.module, opts.layout_param, opts.debugging_param);
   return true;
 }
 
@@ -517,44 +516,10 @@ void DocFileWriter::close_module() {
   if (!files_are_open_ || current_module_.empty())
     return;
 
-  // Blank line for delineation — suppress from .short if the entire module was all-default
-  write_message_and_desc("", "", current_module_all_default_, current_module_layout_, current_module_debugging_);
-
-  // Closing module block
-  std::string mesg = "%" + current_module_;
-  write_message_and_desc(mesg, "", current_module_all_default_, current_module_layout_, current_module_debugging_);
-
   current_module_.clear();
   current_module_layout_ = false;
   current_module_debugging_ = false;
   current_module_all_default_ = false;
-}
-
-void DocFileWriter::handle_module_transition(std::string_view new_module, bool layout, bool debugging) {
-  if (!files_are_open_)
-    return;
-
-  // If we're switching modules, close the previous one and open the new one.
-  // Note: doc_module() uses close_module() + its own "=== module ===" header
-  // for explicit module documentation.  This path handles implicit transitions
-  // triggered by doc_param when the module field changes, using a lighter
-  // "Module%" / "%Module" format.
-  if (new_module != current_module_) {
-    close_module();
-
-    if (!new_module.empty()) {
-      write_message_and_desc("", "", false, layout, debugging); // Blank line
-      std::string opening;
-      opening += new_module;
-      opening += '%';
-      write_message_and_desc(opening, "", false, layout, debugging);
-    }
-
-    current_module_ = new_module;
-    current_module_layout_ = layout;
-    current_module_debugging_ = debugging;
-    current_module_all_default_ = false; // implicit transitions are never all-default
-  }
 }
 
 void DocFileWriter::doc_openBlock(std::string_view blockName, std::string_view desc) {
