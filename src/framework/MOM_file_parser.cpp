@@ -138,10 +138,8 @@ std::string strip_comments(std::string_view line, bool &in_block) {
 
 /// @brief Parse a runtime parameter file and add its contents to the provided table.
 /// @param path The file path of the runtime parameter file to parse.
-/// @param table The table to which parsed parameters will be added. This is a map from module names to maps of
-/// key-value pairs.
-void add_data_from_file(const std::string &path,
-                               std::unordered_map<std::string, std::unordered_map<std::string, ParamValue>> &table) {
+/// @param table The ParamTable to which parsed parameters will be added.
+void add_data_from_file(const std::string &path, ParamTable &table) {
   namespace fs = std::filesystem;
 
   std::cout << "  Reading parameter file: " << path << std::endl;
@@ -165,28 +163,10 @@ void add_data_from_file(const std::string &path,
   std::size_t line_no = 0;
 
   auto assign_param = [&](const std::string &module, const std::string &key, ParamValue value, bool is_override) {
-    auto &mod_table = table[module];
-    auto it = mod_table.find(key);
-
-    if (is_override) {
-      if (it == mod_table.end()) {
-        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": #override requires an existing key: '" +
-                                 (module.empty() ? key : module + "%" + key) + "'");
-      }
-      it->second = std::move(value);
-      return;
-    }
-
-    if (it == mod_table.end()) {
-      mod_table.emplace(key, std::move(value));
-      return;
-    }
-
-    // Keep repeated assignments only when they agree exactly.
-    if (it->second != value) {
-      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": duplicate assignment for '" +
-                               (module.empty() ? key : module + "%" + key) +
-                               "' with a different value; use #override to change it");
+    try {
+      table.insert(module, key, std::move(value), is_override);
+    } catch (const std::runtime_error &e) {
+      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": " + e.what());
     }
   };
 
@@ -270,9 +250,8 @@ void add_data_from_file(const std::string &path,
       if (cmd == "undef") {
         bool is_override = false;
         // if a value was already provided, it must be "true":
-        auto it = table[target.module].find(target.key);
-        if (it != table[target.module].end()) {
-          const auto &existing_val = it->second;
+        if (table.has_param(target.key, target.module)) {
+          const auto &existing_val = table.get_variant(target.key, target.module);
           if (!std::holds_alternative<bool>(existing_val) || !std::get<bool>(existing_val)) {
             throw std::runtime_error(path + ":" + std::to_string(line_no) +
                                      ": #undef can only be applied to keys that are currently defined as true; use "
@@ -338,42 +317,19 @@ RuntimeParams::RuntimeParams(const std::vector<std::string> &paths) {
 }
 
 bool RuntimeParams::has_param(const std::string &key, const std::string &module) const {
-  auto mod_it = table_.find(module);
-  if (mod_it == table_.end()) {
-    return false;
-  }
-  return mod_it->second.find(key) != mod_it->second.end();
+  return table_.has_param(key, module);
 }
 
 std::vector<std::string> RuntimeParams::get_modules() const {
-  std::vector<std::string> modules;
-  modules.reserve(table_.size());
-  for (const auto &pair : table_) {
-    modules.push_back(pair.first);
-  }
-  return modules;
+  return table_.get_groups();
 }
 
 size_t RuntimeParams::get_num_parameters() const {
-  size_t count = 0;
-  for (const auto &mod_pair : table_) {
-    count += mod_pair.second.size();
-  }
-  return count;
+  return table_.get_num_parameters();
 }
 
 const ParamValue &RuntimeParams::get_variant(const std::string &key, const std::string &module) const {
-  auto mod_it = table_.find(module);
-  if (mod_it == table_.end()) {
-    throw std::out_of_range("Module not found: " + module);
-  }
-
-  auto key_it = mod_it->second.find(key);
-  if (key_it == mod_it->second.end()) {
-    throw std::out_of_range("Key not found in module " + module + ": " + key);
-  }
-
-  return key_it->second;
+  return table_.get_variant(key, module);
 }
 
 template <typename T>

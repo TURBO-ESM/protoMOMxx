@@ -39,6 +39,7 @@
 
 #pragma once
 
+#include "MOM_param_table.h"
 #include "MOM_parser_utils.h"
 #include "MOM_string_utils.h"
 #include <algorithm>
@@ -48,7 +49,6 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <unordered_map>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -99,7 +99,7 @@ public:
 
 private:
   std::string path_;
-  std::unordered_map<std::string, std::unordered_map<std::string, ParamValue>> table_;
+  ParamTable table_{true}; // case-insensitive
 };
 
 } // namespace MOM

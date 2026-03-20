@@ -29,20 +29,10 @@ NamelistParams::NamelistParams(const std::string &path) : path_(path) {
   std::size_t line_no = 0;
 
   auto assign_param = [&](const std::string &namelist, const std::string &key, ParamValue value) {
-    auto &nml_table = table_[namelist];
-    auto it = nml_table.find(key);
-
-    if (it == nml_table.end()) {
-      nml_table.emplace(key, std::move(value));
-      return;
-    }
-
-    if (it->second != value) {
-      throw std::runtime_error(
-        path_ + ":" + std::to_string(line_no) +
-        ": duplicate assignment for '" + (namelist.empty() ? key : namelist + "%" + key) +
-        "' with a different value"
-      );
+    try {
+      table_.insert(namelist, key, std::move(value));
+    } catch (const std::runtime_error &e) {
+      throw std::runtime_error(path_ + ":" + std::to_string(line_no) + ": " + e.what());
     }
   };
 
@@ -238,34 +228,19 @@ void NamelistParams::get(const std::string &key, T &value, const std::string &na
 }
 
 const ParamValue &NamelistParams::get_variant(const std::string &key, const std::string &namelist) const {
-  const std::string lower_nml = lowercase(namelist);
-  const std::string lower_key = lowercase(key);
-
-  auto nml_it = table_.find(lower_nml);
-  if (nml_it == table_.end()) throw std::out_of_range("Namelist not found: " + namelist);
-
-  auto key_it = nml_it->second.find(lower_key);
-  if (key_it == nml_it->second.end()) throw std::out_of_range("Key not found in namelist " + namelist + ": " + key);
-
-  return key_it->second;
+  return table_.get_variant(key, namelist);
 }
 
 bool NamelistParams::has_param(const std::string &key, const std::string &namelist) const {
-  auto nml_it = table_.find(lowercase(namelist));
-  return nml_it != table_.end() && nml_it->second.find(lowercase(key)) != nml_it->second.end();
+  return table_.has_param(key, namelist);
 }
 
 std::vector<std::string> NamelistParams::get_namelists() const {
-  std::vector<std::string> namelists;
-  namelists.reserve(table_.size());
-  for (const auto& [name, _] : table_) namelists.push_back(name);
-  return namelists;
+  return table_.get_groups();
 }
 
 size_t NamelistParams::get_num_parameters() const {
-  size_t count = 0;
-  for (const auto& [_, params] : table_) count += params.size();
-  return count;
+  return table_.get_num_parameters();
 }
 
 // Explicit template instantiations

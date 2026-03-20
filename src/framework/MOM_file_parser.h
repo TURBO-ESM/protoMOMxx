@@ -43,6 +43,7 @@
 
 #include "MOM_document.h"
 #include "MOM_directories.h"
+#include "MOM_param_table.h"
 #include "MOM_parser_utils.h"
 #include "MOM_string_utils.h"
 #include <algorithm>
@@ -57,7 +58,6 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -163,7 +163,7 @@ public:
 
 private:
   std::string path_;
-  std::unordered_map<std::string, std::unordered_map<std::string, ParamValue>> table_;
+  ParamTable table_{false}; // case-sensitive
   std::shared_ptr<DocFileWriter> doc_; ///< Optional documentation writer
 };
 
