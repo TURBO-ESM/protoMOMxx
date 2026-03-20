@@ -2,6 +2,7 @@
 add_library(MOM_src_framework
   MOM_logger.cpp
   MOM_parser_utils.cpp
+  MOM_directories.cpp
   MOM_nml_parser.cpp
 )
 

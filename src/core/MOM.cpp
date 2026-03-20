@@ -1,15 +1,20 @@
 #include "MOM.h"
 #include "MOM_logger.h"
+#include "MOM_directories.h"
 
 namespace MOM {
 
 Model::Model(const int ensemble_num)
   : ensemble_num_(ensemble_num) {
 
+  logger::info("Initializing protoMOMxx...");
+
+  // Initialize the directories container, which will read the namelist and determine the paths to use for input and output.
+  Directories directories(ensemble_num_);
+
   // todo: read VERBOSITY param instead of hardcoding it below
   logger::set_verbosity(logger::LogLevel::DEBUG);
 
-  logger::info("Initializing protoMOMxx...");
   if (ensemble_num_ >= 0) {
     logger::info("Ensemble number: ", ensemble_num_);
   }
