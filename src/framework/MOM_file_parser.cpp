@@ -1,4 +1,11 @@
 #include "MOM_file_parser.h"
+#include "MOM_string_utils.h"
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <stdexcept>
+#include <string_view>
+#include <utility>
 
 namespace MOM {
 
@@ -241,6 +248,11 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
           // #define key  (no value) means set bool to true
           assign_param(target.module, target.key, ParamValue(true), false);
         } else {
+          if (rhs.front() == '=') {
+            throw std::runtime_error(path + ":" + std::to_string(line_no) +
+                                     ": #define does not use '='; write '#define " + target.key + " <value>' or '" +
+                                     target.key + " = <value>'");
+          }
           // #define key value means parse value as usual
           assign_param(target.module, target.key, get_value(rhs, line_no, path), false);
         }
@@ -248,6 +260,11 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
       }
 
       if (cmd == "undef") {
+        if (!rhs.empty()) {
+          throw std::runtime_error(path + ":" + std::to_string(line_no) +
+                                   ": #undef takes only a key name, but got trailing content: '" + std::string(rhs) +
+                                   "'");
+        }
         bool is_override = false;
         // if a value was already provided, it must be "true":
         if (table.has_param(target.key, target.module)) {
@@ -335,25 +352,29 @@ const ParamValue &RuntimeParams::get_variant(const std::string &key, const std::
 template <typename T>
 void RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions &options) const {
   bool value_was_set = false;
-  try {
-    const auto &val = get_variant(key, options.module);
-    if (std::holds_alternative<T>(val)) {
-      value = std::get<T>(val);
-      value_was_set = true;
-    } else {
-      throw std::runtime_error("Parameter " + options.module + ":" + key + " is not of the requested type");
-    }
-  } catch (const std::out_of_range &) {
-    if (options.fail_if_missing) {
-      throw std::out_of_range("Key not found in module " + options.module + ": " + key);
-    }
-    if (options.default_value.has_value()) {
-      if (!std::holds_alternative<T>(options.default_value.value())) {
-        throw std::runtime_error("Default value for " + options.module + ":" + key + " is not of the requested type");
+
+  if (!options.do_not_read) {
+    try {
+      const auto &val = get_variant(key, options.module);
+      if (std::holds_alternative<T>(val)) {
+        value = std::get<T>(val);
+        value_was_set = true;
+      } else {
+        throw std::runtime_error("Parameter " + options.module + "%" + key + " is not of the requested type");
       }
-      value = std::get<T>(options.default_value.value());
-      value_was_set = true;
+    } catch (const std::out_of_range &) {
+      if (options.fail_if_missing) {
+        throw std::out_of_range("Key not found in module " + options.module + ": " + key);
+      }
     }
+  }
+
+  if (!value_was_set && options.default_value.has_value()) {
+    if (!std::holds_alternative<T>(options.default_value.value())) {
+      throw std::runtime_error("Default value for " + options.module + "%" + key + " is not of the requested type");
+    }
+    value = std::get<T>(options.default_value.value());
+    value_was_set = true;
   }
 
   // Document the parameter if a doc writer is attached and desc is provided

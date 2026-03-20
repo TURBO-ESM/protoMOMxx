@@ -56,7 +56,7 @@ TEST(MOMFileParserTest, ParseMOMInputSimple) {
   rp.get("VERT_COORDINATE", vert_coordinate);
   EXPECT_EQ(vert_coordinate, "ALE");
 
-  // Check that all 54 of the parameters in the file are present
+  // Check that all parameters in the file are present
   EXPECT_EQ(rp.get_num_parameters(), 5);
 }
 
@@ -128,7 +128,7 @@ TEST(MOMFileParserTest, ParseMOMInputLarge1) {
   rp.get("MLD_DECAYING_TFILTER", mld_decaying_tfilter, {.module = "MLE", .units = ""});
   EXPECT_EQ(mld_decaying_tfilter, 2592000.0);
 
-  // Check that all 54 of the parameters in the file are present
+  // Check that all parameters in the file are present
   EXPECT_EQ(rp.get_num_parameters(), 243);
 }
 

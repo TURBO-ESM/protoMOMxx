@@ -42,24 +42,11 @@
 #pragma once
 
 #include "MOM_document.h"
-#include "MOM_directories.h"
 #include "MOM_param_table.h"
 #include "MOM_parser_utils.h"
-#include "MOM_string_utils.h"
-#include <algorithm>
-#include <cctype>
-#include <charconv>
-#include <cstdint>
-#include <filesystem>
-#include <fstream>
-#include <iostream>
 #include <memory>
 #include <optional>
-#include <stdexcept>
 #include <string>
-#include <string_view>
-#include <utility>
-#include <variant>
 #include <vector>
 
 namespace MOM {
