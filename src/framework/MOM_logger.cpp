@@ -13,8 +13,21 @@ void MOM::logger::log_impl(LogLevel level, std::string_view message) {
   }
 }
 
-void MOM::logger::set_verbosity(LogLevel level) { log_level_ = level; }
-MOM::logger::LogLevel MOM::logger::get_verbosity() { return log_level_; }
+void MOM::logger::set_verbosity(LogLevel level) { 
+  log_level_ = level; 
+}
+
+void MOM::logger::set_verbosity(int level) {
+  if (level < 0 || level > 9) {
+    warning("Invalid verbosity level: ", level, ". Valid range is 0-9. Keeping previous level: ", log_level_);
+    return;
+  }
+  set_verbosity(static_cast<LogLevel>(level));
+}
+
+MOM::logger::LogLevel MOM::logger::get_verbosity() {
+  return log_level_;
+}
 
 void MOM::logger::set_log_stream(std::ostream& log_stream) {
   log_stream_ = &log_stream;

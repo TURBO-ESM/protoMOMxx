@@ -10,19 +10,19 @@ Model::Model(const int ensemble_num)
   logger::info("Initializing protoMOMxx...");
   if (ensemble_num_ >= 0) logger::info("Ensemble number: ", ensemble_num_);
 
-  // Directories container reads the input.nml file to determine where to read/write files.
+  // Read input.nml to determine the directories and files to read from and write to
   Directories directories(ensemble_num_);
 
-  // RuntimeParams reads the parameter files specified by Directories and makes them available for querying.
+  // RuntimeParams reads the parameter files specified in input.nml and makes them available for querying.
   params = std::make_shared<RuntimeParams>(
     directories.parameter_filenames(),
     "MOM_parameters_doc"
   );
-  params->doc_module("MOM", "Main MOM ocean model module");
+  params->doc_module("MOM", "Main MOM ocean model module"); // set current param module for documentation purposes
 
-  int verbosity = 0;
+  int verbosity = 2;
   params->get("VERBOSITY", verbosity, 
-              {.default_value = 0,
+              {.default_value = 2,
                .desc = "Integer controlling level of messaging\n"
                        "\t0 = Only FATAL messages\n"
                        "\t2 = Only FATAL, WARNING, NOTE [default]\n"
@@ -30,10 +30,11 @@ Model::Model(const int ensemble_num)
                .units = "",
                .fail_if_missing = false});
 
-  logger::set_verbosity(static_cast<logger::LogLevel>(verbosity));
-  //logger::info("Log verbosity set to ", logger::get_verbosity());
+  logger::set_verbosity(verbosity);
+  logger::info("Log verbosity: ", logger::get_verbosity());
 
-  // todo: Below parameter queries are currently just examples to demonstrate the get() interface and are not used yet.
+  // todo: Below parameter queries are currently just examples to demonstrate the get() interface and should 
+  // be moved to more appropriate locations as the corresponding functionality is implemented.
 
   bool split = false;
   params->get("SPLIT", split, {.default_value = true, .desc = "Use the split time stepping if true."});

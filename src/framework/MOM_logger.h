@@ -61,6 +61,10 @@ public:
   /// @param level The new verbosity threshold.
   static void set_verbosity(LogLevel level);
 
+  /// @brief Set the minimum verbosity level using an integer. Valid range is 0-9.
+  /// @param level The new verbosity threshold as an integer (0=FATAL, 1=WARNING, 2=NOTE, 3=INFO, 9=DEBUG).
+  static void set_verbosity(int level);
+
   /// @brief Return the current verbosity level.
   /// @return The current verbosity threshold (of type LogLevel).
   static LogLevel get_verbosity();
@@ -110,5 +114,17 @@ private:
   inline static std::ostream* log_stream_      = &std::cout;
   inline static std::ostream* err_stream_      = &std::cerr;
 };
+
+/// @brief Stream insertion for LogLevel, producing human-readable names.
+inline std::ostream &operator<<(std::ostream &os, logger::LogLevel level) {
+  switch (level) {
+  case logger::LogLevel::FATAL:   return os << "FATAL";
+  case logger::LogLevel::WARNING: return os << "WARNING";
+  case logger::LogLevel::NOTE:    return os << "NOTE";
+  case logger::LogLevel::INFO:    return os << "INFO";
+  case logger::LogLevel::DEBUG:   return os << "DEBUG";
+  default:                        return os << "UNKNOWN(" << static_cast<int>(level) << ")";
+  }
+}
 
 } // namespace MOM
