@@ -11,6 +11,7 @@
 #include <array>
 #include <charconv>
 #include <cmath>
+#include <limits>
 #include <type_traits>
 #include <stdexcept>
 
@@ -26,8 +27,8 @@ constexpr double fixed_upper_bound = 1.0e4;
 // Precision sweep bounds for real_string round-trip formatting
 constexpr int fixed_min_precision = 1;
 constexpr int sci_min_precision = 1;
-constexpr int max_precision = 16;
-constexpr int fallback_precision = 15;
+constexpr int max_precision = std::numeric_limits<double>::max_digits10; // 17; guarantees round-trip
+constexpr int fallback_precision = max_precision;
 
 /// @brief Trim trailing zeros from a fixed-notation string, keeping at least "x.0".
 void trim_fixed_zeros(std::string &s) {
@@ -322,8 +323,14 @@ void DocFileWriter::write_message_and_desc(std::string_view mesg, std::string_vi
     if (write_dbg)
       file_debugging_.stream << comment_line << "\n";
 
-    check_io();
   }
+
+  // Flush after each parameter to ensure data is written promptly
+  if (write_all)   file_all_.stream.flush();
+  if (write_short) file_short_.stream.flush();
+  if (write_lay)   file_layout_.stream.flush();
+  if (write_dbg)   file_debugging_.stream.flush();
+  check_io();
 }
 
 // ---------------------------------------------------------------------------

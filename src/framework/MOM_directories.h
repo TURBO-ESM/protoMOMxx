@@ -28,7 +28,8 @@ public:
   const std::string& restart_output_dir() const;
   /// @return The directory to write model output to.
   const std::string& output_directory() const;
-  /// @return The input filename indicating how the run segment should be started.
+  /// @return The input filename indicating how the run segment should be started. If equal to "n",
+  /// will run a new run. If equal to "r", will attempt to read a restart file.
   const std::string& input_filename() const;
   /// @return The list of parameter files to read for model initialization (e.g., MOM_input, MOM_override, etc.).
   const std::vector<std::string>& parameter_filenames() const;
@@ -38,7 +39,8 @@ private:
   std::string restart_input_dir_;  ///< Directory to read restart and input files.
   std::string restart_output_dir_; ///< Directory to write restart files.
   std::string output_directory_;   ///< Directory to write model output.
-  std::string input_filename_;  ///< Indicates input files or how the run segment should be started.
+  std::string input_filename_;  ///< Indicates input files or how the run segment should be started. If equal to "n",
+                                /// will run a new run. If equal to "r", will attempt to read a restart file.
   std::vector<std::string> parameter_filenames_; ///< List of parameter files to read for model initialization.
 };
 

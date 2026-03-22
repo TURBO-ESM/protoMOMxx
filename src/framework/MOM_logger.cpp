@@ -18,6 +18,12 @@ void MOM::logger::set_verbosity(LogLevel level) {
 }
 
 void MOM::logger::set_verbosity(int level) {
+  // Ensure enum values match the hardcoded cases below
+  static_assert(static_cast<int>(LogLevel::FATAL)   == 0);
+  static_assert(static_cast<int>(LogLevel::WARNING) == 1);
+  static_assert(static_cast<int>(LogLevel::NOTE)    == 2);
+  static_assert(static_cast<int>(LogLevel::INFO)    == 3);
+  static_assert(static_cast<int>(LogLevel::DEBUG)   == 9);
   switch (level) {
   case 0: case 1: case 2: case 3: case 9:
     set_verbosity(static_cast<LogLevel>(level));

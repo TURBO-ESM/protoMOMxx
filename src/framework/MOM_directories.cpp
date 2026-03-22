@@ -29,9 +29,16 @@ Directories::Directories(int ensemble_num) {
   };
 
   output_directory_   = io::ensembler(get_MOM_input_nml_param("OUTPUT_DIRECTORY"), ensemble_num);
+  if (output_directory_.empty()) output_directory_ = "./"; // Default to current directory if not specified
+
   restart_input_dir_  = io::ensembler(get_MOM_input_nml_param("RESTART_INPUT_DIR"), ensemble_num);
+  if (restart_input_dir_.empty()) restart_input_dir_ = "./"; // Default to current directory if not specified
+
   restart_output_dir_ = io::ensembler(get_MOM_input_nml_param("RESTART_OUTPUT_DIR"), ensemble_num);
+  if (restart_output_dir_.empty()) restart_output_dir_ = "./"; // Default to current directory if not specified
+
   input_filename_     = io::ensembler(get_MOM_input_nml_param("INPUT_FILENAME"), ensemble_num);
+  if (input_filename_.empty()) input_filename_ = "n"; // Default to "n" (new run) if not specified
 
   // Read the parameter file names, which can be a single string or a list of strings like
   // MOM_input, MOM_override, etc. The ensembler number is applied to each file name if provided.
