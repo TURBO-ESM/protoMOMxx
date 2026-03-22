@@ -95,14 +95,16 @@ TEST(MOMFileParserTest, ParseMOMInputDirective) {
   rp.get("GAMMA", Gamma);
   EXPECT_FALSE(Gamma); // Check that #define GAMMA followed by #undef GAMMA results in GAMMA being false
 
-  // Check #define with module%key syntax outside a module block
+  // Check #define with block%key syntax outside a block
   bool Enabled;
-  rp.get("ENABLED", Enabled, {.module = "MyMod"});
+  rp.open_block("MyMod");
+  rp.get("ENABLED", Enabled);
   EXPECT_TRUE(Enabled);
 
   double Scale;
-  rp.get("SCALE", Scale, {.module = "MyMod", .units = ""});
+  rp.get("SCALE", Scale, {.units = ""});
   EXPECT_EQ(Scale, 2.5);
+  rp.close_block();
 }
 
 TEST(MOMFileParserTest, ParseMOMInputLarge1) {
@@ -112,7 +114,7 @@ TEST(MOMFileParserTest, ParseMOMInputLarge1) {
   RuntimeParams rp(test_file_path.string());
 
   // Check that we can parse the large file without errors
-  EXPECT_FALSE(rp.get_modules().empty());
+  EXPECT_FALSE(rp.get_blocks().empty());
 
   // Check several values
   bool tripolar_n;
@@ -131,10 +133,12 @@ TEST(MOMFileParserTest, ParseMOMInputLarge1) {
   rp.get("NJGLOBAL", njglobal);
   EXPECT_EQ(njglobal, 480);
 
-  EXPECT_TRUE(check_double_value(rp.get_variant("MLD_DECAYING_TFILTER", "MLE"), 2592000.0));
+  rp.open_block("MLE");
+  EXPECT_TRUE(check_double_value(rp.get_variant("MLD_DECAYING_TFILTER"), 2592000.0));
 
   double mld_decaying_tfilter;
-  rp.get("MLD_DECAYING_TFILTER", mld_decaying_tfilter, {.module = "MLE", .units = ""});
+  rp.get("MLD_DECAYING_TFILTER", mld_decaying_tfilter, {.units = ""});
+  rp.close_block();
   EXPECT_EQ(mld_decaying_tfilter, 2592000.0);
 
   // Check that all parameters in the file are present
@@ -148,7 +152,7 @@ TEST(MOMFileParserTest, ParseMOMInputModules) {
   RuntimeParams rp(test_file_path.string());
 
   // Check that we have the expected modules
-  auto modules = rp.get_modules();
+  auto modules = rp.get_blocks();
 
   // Attemping to read D as a double should throw an error since D is a bool
   double D_double;
@@ -212,32 +216,40 @@ TEST(MOMFileParserTest, ParseMOMInputModules) {
     FAIL() << "Expected std::out_of_range when trying to read N_SMOOTH without specifying module, but no exception was "
               "thrown";
   } catch (const std::out_of_range &e) {
-    EXPECT_TRUE(std::string(e.what()).find("Key not found in module ") != std::string::npos);
+    EXPECT_TRUE(std::string(e.what()).find("Key not found in block") != std::string::npos);
   } catch (...) {
     FAIL() << "Expected std::out_of_range when trying to read N_SMOOTH without specifying module, but caught different "
               "exception";
   }
+  rp.open_block("KPP");
   EXPECT_EQ(
       [&] {
         int N_SMOOTH;
-        rp.get("N_SMOOTH", N_SMOOTH, {.module = "KPP"});
+        rp.get("N_SMOOTH", N_SMOOTH);
         return N_SMOOTH;
       }(),
       3);
+  rp.close_block();
+
+  rp.open_block("MLE");
   EXPECT_EQ(
       [&] {
         bool USE_BODNER23;
-        rp.get("USE_BODNER23", USE_BODNER23, {.module = "MLE"});
+        rp.get("USE_BODNER23", USE_BODNER23);
         return USE_BODNER23;
       }(),
       false);
+  rp.close_block();
+
+  rp.open_block("FOO");
   EXPECT_EQ(
       [&] {
         std::string BAR;
-        rp.get("BAR", BAR, {.module = "FOO"});
+        rp.get("BAR", BAR);
         return BAR;
       }(),
       "t.nc");
+  rp.close_block();
 }
 
 TEST(MOMFileParserTest, ParseMOMInputLists) {
@@ -371,7 +383,7 @@ TEST(MOMFileParserTest, InvalidFile2) {
     RuntimeParams rp(test_file_path.string());
     FAIL() << "Expected std::runtime_error due to invalid key name";
   } catch (const std::runtime_error &e) {
-    EXPECT_TRUE(std::string(e.what()).find("already-open module") != std::string::npos);
+    EXPECT_TRUE(std::string(e.what()).find("already-open block") != std::string::npos);
   } catch (...) {
     FAIL() << "Expected std::runtime_error due to invalid key name, but caught different exception";
   }
@@ -379,14 +391,14 @@ TEST(MOMFileParserTest, InvalidFile2) {
 
 TEST(MOMFileParserTest, InvalidFile3) {
   auto test_file_path = get_test_data_dir() / "MOM_input_invalid3";
-  // Parsing this file should throw an "unterminated module" error:
+  // Parsing this file should throw an "unterminated block" error:
   try {
     RuntimeParams rp(test_file_path.string());
-    FAIL() << "Expected std::runtime_error due to unterminated module";
+    FAIL() << "Expected std::runtime_error due to unterminated block";
   } catch (const std::runtime_error &e) {
-    EXPECT_TRUE(std::string(e.what()).find("unterminated module") != std::string::npos);
+    EXPECT_TRUE(std::string(e.what()).find("unterminated block") != std::string::npos);
   } catch (...) {
-    FAIL() << "Expected std::runtime_error due to unterminated module, but caught different exception";
+    FAIL() << "Expected std::runtime_error due to unterminated block, but caught different exception";
   }
 }
 
@@ -440,7 +452,9 @@ TEST(MOMFileParserTest, OverrideModules) {
   EXPECT_EQ(H, 1e-5); // H should be overridden to 1e-5
 
   int N_SMOOTH;
-  rp.get("N_SMOOTH", N_SMOOTH, {.module = "KPP"});
+  rp.open_block("KPP");
+  rp.get("N_SMOOTH", N_SMOOTH);
+  rp.close_block();
   EXPECT_EQ(N_SMOOTH, 5); // N_SMOOTH in KPP should be overridden to 5
 
   // Newly defined variable in the override file should be present
@@ -466,10 +480,14 @@ TEST(MOMFileParserTest, OverrideModules) {
   rp.get("F", F);
   EXPECT_EQ(F, "./t.nc");
   bool USE_BODNER23;
-  rp.get("USE_BODNER23", USE_BODNER23, {.module = "MLE"});
+  rp.open_block("MLE");
+  rp.get("USE_BODNER23", USE_BODNER23);
+  rp.close_block();
   EXPECT_EQ(USE_BODNER23, false);
   std::string BAR;
-  rp.get("BAR", BAR, {.module = "FOO"});
+  rp.open_block("FOO");
+  rp.get("BAR", BAR);
+  rp.close_block();
   EXPECT_EQ(BAR, "t.nc");
 }
 

@@ -8,7 +8,7 @@ H = 1.e-3
 F = ./t.nc
 
 
-! Module Parameters inside module blocks --------------------------------
+! Block Parameters inside blocks --------------------------------
 
 KPP%
 N_SMOOTH = 3
@@ -20,7 +20,7 @@ USE_BODNER23 = True
                                 ! "[Boolean] default = False
 %MLE
 
-! Module Parameters inside module blocks --------------------------------
+! Block Parameters via block%key syntax --------------------------------
 
 FOO%BAR = t.nc
 #override MLE%USE_BODNER23 = False

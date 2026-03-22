@@ -19,7 +19,7 @@ using parser_utils::NotFound;
 namespace {
 
 struct ParsedTarget {
-  std::string module;
+  std::string block;
   std::string key;
 };
 
@@ -27,14 +27,14 @@ struct ParsedTarget {
 ///
 /// Supports either:
 /// - key
-/// - module%key (only when not inside an open module block)
+/// - block%key (only when not inside an open block)
 ///
 /// @param lhs The raw left-hand-side key expression.
-/// @param curr_module The currently open module name, if any.
+/// @param curr_block The currently open block name, if any.
 /// @param line_no Current line number for diagnostics.
 /// @param path File path for diagnostics.
-/// @return ParsedTarget containing resolved module and key.
-ParsedTarget parse_target(std::string_view lhs, std::string_view curr_module, std::size_t line_no,
+/// @return ParsedTarget containing resolved block and key.
+ParsedTarget parse_target(std::string_view lhs, std::string_view curr_block, std::size_t line_no,
                                  const std::string &path) {
   lhs = trim(lhs);
   if (lhs.empty()) {
@@ -42,29 +42,29 @@ ParsedTarget parse_target(std::string_view lhs, std::string_view curr_module, st
   }
 
   ParsedTarget out;
-  out.module = std::string(curr_module);
+  out.block = std::string(curr_block);
 
   auto pct = lhs.find('%');
   if (pct != std::string_view::npos) {
-    if (!curr_module.empty()) {
+    if (!curr_block.empty()) {
       throw std::runtime_error(path + ":" + std::to_string(line_no) +
-                               ": cannot use module%key inside an open module: '" + std::string(lhs) + "'");
+                               ": cannot use block%key inside an open block: '" + std::string(lhs) + "'");
     }
 
-    auto mod = trim(lhs.substr(0, pct));
+    auto blk = trim(lhs.substr(0, pct));
     auto key = trim(lhs.substr(pct + 1));
 
     if (key.find('%') != std::string_view::npos) {
-      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": only one '%' allowed in module%key: '" +
+      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": only one '%' allowed in block%key: '" +
                                std::string(lhs) + "'");
     }
 
-    if (!is_valid_identifier(mod) || !is_valid_identifier(key)) {
-      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": invalid module%key syntax: '" +
+    if (!is_valid_identifier(blk) || !is_valid_identifier(key)) {
+      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": invalid block%key syntax: '" +
                                std::string(lhs) + "'");
     }
 
-    out.module = std::string(mod);
+    out.block = std::string(blk);
     out.key = std::string(key);
     return out;
   }
@@ -163,15 +163,15 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
     throw std::runtime_error("Unable to open runtime parameter file at " + path);
   }
 
-  std::string curr_module;
+  std::string curr_block;
   bool in_block_comment = false;
 
   std::string raw_line;
   std::size_t line_no = 0;
 
-  auto assign_param = [&](const std::string &module, const std::string &key, ParamValue value, bool is_override) {
+  auto assign_param = [&](const std::string &block, const std::string &key, ParamValue value, bool is_override) {
     try {
-      table.insert(key, module, std::move(value), is_override);
+      table.insert(key, block, std::move(value), is_override);
     } catch (const std::runtime_error &e) {
       throw std::runtime_error(path + ":" + std::to_string(line_no) + ": " + e.what());
     }
@@ -187,33 +187,33 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
     if (sv.empty())
       continue;
 
-    // Module open: name%
+    // Block open: name%
     if (sv.back() == '%' && sv.front() != '%') {
       auto name = trim(sv.substr(0, sv.size() - 1));
       if (!is_valid_identifier(name)) {
-        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": invalid module name: '" + std::string(name) +
+        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": invalid block name: '" + std::string(name) +
                                  "'");
       }
-      if (!curr_module.empty()) {
-        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": cannot open module '" + std::string(name) +
-                                 "' inside already-open module '" + curr_module + "'");
+      if (!curr_block.empty()) {
+        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": cannot open block '" + std::string(name) +
+                                 "' inside already-open block '" + curr_block + "'");
       }
-      curr_module = std::string(name);
+      curr_block = std::string(name);
       continue;
     }
 
-    // Module close: %name
+    // Block close: %name
     if (sv.front() == '%' && sv.size() >= 2) {
       auto name = trim(sv.substr(1));
       if (!is_valid_identifier(name)) {
-        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": invalid module close: '%" +
+        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": invalid block close: '%" +
                                  std::string(name) + "'");
       }
-      if (curr_module != name) {
-        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": module mismatch: closing '" +
-                                 std::string(name) + "' but open module is '" + curr_module + "'");
+      if (curr_block != name) {
+        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": block mismatch: closing '" +
+                                 std::string(name) + "' but open block is '" + curr_block + "'");
       }
-      curr_module.clear();
+      curr_block.clear();
       continue;
     }
 
@@ -239,14 +239,14 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
         throw std::runtime_error(path + ":" + std::to_string(line_no) + ": directive '#" + std::string(cmd) +
                                  "' requires a key");
       }
-      auto target = parse_target(lhs, curr_module, line_no, path);
+      auto target = parse_target(lhs, curr_block, line_no, path);
 
       auto rhs = trim(lhs_end == std::string_view::npos ? std::string_view{} : args.substr(lhs_end + 1));
 
       if (cmd == "define") {
         if (rhs.empty()) {
           // #define key  (no value) means set bool to true
-          assign_param(target.module, target.key, ParamValue(true), false);
+          assign_param(target.block, target.key, ParamValue(true), false);
         } else {
           if (rhs.front() == '=') {
             throw std::runtime_error(path + ":" + std::to_string(line_no) +
@@ -254,7 +254,7 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
                                      target.key + " = <value>'");
           }
           // #define key value means parse value as usual
-          assign_param(target.module, target.key, get_value(rhs, line_no, path), false);
+          assign_param(target.block, target.key, get_value(rhs, line_no, path), false);
         }
         continue;
       }
@@ -267,8 +267,8 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
         }
         bool is_override = false;
         // if a value was already provided, it must be "true":
-        if (table.has_param(target.key, target.module)) {
-          const auto &existing_val = table.get_variant(target.key, target.module);
+        if (table.has_param(target.key, target.block)) {
+          const auto &existing_val = table.get_variant(target.key, target.block);
           if (!std::holds_alternative<bool>(existing_val) || !std::get<bool>(existing_val)) {
             throw std::runtime_error(path + ":" + std::to_string(line_no) +
                                      ": #undef can only be applied to keys that are currently defined as true; use "
@@ -276,7 +276,7 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
           }
           is_override = true;
         }
-        assign_param(target.module, target.key, ParamValue(false), is_override);
+        assign_param(target.block, target.key, ParamValue(false), is_override);
         continue;
       }
 
@@ -289,7 +289,7 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
                                    ": expected '=' after key in #override directive");
         }
         rhs.remove_prefix(1); // remove '='
-        assign_param(target.module, target.key, get_value(rhs, line_no, path), true);
+        assign_param(target.block, target.key, get_value(rhs, line_no, path), true);
         continue;
       }
 
@@ -311,33 +311,41 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
       throw std::runtime_error(path + ":" + std::to_string(line_no) + ": empty key in: '" + std::string(sv) + "'");
     }
 
-    auto target = parse_target(lhs, curr_module, line_no, path);
-    assign_param(target.module, target.key, get_value(rhs, line_no, path), false);
+    auto target = parse_target(lhs, curr_block, line_no, path);
+    assign_param(target.block, target.key, get_value(rhs, line_no, path), false);
   }
 
   if (in_block_comment) {
     throw std::runtime_error(path + ":EOF: unterminated block comment (missing '*/')");
   }
-  if (!curr_module.empty()) {
-    throw std::runtime_error(path + ":EOF: unterminated module '" + curr_module + "' (missing '%" + curr_module + "')");
+  if (!curr_block.empty()) {
+    throw std::runtime_error(path + ":EOF: unterminated block '" + curr_block + "' (missing '%" + curr_block + "')");
   }
 }
 
 } // anonymous namespace
 
-RuntimeParams::RuntimeParams(const std::string &path) { add_data_from_file(path, table_); }
+RuntimeParams::RuntimeParams(const std::string &path, const std::string &doc_file_base) {
+  if (!doc_file_base.empty()) {
+    doc_ = std::make_unique<DocFileWriter>(doc_file_base);
+  }
+  add_data_from_file(path, table_);
+}
 
-RuntimeParams::RuntimeParams(const std::vector<std::string> &paths) {
+RuntimeParams::RuntimeParams(const std::vector<std::string> &paths, const std::string &doc_file_base) {
+  if (!doc_file_base.empty()) {
+     doc_ = std::make_unique<DocFileWriter>(doc_file_base);
+  }
   for (const auto &path : paths) {
     add_data_from_file(path, table_);
   }
 }
 
-bool RuntimeParams::has_param(const std::string &key, const std::string &module) const {
-  return table_.has_param(key, module);
+bool RuntimeParams::has_param(const std::string &key) const {
+  return table_.has_param(key, current_block_);
 }
 
-std::vector<std::string> RuntimeParams::get_modules() const {
+std::vector<std::string> RuntimeParams::get_blocks() const {
   return table_.get_groups();
 }
 
@@ -345,33 +353,68 @@ size_t RuntimeParams::get_num_parameters() const {
   return table_.get_num_parameters();
 }
 
-const ParamValue &RuntimeParams::get_variant(const std::string &key, const std::string &module) const {
-  return table_.get_variant(key, module);
+const ParamValue &RuntimeParams::get_variant(const std::string &key) const {
+  return table_.get_variant(key, current_block_);
 }
+
+void RuntimeParams::open_block(const std::string &blockName, const std::string &desc) {
+  if (!current_block_.empty()) {
+    throw std::logic_error("open_block(\"" + blockName + "\") called but block \"" + current_block_ + "\" is already open");
+  }
+  current_block_ = blockName;
+  if (doc_) doc_->open_block(blockName, desc);
+}
+
+void RuntimeParams::close_block() {
+  if (current_block_.empty()) throw std::logic_error("close_block() called but no block is open");
+  current_block_.clear();
+  if (doc_) doc_->close_block();
+}
+
+void RuntimeParams::doc_module(const std::string &modname, const std::string &desc, bool layout_mod,
+    bool debugging_mod, bool all_default) {
+  if (doc_) {
+    doc_->doc_module(modname, desc, layout_mod, debugging_mod, all_default);
+  } else {
+    logger::warning("Attempted to document module '", modname,
+                  "' but no documentation writer is attached. Provide a non-empty doc_file_base when constructing RuntimeParams to enable documentation.");
+  }
+}
+
+void RuntimeParams::close_module() {
+  if (doc_) {
+    doc_->close_module();
+  } else {
+    logger::warning("Attempted to close module documentation but no documentation writer is attached. "
+        "Provide a non-empty doc_file_base when constructing RuntimeParams to enable documentation.");
+  }
+}
+
 
 template <typename T>
 void RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions &options) const {
   bool value_was_set = false;
+  auto full_key = [&]() { return current_block_.empty() ? key : current_block_ + "%" + key; };
 
   if (!options.do_not_read) {
     try {
-      const auto &val = get_variant(key, options.module);
+      const auto &val = get_variant(key);
       if (std::holds_alternative<T>(val)) {
         value = std::get<T>(val);
         value_was_set = true;
       } else {
-        throw std::runtime_error("Parameter " + (options.module.empty() ? key : options.module + "%" + key) + " is not of the requested type");
+        throw std::runtime_error("Parameter " + full_key() + " is not of the requested type");
       }
     } catch (const std::out_of_range &) {
       if (options.fail_if_missing) {
-        throw std::out_of_range("Key not found in module " + options.module + ": " + key);
+        throw std::out_of_range("Key not found in block " + current_block_ + ": " + key);
       }
     }
   }
 
   if (!value_was_set && options.default_value.has_value()) {
     if (!std::holds_alternative<T>(options.default_value.value())) {
-      throw std::runtime_error("Default value for " + (options.module.empty() ? key : options.module + "%" + key) + " is not of the requested type");
+      throw std::runtime_error("Default value for " + full_key() + " is not of the requested type");
     }
     value = std::get<T>(options.default_value.value());
     value_was_set = true;
@@ -382,7 +425,6 @@ void RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions 
     DocParamOptions doc_opts;
     doc_opts.layout_param = options.layout_param;
     doc_opts.debugging_param = options.debugging_param;
-    doc_opts.module = options.module;
 
     // Convert ParamValue variant to the appropriate typed optional
     std::optional<T> typed_default;

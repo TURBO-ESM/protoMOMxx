@@ -1,4 +1,4 @@
-! Unterminated module
+! Unterminated block
 
 MODULEX%
   abc = "foo"

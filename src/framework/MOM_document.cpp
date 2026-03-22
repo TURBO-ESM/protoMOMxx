@@ -351,7 +351,7 @@ bool DocFileWriter::mesg_has_been_documented(std::string_view varname, std::stri
 // doc_param helpers
 // ---------------------------------------------------------------------------
 
-bool DocFileWriter::prepare_doc(const DocParamOptions &opts) {
+bool DocFileWriter::prepare_doc() {
   open_files();
   if (!files_are_open_)
     return false;
@@ -389,7 +389,7 @@ std::string to_doc_string(const std::string &v) { return "\"" + v + "\""; }
 template <typename T>
 void DocFileWriter::doc_param(std::string_view varname, std::string_view desc, std::string_view units, const T &val,
                               std::optional<T> default_val, const DocParamOptions &opts) {
-  if (!prepare_doc(opts))
+  if (!prepare_doc())
     return;
 
   std::string mesg;
@@ -417,7 +417,7 @@ template <typename T>
 void DocFileWriter::doc_param(std::string_view varname, std::string_view desc, std::string_view units,
                               const std::vector<T> &vals, std::optional<std::vector<T>> default_val,
                               const DocParamOptions &opts) {
-  if (!prepare_doc(opts))
+  if (!prepare_doc())
     return;
 
   std::string valstring;
@@ -522,7 +522,7 @@ void DocFileWriter::close_module() {
   current_module_all_default_ = false;
 }
 
-void DocFileWriter::doc_openBlock(std::string_view blockName, std::string_view desc) {
+void DocFileWriter::open_block(std::string_view blockName, std::string_view desc) {
   open_files();
   if (!files_are_open_)
     return;
@@ -535,26 +535,24 @@ void DocFileWriter::doc_openBlock(std::string_view blockName, std::string_view d
 
   block_prefix_ += blockName;
   block_prefix_ += '%';
+  current_block_name_ = blockName;
 }
 
-void DocFileWriter::doc_closeBlock(std::string_view blockName) {
+void DocFileWriter::close_block() {
+  if (current_block_name_.empty())
+    throw std::logic_error("close_block() called but no block is open");
+
   open_files();
   if (!files_are_open_)
     return;
 
   std::string mesg = "%";
-  mesg += blockName;
+  mesg += current_block_name_;
   write_message_and_desc(mesg, "", current_module_all_default_,
                          current_module_layout_, current_module_debugging_);
 
-  // Remove the last occurrence of "blockName%" from block_prefix_
-  std::string target;
-  target += blockName;
-  target += '%';
-  auto pos = block_prefix_.rfind(target);
-  if (pos != std::string::npos) {
-    block_prefix_.erase(pos, target.size());
-  }
+  block_prefix_.clear();
+  current_block_name_.clear();
 }
 
 } // namespace MOM

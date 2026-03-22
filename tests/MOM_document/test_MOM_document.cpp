@@ -121,14 +121,13 @@ TEST_F(DocFileWriterTest, ModulesBlocksAndDedup) {
     doc.doc_module("MOM_thermo", "Thermodynamics"); // triggers "already open" warning
 
     DocParamOptions thermo_opts;
-    thermo_opts.module = "MOM_thermo";
     doc.doc_param<int>("T_REF", "ref temp", "K", 300, std::nullopt, thermo_opts);
 
     // Block open/close
-    doc.doc_openBlock("KPP");
+    doc.open_block("KPP");
     EXPECT_EQ(doc.block_prefix(), "KPP%");
     doc.doc_param<double>("KPP_VT2", "Threshold", "", 0.01, std::nullopt, thermo_opts);
-    doc.doc_closeBlock("KPP");
+    doc.close_block();
     EXPECT_EQ(doc.block_prefix(), "");
 
     // Duplicate param detection: same param documented twice, inconsistent value warns

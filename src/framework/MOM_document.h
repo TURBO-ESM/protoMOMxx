@@ -30,7 +30,6 @@ struct DocParamOptions {
   bool layout_param = false;    ///< If true, write to the layout doc file.
   bool debugging_param = false; ///< If true, write to the debugging doc file.
   bool like_default = false;    ///< If true, treat the value as if it equals the default.
-  std::string module;           ///< The module this parameter belongs to.
 };
 
 /// @brief Wrapper around std::ofstream that manages open/close with error checking.
@@ -123,12 +122,11 @@ public:
   /// @brief Open a parameter block (adds blockName% to the current prefix).
   /// @param blockName The name of the block to open.
   /// @param desc A description of the block (written to doc file).
-  void doc_openBlock(std::string_view blockName, std::string_view desc = "");
+  void open_block(std::string_view blockName, std::string_view desc = "");
 
-  /// @brief Close a parameter block (removes blockName% from the current prefix).
-  /// @param blockName The name of the block to close.
-  void doc_closeBlock(std::string_view blockName);
-
+  /// @brief Close the most recently opened parameter block.
+  /// @throws std::logic_error if no block is currently open.
+  void close_block();
   // ---- Accessors (mainly for testing) ----
 
   /// @brief Return the number of documented parameters so far.
@@ -151,7 +149,7 @@ private:
 
   /// @brief Common preamble for doc_param overloads: open files.
   /// @return true if files are open and writing can proceed, false otherwise.
-  bool prepare_doc(const DocParamOptions &opts);
+  bool prepare_doc();
 
   /// @brief Common postamble for doc_param overloads: dedup check and write.
   void finalize_doc(std::string_view varname, std::string_view desc, std::string_view mesg,
@@ -192,6 +190,7 @@ private:
   static constexpr int comment_prefix_len_ = 2; ///< Length of "! " prefix in comment lines
 
   std::string block_prefix_;          ///< Current block prefix (e.g. "KPP%")
+  std::string current_block_name_;    ///< Name of the currently open block (empty if none)
   std::string current_module_;        ///< Current module name for closing blocks
   bool current_module_layout_ = false;    ///< Whether the current module is a layout module
   bool current_module_debugging_ = false; ///< Whether the current module is a debugging module

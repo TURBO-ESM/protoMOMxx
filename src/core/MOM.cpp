@@ -14,9 +14,10 @@ Model::Model(const int ensemble_num)
   Directories directories(ensemble_num_);
 
   // RuntimeParams reads the parameter files specified by Directories and makes them available for querying.
-  params = std::make_shared<RuntimeParams>(directories.parameter_filenames());
-  auto doc_writer = std::make_shared<DocFileWriter>("MOM_parameters_doc");
-  params->set_doc(doc_writer);
+  params = std::make_shared<RuntimeParams>(
+    directories.parameter_filenames(),
+    "MOM_parameters_doc"
+  );
   params->doc_module("MOM", "Main MOM ocean model module");
 
   int verbosity = 0;
@@ -63,11 +64,12 @@ Model::Model(const int ensemble_num)
   }
 
   int N_SMOOTH = 0;
+  params->open_block("KPP", "KPP module parameters");
   params->get("N_SMOOTH", N_SMOOTH,
               {.default_value = 0,
-               .module = "KPP",
                .desc = "Number of times to apply the smoothing operator to the initial condition",
                .units = "nondim"});
+  params->close_block();
 
   bool debug = false;
   params->get("DEBUG", debug,

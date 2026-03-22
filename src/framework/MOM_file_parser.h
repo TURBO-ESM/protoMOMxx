@@ -30,7 +30,7 @@
  * Key-value pairs may be written as:
  * @code
  *   key = value
- *   ModuleName%key = value   ! when defined outside a module block
+ *   BlockName%key = value   ! when defined outside a block
  * @endcode
  *
  * Example usage:
@@ -55,11 +55,11 @@ using parser_utils::ParamValue;
 
 /// @brief Options for getting a parameter value.
 ///
-/// @details Controls default value fallback, module attribution, documentation
-/// output, and error handling behavior for RuntimeParams::get().
+/// @details Controls default value fallback, documentation output, and error
+/// handling behavior for RuntimeParams::get(). The block context is set via
+/// RuntimeParams::open_block()/close_block() rather than per-call options.
 struct ParamGetOptions {
   std::optional<ParamValue> default_value; ///< The default value of the parameter
-  std::string module = "";        ///< The name of the calling module
   std::string desc = "";          ///< A description of this variable;
                                   ///< If empty, this parameter is not written to a doc file.
   std::string units = "";         ///< The units of this parameter
@@ -88,10 +88,13 @@ class RuntimeParams {
 public:
   /// @brief Construct a RuntimeParams object by parsing the specified parameter file.
   /// @param path The path to a single parameter file to parse.
-  explicit RuntimeParams(const std::string &path);
+  /// @param doc_file_base The base name for the documentation file. If non-empty, a DocFileWriter will be created to write documentation for parsed parameters.
+  explicit RuntimeParams(const std::string &path, const std::string &doc_file_base = "");
+
   /// @brief Construct a RuntimeParams object by parsing multiple parameter files in order.
   /// @param paths A vector of paths to parameter files to parse in order (later files override earlier ones).
-  explicit RuntimeParams(const std::vector<std::string> &paths);
+  /// @param doc_file_base The base name for the documentation file. If non-empty, a DocFileWriter will be created to write documentation for parsed parameters.
+  explicit RuntimeParams(const std::vector<std::string> &paths, const std::string &doc_file_base = "");
 
   /// @brief Get a parameter value with the specified key and type, applying the provided options.
   /// @tparam T The expected type of the parameter value.
@@ -101,34 +104,24 @@ public:
   template <typename T>
   void get(const std::string &key, T &value, const ParamGetOptions &options = ParamGetOptions{}) const;
 
-  /// @brief Get a parameter value from a module
+  /// @brief Get a parameter value, using the current block context.
   /// @param key The parameter key
-  /// @param module The module name
   /// @return The parameter value as a ParamValue
-  /// @throws std::out_of_range if the module or key does not exist
-  const ParamValue &get_variant(const std::string &key, const std::string &module = "") const;
+  /// @throws std::out_of_range if the key does not exist in the current block
+  const ParamValue &get_variant(const std::string &key) const;
 
-  /// @brief Check if a parameter exists
+  /// @brief Check if a parameter exists in the current block context.
   /// @param key The parameter key
-  /// @param module The module name
   /// @return true if the parameter exists, false otherwise
-  bool has_param(const std::string &key, const std::string &module = "") const;
+  bool has_param(const std::string &key) const;
 
-  /// @brief Get all modules
-  /// @return A vector of module names
-  std::vector<std::string> get_modules() const;
+  /// @brief Get all blocks
+  /// @return A vector of block names
+  std::vector<std::string> get_blocks() const;
 
   /// @brief Get the number of parameters in this RuntimeParams object (for testing)
-  /// @return The total number of parameters across all modules.
+  /// @return The total number of parameters across all blocks.
   size_t get_num_parameters() const;
-
-  /// @brief Set the documentation writer for this parameter file.
-  /// @param doc Shared pointer to a DocFileWriter. Pass nullptr to disable documentation.
-  void set_doc(std::shared_ptr<DocFileWriter> doc) { doc_ = std::move(doc); }
-
-  /// @brief Get the documentation writer.
-  /// @return Shared pointer to the DocFileWriter, or nullptr if documentation is disabled.
-  std::shared_ptr<DocFileWriter> get_doc() const { return doc_; }
 
   /// @brief Document a module header.
   /// @param modname The name of the module.
@@ -137,20 +130,30 @@ public:
   /// @param debugging_mod If true, treat this as a debugging module (write to .debugging file).
   /// @param all_default If true, treat all parameters in this module as if they equal their defaults (only write to .all file).
   void doc_module(const std::string &modname, const std::string &desc, bool layout_mod = false,
-                  bool debugging_mod = false, bool all_default = false) {
-    if (doc_)
-      doc_->doc_module(modname, desc, layout_mod, debugging_mod, all_default);
-  }
+                  bool debugging_mod = false, bool all_default = false);
 
   /// @brief Close a module (write closing block).
-  void close_module() {
-    if (doc_)
-      doc_->close_module();
-  }
+  void close_module();
+
+  /// @brief Open a parameter block. Subsequent get() calls will look up keys
+  /// in this block's group in the parameter table (e.g., open_block("KPP") causes
+  /// get("N_SMOOTH", ...) to look up KPP%N_SMOOTH). Also writes the block
+  /// marker to docs if a doc writer is attached.
+  /// @param blockName The name of the block to open.
+  /// @param desc A description of the block (written to doc file).
+  void open_block(const std::string &blockName, const std::string &desc = "");
+
+  /// @brief Close the currently open parameter block.
+  /// @throws std::logic_error if no block is currently open.
+  void close_block();
+
+  /// @brief Get the current block name (empty string if no block is open).
+  const std::string &current_block() const { return current_block_; }
 
 private:
   ParamTable table_{false}; // case-sensitive
-  std::shared_ptr<DocFileWriter> doc_; ///< Optional documentation writer
+  std::string current_block_;  ///< Currently open block name for get() lookups
+  std::unique_ptr<DocFileWriter> doc_; ///< Optional documentation writer
 };
 
 } // namespace MOM
