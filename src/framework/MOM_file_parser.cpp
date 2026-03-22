@@ -420,6 +420,11 @@ void RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions 
     value_was_set = true;
   }
 
+  if (!value_was_set && !options.do_not_read) {
+    logger::warning("Parameter ", full_key(), " was not found and no default value was provided. "
+                    "The variable will retain its previous value.");
+  }
+
   // Document the parameter if a doc writer is attached and desc is provided
   if (value_was_set && doc_ && !options.do_not_log && !options.desc.empty()) {
     DocParamOptions doc_opts;

@@ -524,8 +524,3 @@ TEST(MOMNmlParserTest, ParseArrayTwoElement) {
   nml.get("b", arr, "BAR");
   EXPECT_EQ(arr, std::vector<int>({4, 3}));
 }
-
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

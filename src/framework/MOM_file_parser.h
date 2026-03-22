@@ -47,6 +47,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace MOM {
@@ -60,9 +61,9 @@ using parser_utils::ParamValue;
 /// RuntimeParams::open_block()/close_block() rather than per-call options.
 struct ParamGetOptions {
   std::optional<ParamValue> default_value; ///< The default value of the parameter
-  std::string desc = "";          ///< A description of this variable;
+  std::string_view desc = "";     ///< A description of this variable;
                                   ///< If empty, this parameter is not written to a doc file.
-  std::string units = "";         ///< The units of this parameter
+  std::string_view units = "";    ///< The units of this parameter
   bool fail_if_missing = false;   ///< If true, get() will throw std::out_of_range if the parameter is missing.
   bool do_not_read = false;       ///< If true, do not read a value for this parameter
                                   ///< although it may be logged.

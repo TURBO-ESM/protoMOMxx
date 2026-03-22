@@ -525,6 +525,9 @@ void DocFileWriter::close_module() {
 }
 
 void DocFileWriter::open_block(std::string_view blockName, std::string_view desc) {
+  if (!current_block_name_.empty())
+    throw std::logic_error("open_block(\"" + std::string(blockName) +
+                           "\") called while block \"" + current_block_name_ + "\" is already open");
   open_files();
   if (!files_are_open_)
     return;
@@ -535,7 +538,7 @@ void DocFileWriter::open_block(std::string_view blockName, std::string_view desc
   write_message_and_desc(mesg, desc, current_module_all_default_,
                          current_module_layout_, current_module_debugging_);
 
-  block_prefix_ += blockName;
+  block_prefix_ = blockName;
   block_prefix_ += '%';
   current_block_name_ = blockName;
 }

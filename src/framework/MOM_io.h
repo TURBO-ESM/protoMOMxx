@@ -18,4 +18,4 @@ inline std::string ensembler(const std::string &s, int n = -1) {
   return (p.parent_path() / (p.stem().string() + "." + std::to_string(n) + p.extension().string())).string();
 }
 
-} // namespace MOM_io
+} // namespace MOM::io

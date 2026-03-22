@@ -18,11 +18,15 @@ void MOM::logger::set_verbosity(LogLevel level) {
 }
 
 void MOM::logger::set_verbosity(int level) {
-  if (level < 0 || level > 9) {
-    warning("Invalid verbosity level: ", level, ". Valid range is 0-9. Keeping previous level: ", log_level_);
-    return;
+  switch (level) {
+  case 0: case 1: case 2: case 3: case 9:
+    set_verbosity(static_cast<LogLevel>(level));
+    break;
+  default:
+    throw std::invalid_argument(
+        "Invalid verbosity level: " + std::to_string(level) +
+        ". Valid values are 0 (FATAL), 1 (WARNING), 2 (NOTE), 3 (INFO), 9 (DEBUG).");
   }
-  set_verbosity(static_cast<LogLevel>(level));
 }
 
 MOM::logger::LogLevel MOM::logger::get_verbosity() {

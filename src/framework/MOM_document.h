@@ -122,7 +122,7 @@ public:
   /// @brief Close a module (write closing block).
   void close_module();
 
-  /// @brief Open a parameter block (adds blockName% to the current prefix).
+  /// @brief Open a parameter block (sets the block prefix to blockName%). Nesting is not supported.
   /// @param blockName The name of the block to open.
   /// @param desc A description of the block (written to doc file).
   void open_block(std::string_view blockName, std::string_view desc = "");

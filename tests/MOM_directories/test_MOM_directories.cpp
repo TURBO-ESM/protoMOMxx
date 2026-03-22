@@ -46,8 +46,3 @@ TEST_F(MOMDirectoriesTest, ReadsParameterFilenames) {
   EXPECT_EQ(pfiles[0], "MOM_input");
   EXPECT_EQ(pfiles[1], "MOM_override");
 }
-
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

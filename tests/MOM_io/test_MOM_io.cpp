@@ -26,8 +26,3 @@ TEST(MOMIoTest, EnsemblerNoExtension) {
 TEST(MOMIoTest, EnsemblerWithDirectory) {
   EXPECT_EQ(io::ensembler("RESTART/ocean.nc", 0), "RESTART/ocean.0.nc");
 }
-
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
