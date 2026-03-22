@@ -453,6 +453,7 @@ void DocFileWriter::doc_param(std::string_view varname, std::string_view desc, s
   finalize_doc(varname, desc, mesg, equals_default, opts);
 }
 
+/// @cond
 // Explicit instantiations — scalar
 template void DocFileWriter::doc_param<bool>(std::string_view, std::string_view, std::string_view, const bool &,
                                              std::optional<bool>, const DocParamOptions &);
@@ -477,6 +478,7 @@ template void DocFileWriter::doc_param<double>(std::string_view, std::string_vie
 template void DocFileWriter::doc_param<std::string>(std::string_view, std::string_view, std::string_view,
                                                     const std::vector<std::string> &,
                                                     std::optional<std::vector<std::string>>, const DocParamOptions &);
+/// @endcond
 
 // ---------------------------------------------------------------------------
 // Module / block documentation

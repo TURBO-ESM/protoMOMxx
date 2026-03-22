@@ -34,10 +34,12 @@ struct DocParamOptions {
 
 /// @brief Wrapper around std::ofstream that manages open/close with error checking.
 struct DocFile {
-  std::ofstream stream;
+  std::ofstream stream; ///< The underlying output file stream.
   bool enabled = false; ///< Whether this file category is active.
 
   /// @brief Open the file and write a header. No-op if disabled or already open.
+  /// @param path The file path to open.
+  /// @param header A header string to write at the top of the file after opening.
   /// @throws std::runtime_error if the file cannot be opened.
   void open(const std::string &path, std::string_view header);
 
@@ -45,6 +47,7 @@ struct DocFile {
   void close() noexcept;
 
   /// @brief Return whether the underlying stream is open.
+  /// @return True if the underlying stream is open, false otherwise.
   bool is_open() const { return stream.is_open(); }
 };
 
@@ -171,6 +174,8 @@ private:
 
 public:
   /// @brief Format a double as a compact string (mirroring Fortran real_string).
+  /// @param val The double value to format.
+  /// @return A string representation of the double, using fixed or scientific notation as appropriate.
   static std::string real_string(double val);
 
 private:

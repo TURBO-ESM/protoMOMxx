@@ -116,6 +116,9 @@ private:
 };
 
 /// @brief Stream insertion for LogLevel, producing human-readable names.
+/// @param os The output stream to write to.
+/// @param level The log level to convert to a string.
+/// @return The output stream with the log level name appended.
 inline std::ostream &operator<<(std::ostream &os, logger::LogLevel level) {
   switch (level) {
   case logger::LogLevel::FATAL:   return os << "FATAL";

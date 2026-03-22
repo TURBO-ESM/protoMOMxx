@@ -148,6 +148,7 @@ public:
   void close_block();
 
   /// @brief Get the current block name (empty string if no block is open).
+  /// @return The current block name (empty string if no block is open).
   const std::string &current_block() const { return current_block_; }
 
 private:
