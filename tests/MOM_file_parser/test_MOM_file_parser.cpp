@@ -216,7 +216,7 @@ TEST(MOMFileParserTest, ParseMOMInputModules) {
     FAIL() << "Expected std::out_of_range when trying to read N_SMOOTH without specifying module, but no exception was "
               "thrown";
   } catch (const std::out_of_range &e) {
-    EXPECT_TRUE(std::string(e.what()).find("Key not found in block") != std::string::npos);
+    EXPECT_TRUE(std::string(e.what()).find("Key not found") != std::string::npos);
   } catch (...) {
     FAIL() << "Expected std::out_of_range when trying to read N_SMOOTH without specifying module, but caught different "
               "exception";

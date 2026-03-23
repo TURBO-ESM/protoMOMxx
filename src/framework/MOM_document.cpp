@@ -11,6 +11,7 @@
 #include <array>
 #include <charconv>
 #include <cmath>
+#include <cstdio>
 #include <limits>
 #include <type_traits>
 #include <stdexcept>
@@ -119,7 +120,13 @@ void DocFileWriter::close() {
 // ---------------------------------------------------------------------------
 
 void DocFileWriter::open_files() {
-  if (files_are_open_ || doc_file_base_.empty())
+  // Guard against repeated calls: when doc_file_base_ is empty (documentation
+  // disabled), files_are_open_ stays false so downstream write paths still
+  // short-circuit, but we must not retry opening on every doc_param() call.
+  if (open_attempted_)
+    return;
+  open_attempted_ = true;
+  if (doc_file_base_.empty())
     return;
 
   file_all_.open(doc_file_base_ + ".all",
@@ -146,6 +153,18 @@ std::string DocFileWriter::real_string(double val) {
   std::array<char, 64> buf;
   double absval = std::abs(val);
 
+  // Fallback formatter: tries std::to_chars first, falls back to snprintf if
+  // to_chars fails (e.g., buffer too small). The snprintf format specifier must
+  // match the chars_format (e.g., "%.*f" for fixed, "%.*e" for scientific).
+  auto fallback_format = [&](std::chars_format fmt, const char* snprintf_fmt) -> std::string {
+    auto [end, ec] = std::to_chars(buf.data(), buf.data() + buf.size(), val, fmt, fallback_precision);
+    if (ec != std::errc{}) {
+      auto n = std::snprintf(buf.data(), buf.size(), snprintf_fmt, fallback_precision, val);
+      end = buf.data() + std::max(n, 0);
+    }
+    return {buf.data(), end};
+  };
+
   if (absval >= fixed_lower_bound && absval < fixed_upper_bound) {
     // Fixed notation — try increasing precision until round-trip matches
     for (int prec = fixed_min_precision; prec <= max_precision; ++prec) {
@@ -160,10 +179,7 @@ std::string DocFileWriter::real_string(double val) {
         return s;
       }
     }
-    // Fallback
-    auto [end, ec] =
-        std::to_chars(buf.data(), buf.data() + buf.size(), val, std::chars_format::fixed, fallback_precision);
-    std::string s(buf.data(), (ec == std::errc{}) ? end : buf.data());
+    std::string s = fallback_format(std::chars_format::fixed, "%.*f");
     trim_fixed_zeros(s);
     return s;
   }
@@ -181,9 +197,7 @@ std::string DocFileWriter::real_string(double val) {
       return s;
     }
   }
-  auto [end, ec] =
-      std::to_chars(buf.data(), buf.data() + buf.size(), val, std::chars_format::scientific, fallback_precision);
-  std::string s(buf.data(), (ec == std::errc{}) ? end : buf.data());
+  std::string s = fallback_format(std::chars_format::scientific, "%.*e");
   trim_sci_zeros(s);
   return s;
 }
@@ -385,7 +399,11 @@ namespace {
 std::string to_doc_string(bool v) { return v ? "True" : "False"; }
 std::string to_doc_string(int v) { return std::to_string(v); }
 std::string to_doc_string(double v) { return DocFileWriter::real_string(v); }
-std::string to_doc_string(const std::string &v) { return "\"" + v + "\""; }
+std::string to_doc_string(const std::string &v) {
+  std::string s = v;
+  std::replace(s.begin(), s.end(), '"', '\'');
+  return "\"" + s + "\"";
+}
 
 } // namespace
 

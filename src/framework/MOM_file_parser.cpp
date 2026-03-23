@@ -358,6 +358,9 @@ const ParamValue &RuntimeParams::get_variant(const std::string &key) const {
 }
 
 void RuntimeParams::open_block(const std::string &blockName, const std::string &desc) {
+  if (blockName.empty() || !string_utils::is_valid_identifier(blockName)) {
+    throw std::invalid_argument("open_block: invalid block name \"" + blockName + "\"");
+  }
   if (!current_block_.empty()) {
     throw std::logic_error("open_block(\"" + blockName + "\") called but block \"" + current_block_ + "\" is already open");
   }
@@ -407,7 +410,8 @@ void RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions 
       }
     } catch (const std::out_of_range &) {
       if (options.fail_if_missing) {
-        throw std::out_of_range("Key not found in block " + current_block_ + ": " + key);
+        throw std::out_of_range("Key not found" +
+            (current_block_.empty() ? std::string{} : " in block " + current_block_) + ": " + key);
       }
     }
   }

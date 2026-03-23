@@ -189,6 +189,7 @@ private:
   DocFile file_layout_;    ///< .layout — layout parameters
   DocFile file_debugging_; ///< .debugging — debugging parameters
   bool files_are_open_ = false;
+  bool open_attempted_ = false; ///< True after first open_files() call, to avoid retrying
 
   static constexpr int comment_column_ = 32;    ///< Column at which comments start
   static constexpr int max_line_len_ = 112;     ///< Max line length for descriptions

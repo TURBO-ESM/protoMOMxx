@@ -13,6 +13,7 @@ using string_utils::find_unquoted;
 using string_utils::lowercase;
 using string_utils::trim;
 using string_utils::is_valid_identifier;
+using string_utils::quotes_balanced;
 using parser_utils::get_value;
 using parser_utils::strip_comments;
 
@@ -182,18 +183,8 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
 
       bool looks_complete = (rhs.empty() || rhs.back() != ',');
 
-      if (looks_complete) {
-        char in_quote = 0;
-        for (char c : rhs) {
-          if (in_quote) {
-            if (c == in_quote)
-              in_quote = 0;
-          } else if (c == '"' || c == '\'') {
-            in_quote = c;
-          }
-        }
-        looks_complete = (in_quote == 0);
-      }
+      if (looks_complete)
+        looks_complete = quotes_balanced(rhs);
 
       if (looks_complete) {
         process_assignments(acc_sv, curr_namelist, line_no, path, table);
@@ -220,7 +211,8 @@ void NamelistParams::get(const std::string &key, T &value, const std::string &na
     value = std::get<T>(val);
     return;
   }
-  throw std::runtime_error("Parameter " + namelist + ":" + key + " is not of the requested type");
+  throw std::runtime_error("Parameter " +
+      (namelist.empty() ? key : namelist + ":" + key) + " is not of the requested type");
 }
 
 const ParamValue &NamelistParams::get_variant(const std::string &key, const std::string &namelist) const {
