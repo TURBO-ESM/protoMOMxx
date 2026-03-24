@@ -19,19 +19,24 @@ protected:
   fs::path tmp_dir;
 
   void SetUp() override {
-    tmp_dir = fs::temp_directory_path() / ("mom_doc_test_" + std::to_string(::testing::UnitTest::GetInstance()
-                                                                                ->current_test_info()
-                                                                                ->line()));
+    tmp_dir =
+        fs::temp_directory_path() /
+        ("mom_doc_test_" +
+         std::to_string(
+             ::testing::UnitTest::GetInstance()->current_test_info()->line()));
     fs::create_directories(tmp_dir);
   }
 
   void TearDown() override { fs::remove_all(tmp_dir); }
 
-  std::string base_path() const { return (tmp_dir / "MOM_parameter_doc").string(); }
+  std::string base_path() const {
+    return (tmp_dir / "MOM_parameter_doc").string();
+  }
 
   static std::string read_file(const fs::path &p) {
     std::ifstream ifs(p);
-    return {std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()};
+    return {std::istreambuf_iterator<char>(ifs),
+            std::istreambuf_iterator<char>()};
   }
 };
 
@@ -47,16 +52,19 @@ TEST(RealString, FormattingAndRoundTrip) {
   // Round-trip fidelity across fixed and scientific ranges
   for (double v : {0.1, 0.123456789, 1.0e-10, 1.0e15, -42.5, 1.0 / 3.0}) {
     std::string s = DocFileWriter::real_string(v);
-    EXPECT_DOUBLE_EQ(std::stod(s), v) << "Round-trip failed for " << v << " -> \"" << s << "\"";
+    EXPECT_DOUBLE_EQ(std::stod(s), v)
+        << "Round-trip failed for " << v << " -> \"" << s << "\"";
   }
 }
 
-// End-to-end file routing: all param types, .short filtering, layout/debugging routing
+// End-to-end file routing: all param types, .short filtering, layout/debugging
+// routing
 TEST_F(DocFileWriterTest, FileRoutingAndParamTypes) {
   {
     DocFileWriter doc(base_path());
 
-    // Regular params: default match (suppressed from .short) vs non-default (included in .short)
+    // Regular params: default match (suppressed from .short) vs non-default
+    // (included in .short)
     doc.doc_param<int>("NX", "x cells", "count", 100, std::optional<int>(100));
     doc.doc_param<int>("NY", "y cells", "count", 200, std::optional<int>(100));
 
@@ -66,17 +74,20 @@ TEST_F(DocFileWriterTest, FileRoutingAndParamTypes) {
     doc.doc_param<std::string>("COORD", "Coord type", "", std::string("ALE"));
 
     // Vector param
-    doc.doc_param<int>("LAYERS", "Layer counts", "", std::vector<int>{10, 20, 30});
+    doc.doc_param<int>("LAYERS", "Layer counts", "",
+                       std::vector<int>{10, 20, 30});
 
     // Layout param — should go to .layout only, not .all
     DocParamOptions layout_opts;
     layout_opts.layout_param = true;
-    doc.doc_param<int>("NIGLOBAL", "Global i size", "", 360, std::nullopt, layout_opts);
+    doc.doc_param<int>("NIGLOBAL", "Global i size", "", 360, std::nullopt,
+                       layout_opts);
 
     // Debugging param — should go to .debugging only, not .all
     DocParamOptions debug_opts;
     debug_opts.debugging_param = true;
-    doc.doc_param<int>("DEBUG_LVL", "Debug level", "", 3, std::nullopt, debug_opts);
+    doc.doc_param<int>("DEBUG_LVL", "Debug level", "", 3, std::nullopt,
+                       debug_opts);
 
     doc.close();
   }
@@ -118,22 +129,27 @@ TEST_F(DocFileWriterTest, ModulesBlocksAndDedup) {
 
     // Switch to new module (closes previous), then duplicate module warning
     doc.doc_module("MOM_thermo", "Thermodynamics");
-    doc.doc_module("MOM_thermo", "Thermodynamics"); // triggers "already open" warning
+    doc.doc_module("MOM_thermo",
+                   "Thermodynamics"); // triggers "already open" warning
 
     DocParamOptions thermo_opts;
-    doc.doc_param<int>("T_REF", "ref temp", "K", 300, std::nullopt, thermo_opts);
+    doc.doc_param<int>("T_REF", "ref temp", "K", 300, std::nullopt,
+                       thermo_opts);
 
     // Block open/close
     doc.open_block("KPP");
     EXPECT_EQ(doc.block_prefix(), "KPP%");
-    doc.doc_param<double>("KPP_VT2", "Threshold", "", 0.01, std::nullopt, thermo_opts);
+    doc.doc_param<double>("KPP_VT2", "Threshold", "", 0.01, std::nullopt,
+                          thermo_opts);
     doc.close_block();
     EXPECT_EQ(doc.block_prefix(), "");
 
-    // Duplicate param detection: same param documented twice, inconsistent value warns
+    // Duplicate param detection: same param documented twice, inconsistent
+    // value warns
     doc.doc_param<int>("DUPE", "dup param", "", 1, std::nullopt, thermo_opts);
     doc.doc_param<int>("DUPE", "dup param", "", 2, std::nullopt, thermo_opts);
-    EXPECT_EQ(doc.num_documented(), 4u); // DT, T_REF, KPP_VT2, DUPE (dedup prevents second entry)
+    EXPECT_EQ(doc.num_documented(),
+              4u); // DT, T_REF, KPP_VT2, DUPE (dedup prevents second entry)
 
     doc.close();
   }

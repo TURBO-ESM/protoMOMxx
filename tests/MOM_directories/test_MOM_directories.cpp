@@ -9,8 +9,9 @@
 
 using namespace MOM;
 
-// The Directories constructor reads "input.nml" from the current working directory,
-// so we chdir into the test source directory that contains our fixture input.nml.
+// The Directories constructor reads "input.nml" from the current working
+// directory, so we chdir into the test source directory that contains our
+// fixture input.nml.
 
 class MOMDirectoriesTest : public ::testing::Test {
 protected:
@@ -24,9 +25,7 @@ protected:
         << "input.nml not found in: " << test_dir;
   }
 
-  void TearDown() override {
-    std::filesystem::current_path(original_cwd_);
-  }
+  void TearDown() override { std::filesystem::current_path(original_cwd_); }
 };
 
 TEST_F(MOMDirectoriesTest, ReadsDirectoriesFromNml) {
@@ -41,7 +40,7 @@ TEST_F(MOMDirectoriesTest, ReadsDirectoriesFromNml) {
 TEST_F(MOMDirectoriesTest, ReadsParameterFilenames) {
   Directories dirs;
 
-  const auto& pfiles = dirs.parameter_filenames();
+  const auto &pfiles = dirs.parameter_filenames();
   ASSERT_EQ(pfiles.size(), 2);
   EXPECT_EQ(pfiles[0], "MOM_input");
   EXPECT_EQ(pfiles[1], "MOM_override");
