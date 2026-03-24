@@ -1,0 +1,3 @@
+! override some parameters defined in MOM_input_modules
+
+H = 1e-5 ! this should lead to an error since #override keyword is missing

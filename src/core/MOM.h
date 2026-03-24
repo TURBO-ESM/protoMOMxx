@@ -2,6 +2,9 @@
 /// @file MOM.h
 /// @brief Main header for the Modular Ocean Model (MOM) core.
 
+#include "MOM_file_parser.h"
+#include <memory>
+
 namespace MOM {
 
 /// @brief The Model class serves as the main interface for the Modular Ocean Model (MOM) core.
@@ -15,6 +18,7 @@ public:
   explicit Model(const int ensemble_num = -1);
 
 private:
+  std::shared_ptr<RuntimeParams> params;
   const int ensemble_num_;
 };
 

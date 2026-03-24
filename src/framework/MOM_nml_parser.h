@@ -32,27 +32,16 @@
  * Example usage:
  * @code
  *   NamelistParams params("path/to/namelist.nml");
- *   bool value = params.get<bool>("LOGICAL_VAR", "NAMELIST_NAME");
+ *   bool value;
+ *   params.get("LOGICAL_VAR", value, "NAMELIST_NAME");
  * @endcode
  */
 
 #pragma once
 
+#include "MOM_param_table.h"
 #include "MOM_parser_utils.h"
-#include "MOM_string_utils.h"
-#include <algorithm>
-#include <cctype>
-#include <charconv>
-#include <cstdint>
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <unordered_map>
-#include <stdexcept>
 #include <string>
-#include <string_view>
-#include <utility>
-#include <variant>
 #include <vector>
 
 namespace MOM {
@@ -76,11 +65,11 @@ public:
   /// @brief Get a parameter value as a specific type.
   /// @tparam T The expected type of the parameter value.
   /// @param key The parameter key
+  /// @param value An output reference to store the retrieved parameter value.
   /// @param namelist The namelist name (empty string for global scope)
-  /// @return The parameter value as type T
   /// @throws std::runtime_error if the parameter is not of type T
   template <typename T>
-  T get(const std::string &key, const std::string &namelist = "") const;
+  void get(const std::string &key, T &value, const std::string &namelist = "") const;
 
   /// @brief Check if a parameter exists
   /// @param key The parameter key
@@ -98,7 +87,7 @@ public:
 
 private:
   std::string path_;
-  std::unordered_map<std::string, std::unordered_map<std::string, ParamValue>> table_;
+  ParamTable table_{true}; // case-insensitive
 };
 
 } // namespace MOM

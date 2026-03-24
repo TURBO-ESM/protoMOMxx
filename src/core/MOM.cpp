@@ -1,25 +1,97 @@
 #include "MOM.h"
 #include "MOM_logger.h"
+#include "MOM_directories.h"
 
 namespace MOM {
 
 Model::Model(const int ensemble_num)
   : ensemble_num_(ensemble_num) {
 
-  // todo: read VERBOSITY param instead of hardcoding it below
-  logger::set_verbosity(logger::LogLevel::DEBUG);
-
   logger::info("Initializing protoMOMxx...");
-  if (ensemble_num_ >= 0) {
-    logger::info("Ensemble number: ", ensemble_num_);
+  if (ensemble_num_ >= 0) logger::info("Ensemble number: ", ensemble_num_);
+
+  // Read input.nml to determine the directories and files to read from and write to
+  Directories directories(ensemble_num_);
+
+  // RuntimeParams reads the parameter files specified in input.nml and makes them available for querying.
+  params = std::make_shared<RuntimeParams>(
+    directories.parameter_filenames(),
+    "MOM_parameters_doc"
+  );
+  params->doc_module("MOM", "Main MOM ocean model module"); // set current param module for documentation purposes
+
+  int verbosity = 2;
+  params->get("VERBOSITY", verbosity, 
+              {.default_value = 2,
+               .desc = "Integer controlling level of messaging\n"
+                       "\t0 = Only FATAL messages\n"
+                       "\t2 = Only FATAL, WARNING, NOTE [default]\n"
+                       "\t9 = All",
+               .units = "",
+               .fail_if_missing = false});
+
+  logger::set_verbosity(verbosity);
+  logger::info("Log verbosity: ", logger::get_verbosity());
+
+  // todo: Below parameter queries are currently just examples to demonstrate the get() interface and should 
+  // be moved to more appropriate locations as the corresponding functionality is implemented.
+
+  bool split = false;
+  params->get("SPLIT", split, {.default_value = true, .desc = "Use the split time stepping if true."});
+
+  bool split_rk4 = false;
+  params->get("SPLIT_RK4", split_rk4,
+              {.default_value = false,
+               .desc = "If true, use a version of the split explicit time stepping scheme that "
+                       "exchanges velocities with step_MOM that have the average barotropic phase over "
+                       "a baroclinic timestep rather than the instantaneous barotropic phase.",
+               .do_not_log = !split});
+
+  bool use_RK2 = false;
+  if (!split) {
+    params->get("USE_RK2", use_RK2,
+                {.default_value = false, 
+                 .desc = "If true, use RK2 instead of RK3 in the unsplit time stepping."});
   }
 
-  // todo: Read namelist file
-  //
-  // todo: get_MOM_input():
-  //          	Gets the names of the I/O directories and initialization files
-  //          	Also calls the subroutine that opens run-time parameter files
-  //          	Needs namelist file capability
+  bool fpmix = false;
+  params->get("FPMIX", fpmix, 
+              {.default_value = false,
+               .desc = "If true, use the FPMIX algorithm for tracer advection.",
+               .do_not_log = true});
+  
+  if (fpmix && !split) {
+    logger::fatal("FPMIX is only implemented for the split time stepping.");
+  }
+
+  int N_SMOOTH = 0;
+  params->open_block("KPP", "KPP module parameters");
+  params->get("N_SMOOTH", N_SMOOTH,
+              {.default_value = 0,
+               .desc = "Number of times to apply the smoothing operator to the initial condition",
+               .units = "nondim"});
+  params->close_block();
+
+  bool debug = false;
+  params->get("DEBUG", debug,
+              {.default_value = false,
+               .desc = "If true, write out verbose debugging data.",
+               .units = "nondim",
+               .debugging_param = true});
+
+  bool global_indexing = false;
+  params->get("GLOBAL_INDEXING", global_indexing,
+              {.default_value = false,
+               .desc = "If true, use global indexing for all I/O and internal operations. "
+                       "If false, use local indexing with halo regions.",
+               .layout_param = true});
+  
+  double rad_earth = 0.;
+  params->get("RAD_EARTH", rad_earth,
+              {.default_value = 6.378e6,
+               .desc = "The radius of the Earth.",
+               .units = "m"});
+
   // todo: set_calendar_type()
   //		Functionality from TIM/time_manager/time_manager.F90
   // defer: time_interp_external_init()

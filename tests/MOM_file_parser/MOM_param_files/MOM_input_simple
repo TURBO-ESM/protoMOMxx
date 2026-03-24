@@ -1,0 +1,19 @@
+   /*  This is a simple MOM_input file
+   with some global parameters and with
+   the two supported comment types:
+   - ! Fortran-style line comment
+   - C-style block comment (like this one)
+   */
+
+
+REENTRANT_X = False ! This is a comment
+DT_THERM = 3600      
+
+VERT_COORDINATE = "ALE"  
+! The first comment 
+   ! a comment
+
+FOO  = /home/username    
+
+ETA_TOLERANCE = 1e-06
+

@@ -74,6 +74,19 @@ inline std::size_t find_unquoted(std::string_view s, char ch) {
 }
 
 
+/// @brief Check whether all quotes (single and double) in a string are balanced.
+inline bool quotes_balanced(std::string_view s) {
+  char in_quote = 0;
+  for (char c : s) {
+    if (in_quote) {
+      if (c == in_quote) in_quote = 0;
+    } else if (c == '"' || c == '\'') {
+      in_quote = c;
+    }
+  }
+  return in_quote == 0;
+}
+
 /// @brief Split a string by a delimiter.
 /// @param s The string to split.
 /// @param delim The delimiter to split by.
