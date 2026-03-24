@@ -18,7 +18,7 @@ int main() {
 
     return 0;
 
-  } catch (const MOM::logger::FatalError&) {
+  } catch (const MOM::logger::FatalError &) {
     return EXIT_FAILURE;
   }
 }

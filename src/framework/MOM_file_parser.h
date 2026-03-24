@@ -3,8 +3,9 @@
  * @brief Lightweight parser for MOM runtime parameter files.
  *
  * @details
- * Provides robust parsing of MOM runtime parameter files with support for C-style block comments,
- * Fortran-style line comments, quoted strings, and detailed error reporting. Supported value types:
+ * Provides robust parsing of MOM runtime parameter files with support for
+ * C-style block comments, Fortran-style line comments, quoted strings, and
+ * detailed error reporting. Supported value types:
  * - Scalars: bool, int, double, string
  * - Homogeneous comma-separated lists of the above types
  *
@@ -22,9 +23,10 @@
  *   NAME = "abc"	                ! Set the string NAME to 'abc'
  *   VECTOR = 1.0,2.0	            ! Set the array VECTOR to [1.0, 2.0]
  *   NAMES = 'abc','xyz'	        ! Set the strings NAMES to 'abc','xyz'
- *   #override DO_THIS = False	  ! Set the Boolean to .FALSE., ignoring the above specification
- *   #override HALF = 0.25	      ! Set the value of HALF to 0.25, ignoring the above value
- *   #override HALF = 0.25	      ! Same as the above value of HALF to 0.25 so is accepted
+ *   #override DO_THIS = False	  ! Set the Boolean to .FALSE., ignoring the
+ * above specification #override HALF = 0.25	      ! Set the value of HALF to
+ * 0.25, ignoring the above value #override HALF = 0.25	      ! Same as the
+ * above value of HALF to 0.25 so is accepted
  * @endcode
  *
  * Key-value pairs may be written as:
@@ -60,23 +62,31 @@ using parser_utils::ParamValue;
 /// handling behavior for RuntimeParams::get(). The block context is set via
 /// RuntimeParams::open_block()/close_block() rather than per-call options.
 struct ParamGetOptions {
-  std::optional<ParamValue> default_value; ///< The default value of the parameter
-  std::string_view desc = "";     ///< A description of this variable;
-                                  ///< If empty, this parameter is not written to a doc file.
-  std::string_view units = "";    ///< The units of this parameter
-  bool fail_if_missing = false;   ///< If true, get() will throw std::out_of_range if the parameter is missing.
-  bool do_not_read = false;       ///< If true, do not read a value for this parameter
-                                  ///< although it may be logged.
-  bool do_not_log = false;        ///< If true, do not log this parameter to a doc file.
-  bool layout_param = false;      ///< If true, this parameter is logged in the layout parameter file.
-  bool debugging_param = false;   ///< If true, this parameter is logged in the debugging parameter file.
+  std::optional<ParamValue>
+      default_value; ///< The default value of the parameter
+  std::string_view desc =
+      ""; ///< A description of this variable;
+          ///< If empty, this parameter is not written to a doc file.
+  std::string_view units = "";  ///< The units of this parameter
+  bool fail_if_missing = false; ///< If true, get() will throw std::out_of_range
+                                ///< if the parameter is missing.
+  bool do_not_read = false; ///< If true, do not read a value for this parameter
+                            ///< although it may be logged.
+  bool do_not_log =
+      false; ///< If true, do not log this parameter to a doc file.
+  bool layout_param = false;    ///< If true, this parameter is logged in the
+                                ///< layout parameter file.
+  bool debugging_param = false; ///< If true, this parameter is logged in the
+                                ///< debugging parameter file.
 };
 
-/// @brief The RuntimeParams class provides an interface for parsing MOM runtime parameter files and retrieving values.
-/// 
-/// Supported value types include scalars (bool, int, double, string) and homogeneous comma-separated lists of the
-/// above types. It supports C-style block comments, Fortran-style line comments, quoted strings, and error reporting.
-/// Example usage:
+/// @brief The RuntimeParams class provides an interface for parsing MOM runtime
+/// parameter files and retrieving values.
+///
+/// Supported value types include scalars (bool, int, double, string) and
+/// homogeneous comma-separated lists of the above types. It supports C-style
+/// block comments, Fortran-style line comments, quoted strings, and error
+/// reporting. Example usage:
 /// @code
 ///   RuntimeParams params("path/to/params.txt");
 ///   bool REENTRANT_X = false;
@@ -87,23 +97,35 @@ struct ParamGetOptions {
 /// @endcode
 class RuntimeParams {
 public:
-  /// @brief Construct a RuntimeParams object by parsing the specified parameter file.
+  /// @brief Construct a RuntimeParams object by parsing the specified parameter
+  /// file.
   /// @param path The path to a single parameter file to parse.
-  /// @param doc_file_base The base name for the documentation file. If non-empty, a DocFileWriter will be created to write documentation for parsed parameters.
-  explicit RuntimeParams(const std::string &path, const std::string &doc_file_base = "");
+  /// @param doc_file_base The base name for the documentation file. If
+  /// non-empty, a DocFileWriter will be created to write documentation for
+  /// parsed parameters.
+  explicit RuntimeParams(const std::string &path,
+                         const std::string &doc_file_base = "");
 
-  /// @brief Construct a RuntimeParams object by parsing multiple parameter files in order.
-  /// @param paths A vector of paths to parameter files to parse in order (later files override earlier ones).
-  /// @param doc_file_base The base name for the documentation file. If non-empty, a DocFileWriter will be created to write documentation for parsed parameters.
-  explicit RuntimeParams(const std::vector<std::string> &paths, const std::string &doc_file_base = "");
+  /// @brief Construct a RuntimeParams object by parsing multiple parameter
+  /// files in order.
+  /// @param paths A vector of paths to parameter files to parse in order (later
+  /// files override earlier ones).
+  /// @param doc_file_base The base name for the documentation file. If
+  /// non-empty, a DocFileWriter will be created to write documentation for
+  /// parsed parameters.
+  explicit RuntimeParams(const std::vector<std::string> &paths,
+                         const std::string &doc_file_base = "");
 
-  /// @brief Get a parameter value with the specified key and type, applying the provided options.
+  /// @brief Get a parameter value with the specified key and type, applying the
+  /// provided options.
   /// @tparam T The expected type of the parameter value.
   /// @param key The parameter key to look up.
   /// @param value An output reference to store the retrieved parameter value.
-  /// @param options A ParamGetOptions struct controlling default fallback, documentation, and error handling behavior.
+  /// @param options A ParamGetOptions struct controlling default fallback,
+  /// documentation, and error handling behavior.
   template <typename T>
-  void get(const std::string &key, T &value, const ParamGetOptions &options = ParamGetOptions{}) const;
+  void get(const std::string &key, T &value,
+           const ParamGetOptions &options = ParamGetOptions{}) const;
 
   /// @brief Get a parameter value, using the current block context.
   /// @param key The parameter key
@@ -120,26 +142,31 @@ public:
   /// @return A vector of block names
   std::vector<std::string> get_blocks() const;
 
-  /// @brief Get the number of parameters in this RuntimeParams object (for testing)
+  /// @brief Get the number of parameters in this RuntimeParams object (for
+  /// testing)
   /// @return The total number of parameters across all blocks.
   size_t get_num_parameters() const;
 
   /// @brief Document a module header.
   /// @param modname The name of the module.
   /// @param desc A description of the module (written to doc file).
-  /// @param layout_mod If true, treat this as a layout module (write to .layout file).
-  /// @param debugging_mod If true, treat this as a debugging module (write to .debugging file).
-  /// @param all_default If true, treat all parameters in this module as if they equal their defaults (only write to .all file).
-  void doc_module(const std::string &modname, const std::string &desc, bool layout_mod = false,
-                  bool debugging_mod = false, bool all_default = false);
+  /// @param layout_mod If true, treat this as a layout module (write to .layout
+  /// file).
+  /// @param debugging_mod If true, treat this as a debugging module (write to
+  /// .debugging file).
+  /// @param all_default If true, treat all parameters in this module as if they
+  /// equal their defaults (only write to .all file).
+  void doc_module(const std::string &modname, const std::string &desc,
+                  bool layout_mod = false, bool debugging_mod = false,
+                  bool all_default = false);
 
   /// @brief Close a module (write closing block).
   void close_module();
 
   /// @brief Open a parameter block. Subsequent get() calls will look up keys
-  /// in this block's group in the parameter table (e.g., open_block("KPP") causes
-  /// get("N_SMOOTH", ...) to look up KPP%N_SMOOTH). Also writes the block
-  /// marker to docs if a doc writer is attached.
+  /// in this block's group in the parameter table (e.g., open_block("KPP")
+  /// causes get("N_SMOOTH", ...) to look up KPP%N_SMOOTH). Also writes the
+  /// block marker to docs if a doc writer is attached.
   /// @param blockName The name of the block to open.
   /// @param desc A description of the block (written to doc file).
   void open_block(const std::string &blockName, const std::string &desc = "");
@@ -153,8 +180,8 @@ public:
   const std::string &current_block() const { return current_block_; }
 
 private:
-  ParamTable table_{false}; // case-sensitive
-  std::string current_block_;  ///< Currently open block name for get() lookups
+  ParamTable table_{false};   // case-sensitive
+  std::string current_block_; ///< Currently open block name for get() lookups
   std::unique_ptr<DocFileWriter> doc_; ///< Optional documentation writer
 };
 

@@ -12,10 +12,14 @@
 using namespace MOM;
 
 // Helper function to get the absolute path to the test data directory
-std::filesystem::path get_test_data_dir() { return std::filesystem::path(__FILE__).parent_path() / "nml_files"; }
+std::filesystem::path get_test_data_dir() {
+  return std::filesystem::path(__FILE__).parent_path() / "nml_files";
+}
 
-// Helper function to check if a value is of a specific type and has the expected value
-template <typename T> bool check_value(const ParamValue &val, const T &expected) {
+// Helper function to check if a value is of a specific type and has the
+// expected value
+template <typename T>
+bool check_value(const ParamValue &val, const T &expected) {
   if (std::holds_alternative<T>(val)) {
     return std::get<T>(val) == expected;
   }
@@ -23,7 +27,8 @@ template <typename T> bool check_value(const ParamValue &val, const T &expected)
 }
 
 // Helper function for double comparison with tolerance
-bool check_double_value(const ParamValue &val, double expected, double tolerance = 1e-9) {
+bool check_double_value(const ParamValue &val, double expected,
+                        double tolerance = 1e-9) {
   if (std::holds_alternative<double>(val)) {
     return std::abs(std::get<double>(val) - expected) < tolerance;
   }
@@ -31,11 +36,14 @@ bool check_double_value(const ParamValue &val, double expected, double tolerance
 }
 
 // Helper function to check if a value is a vector of a specific type
-template <typename T> bool is_vector_of(const ParamValue &val) { return std::holds_alternative<std::vector<T>>(val); }
+template <typename T> bool is_vector_of(const ParamValue &val) {
+  return std::holds_alternative<std::vector<T>>(val);
+}
 
 TEST(MOMNmlParserTest, ParseNamelistSimple) {
   auto test_file_path = get_test_data_dir() / "namelist_simple.nml";
-  ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";
+  ASSERT_TRUE(std::filesystem::exists(test_file_path))
+      << "Test file " << test_file_path << " does not exist";
 
   NamelistParams nml(test_file_path.string());
 
@@ -65,7 +73,8 @@ TEST(MOMNmlParserTest, ParseNamelistSimple) {
 
 TEST(MOMNmlParserTest, ParseNamelistModules) {
   auto test_file_path = get_test_data_dir() / "namelist_modules.nml";
-  ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";
+  ASSERT_TRUE(std::filesystem::exists(test_file_path))
+      << "Test file " << test_file_path << " does not exist";
 
   NamelistParams nml(test_file_path.string());
 
@@ -91,7 +100,8 @@ TEST(MOMNmlParserTest, ParseNamelistModules) {
   bool use_bodner23;
   nml.get("USE_BODNER23", use_bodner23, "MLE_PARAMS");
   EXPECT_FALSE(use_bodner23);
-  EXPECT_TRUE(check_double_value(nml.get_variant("MLD_DECAYING_TFILTER", "MLE_PARAMS"), 2592000.0));
+  EXPECT_TRUE(check_double_value(
+      nml.get_variant("MLD_DECAYING_TFILTER", "MLE_PARAMS"), 2592000.0));
   bool khth_use_ebt_struct;
   nml.get("KHTH_USE_EBT_STRUCT", khth_use_ebt_struct, "MLE_PARAMS");
   EXPECT_TRUE(khth_use_ebt_struct);
@@ -100,7 +110,8 @@ TEST(MOMNmlParserTest, ParseNamelistModules) {
   int n_smooth;
   nml.get("N_SMOOTH", n_smooth, "KPP_PARAMS");
   EXPECT_EQ(n_smooth, 3);
-  EXPECT_TRUE(check_double_value(nml.get_variant("RI_CRIT", "KPP_PARAMS"), 0.3));
+  EXPECT_TRUE(
+      check_double_value(nml.get_variant("RI_CRIT", "KPP_PARAMS"), 0.3));
   int enhance;
   nml.get("ENHANCE", enhance, "KPP_PARAMS");
   EXPECT_EQ(enhance, 1);
@@ -115,12 +126,14 @@ TEST(MOMNmlParserTest, ParseNamelistModules) {
 
 TEST(MOMNmlParserTest, ParseNamelistArrays) {
   auto test_file_path = get_test_data_dir() / "namelist_arrays.nml";
-  ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";
+  ASSERT_TRUE(std::filesystem::exists(test_file_path))
+      << "Test file " << test_file_path << " does not exist";
 
   NamelistParams nml(test_file_path.string());
 
   // Check scalar
-  EXPECT_TRUE(std::holds_alternative<int>(nml.get_variant("INT_SCALAR", "ARRAY_TEST")));
+  EXPECT_TRUE(
+      std::holds_alternative<int>(nml.get_variant("INT_SCALAR", "ARRAY_TEST")));
   int int_scalar;
   nml.get("INT_SCALAR", int_scalar, "ARRAY_TEST");
   EXPECT_EQ(int_scalar, 42);
@@ -132,16 +145,19 @@ TEST(MOMNmlParserTest, ParseNamelistArrays) {
   EXPECT_EQ(int_array, std::vector<int>({1, 2, 3, 4, 5}));
 
   // Check real array
-  EXPECT_TRUE(is_vector_of<double>(nml.get_variant("REAL_ARRAY", "ARRAY_TEST")));
+  EXPECT_TRUE(
+      is_vector_of<double>(nml.get_variant("REAL_ARRAY", "ARRAY_TEST")));
   std::vector<double> real_array;
   nml.get("REAL_ARRAY", real_array, "ARRAY_TEST");
   EXPECT_EQ(real_array, std::vector<double>({1.0, 2.0, 3.0}));
 
   // Check string array
-  EXPECT_TRUE(is_vector_of<std::string>(nml.get_variant("STRING_ARRAY", "ARRAY_TEST")));
+  EXPECT_TRUE(
+      is_vector_of<std::string>(nml.get_variant("STRING_ARRAY", "ARRAY_TEST")));
   std::vector<std::string> string_array;
   nml.get("STRING_ARRAY", string_array, "ARRAY_TEST");
-  EXPECT_EQ(string_array, std::vector<std::string>({"file1.nc", "file2.nc", "file3.nc"}));
+  EXPECT_EQ(string_array,
+            std::vector<std::string>({"file1.nc", "file2.nc", "file3.nc"}));
 
   // Check boolean array
   EXPECT_TRUE(is_vector_of<bool>(nml.get_variant("BOOL_ARRAY", "ARRAY_TEST")));
@@ -154,7 +170,8 @@ TEST(MOMNmlParserTest, ParseNamelistArrays) {
   }
 
   // Check trailing comma handling
-  EXPECT_TRUE(is_vector_of<int>(nml.get_variant("TRAILING_COMMA", "ARRAY_TEST")));
+  EXPECT_TRUE(
+      is_vector_of<int>(nml.get_variant("TRAILING_COMMA", "ARRAY_TEST")));
   std::vector<int> trailing_array;
   nml.get("TRAILING_COMMA", trailing_array, "ARRAY_TEST");
   EXPECT_EQ(trailing_array, std::vector<int>({10, 20, 30}));
@@ -162,7 +179,8 @@ TEST(MOMNmlParserTest, ParseNamelistArrays) {
 
 TEST(MOMNmlParserTest, ParseNamelistComments) {
   auto test_file_path = get_test_data_dir() / "namelist_comments.nml";
-  ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";
+  ASSERT_TRUE(std::filesystem::exists(test_file_path))
+      << "Test file " << test_file_path << " does not exist";
 
   NamelistParams nml(test_file_path.string());
 
@@ -176,7 +194,8 @@ TEST(MOMNmlParserTest, ParseNamelistComments) {
   bool var3;
   nml.get("VAR3", var3, "TEST_COMMENTS");
   EXPECT_TRUE(var3);
-  EXPECT_TRUE(check_double_value(nml.get_variant("VAR4", "TEST_COMMENTS"), 3.14159));
+  EXPECT_TRUE(
+      check_double_value(nml.get_variant("VAR4", "TEST_COMMENTS"), 3.14159));
 
   EXPECT_EQ(nml.get_num_parameters(), 4);
 }
@@ -188,33 +207,37 @@ TEST(MOMNmlParserTest, InvalidFileNonExistent) {
 
 TEST(MOMNmlParserTest, InvalidFileMissingClose) {
   auto test_file_path = get_test_data_dir() / "namelist_invalid1.nml";
-  ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";
+  ASSERT_TRUE(std::filesystem::exists(test_file_path))
+      << "Test file " << test_file_path << " does not exist";
 
   EXPECT_THROW(NamelistParams nml(test_file_path.string()), std::runtime_error);
 }
 
 TEST(MOMNmlParserTest, InvalidFileOutsideNamelist) {
   auto test_file_path = get_test_data_dir() / "namelist_invalid2.nml";
-  ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";
+  ASSERT_TRUE(std::filesystem::exists(test_file_path))
+      << "Test file " << test_file_path << " does not exist";
 
   EXPECT_THROW(NamelistParams nml(test_file_path.string()), std::runtime_error);
 }
 
 TEST(MOMNmlParserTest, InvalidFileNestedNamelists) {
   auto test_file_path = get_test_data_dir() / "namelist_invalid3.nml";
-  ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";
+  ASSERT_TRUE(std::filesystem::exists(test_file_path))
+      << "Test file " << test_file_path << " does not exist";
 
   EXPECT_THROW(NamelistParams nml(test_file_path.string()), std::runtime_error);
 }
 
 TEST(MOMNmlParserTest, CaseInsensitivity) {
   auto test_file_path = get_test_data_dir() / "namelist_simple.nml";
-  ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";
+  ASSERT_TRUE(std::filesystem::exists(test_file_path))
+      << "Test file " << test_file_path << " does not exist";
 
   NamelistParams nml(test_file_path.string());
 
-  // Fortran namelists are case-insensitive, but our parser converts to uppercase
-  // Test that we can access using uppercase (as stored)
+  // Fortran namelists are case-insensitive, but our parser converts to
+  // uppercase Test that we can access using uppercase (as stored)
   EXPECT_TRUE(nml.has_param("DT", "OCEAN"));
   EXPECT_TRUE(nml.has_param("REENTRANT_X", "OCEAN"));
   EXPECT_TRUE(nml.has_param("COORD_TYPE", "OCEAN"));
@@ -222,7 +245,8 @@ TEST(MOMNmlParserTest, CaseInsensitivity) {
 
 TEST(MOMNmlParserTest, TypeMismatch) {
   auto test_file_path = get_test_data_dir() / "namelist_simple.nml";
-  ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";
+  ASSERT_TRUE(std::filesystem::exists(test_file_path))
+      << "Test file " << test_file_path << " does not exist";
 
   NamelistParams nml(test_file_path.string());
 
@@ -235,10 +259,12 @@ TEST(MOMNmlParserTest, TypeMismatch) {
   EXPECT_THROW(nml.get("REENTRANT_X", tmp_int, "OCEAN"), std::runtime_error);
 }
 
-// Read in double_gyre_input.nml and check that the expected parameters are present and correct:
+// Read in double_gyre_input.nml and check that the expected parameters are
+// present and correct:
 TEST(MOMNmlParserTest, ParseDoubleGyreInput) {
   auto test_file_path = get_test_data_dir() / "double_gyre_input.nml";
-  ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";
+  ASSERT_TRUE(std::filesystem::exists(test_file_path))
+      << "Test file " << test_file_path << " does not exist";
   NamelistParams nml(test_file_path.string());
 
   std::string output_directory;
@@ -254,7 +280,8 @@ TEST(MOMNmlParserTest, ParseDoubleGyreInput) {
   nml.get("restart_output_dir", restart_output_dir, "MOM_INPUT_NML");
   EXPECT_EQ(restart_output_dir, "RESTART/");
   EXPECT_TRUE(nml.has_param("parameter_filename", "MOM_INPUT_NML"));
-  const auto &param_val = nml.get_variant("parameter_filename", "MOM_INPUT_NML");
+  const auto &param_val =
+      nml.get_variant("parameter_filename", "MOM_INPUT_NML");
   EXPECT_TRUE(std::holds_alternative<std::vector<std::string>>(param_val));
   auto param_files = std::get<std::vector<std::string>>(param_val);
   EXPECT_EQ(param_files.size(), 2);
@@ -265,7 +292,9 @@ TEST(MOMNmlParserTest, ParseDoubleGyreInput) {
 // Helper to validate the common MOM_input_nml 5-parameter structure shared by
 // mom_input_nml_string_array.nml and mom_input_nml_inline_comments.nml.
 void validate_mom_input_nml_5params(const NamelistParams &nml) {
-  EXPECT_EQ(nml.get_namelists().size(), 1) << "Only mom_input_nml should be present (empty namelists are not stored)";
+  EXPECT_EQ(nml.get_namelists().size(), 1)
+      << "Only mom_input_nml should be present (empty namelists are not "
+         "stored)";
   EXPECT_EQ(nml.get_num_parameters(), 5);
 
   std::string output_directory;

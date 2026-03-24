@@ -30,32 +30,31 @@ inline std::string lowercase(std::string_view sv) {
 
 /// @brief Check if a string_view is a valid identifier
 ///
-/// A valid identifier starts with a letter or underscore, followed by letters, digits, or underscores.
+/// A valid identifier starts with a letter or underscore, followed by letters,
+/// digits, or underscores.
 /// @param s The string_view to check.
 /// @return true if the string_view is a valid identifier, false otherwise.
 inline bool is_valid_identifier(std::string_view s) {
   s = trim(s);
-  if (s.empty()) return false;
+  if (s.empty())
+    return false;
 
-  auto is_first = [&]() {
-    return std::isalpha(s.front()) || s.front() == '_';
-  };
+  auto is_first = [&]() { return std::isalpha(s.front()) || s.front() == '_'; };
 
-  auto is_rest = [](unsigned char c) {
-    return std::isalnum(c) || c == '_';
-  };
+  auto is_rest = [](unsigned char c) { return std::isalnum(c) || c == '_'; };
 
   unsigned char first = static_cast<unsigned char>(s.front());
-  return is_first() &&
-         std::ranges::all_of(s.substr(1), [&](char c) {
+  return is_first() && std::ranges::all_of(s.substr(1), [&](char c) {
            return is_rest(static_cast<unsigned char>(c));
          });
 }
 
-/// @brief Find the first occurrence of a character in a string_view, ignoring characters inside quotes.
+/// @brief Find the first occurrence of a character in a string_view, ignoring
+/// characters inside quotes.
 /// @param s The string_view to search.
 /// @param ch The character to find.
-/// @return The index of the first occurrence of the character, or std::string_view::npos if not found.
+/// @return The index of the first occurrence of the character, or
+/// std::string_view::npos if not found.
 inline std::size_t find_unquoted(std::string_view s, char ch) {
   char in_quote = 0; // 0, '\'' or '"'
   for (std::size_t i = 0; i < s.size(); ++i) {
@@ -73,13 +72,14 @@ inline std::size_t find_unquoted(std::string_view s, char ch) {
   return std::string_view::npos;
 }
 
-
-/// @brief Check whether all quotes (single and double) in a string are balanced.
+/// @brief Check whether all quotes (single and double) in a string are
+/// balanced.
 inline bool quotes_balanced(std::string_view s) {
   char in_quote = 0;
   for (char c : s) {
     if (in_quote) {
-      if (c == in_quote) in_quote = 0;
+      if (c == in_quote)
+        in_quote = 0;
     } else if (c == '"' || c == '\'') {
       in_quote = c;
     }
@@ -105,11 +105,13 @@ inline std::vector<std::string> split(const std::string &s, char delim) {
   return result;
 }
 
-/// @brief Split a string by a delimiter, but only at the top level (i.e. ignoring delimiters inside quotes).
+/// @brief Split a string by a delimiter, but only at the top level (i.e.
+/// ignoring delimiters inside quotes).
 /// @param s The string to split.
 /// @param delimiter The delimiter to split by. Default is comma.
 /// @return A vector of string_view parts.
-inline std::vector<std::string_view> split_unquoted(std::string_view s, const char delimiter = ',') {
+inline std::vector<std::string_view>
+split_unquoted(std::string_view s, const char delimiter = ',') {
   std::vector<std::string_view> parts;
   std::size_t start = 0;
 
@@ -126,6 +128,5 @@ inline std::vector<std::string_view> split_unquoted(std::string_view s, const ch
   parts.push_back(s.substr(start));
   return parts;
 }
-
 
 } // namespace MOM::string_utils

@@ -9,13 +9,13 @@
 
 namespace MOM {
 
-using string_utils::find_unquoted;
-using string_utils::lowercase;
-using string_utils::trim;
-using string_utils::is_valid_identifier;
-using string_utils::quotes_balanced;
 using parser_utils::get_value;
 using parser_utils::strip_comments;
+using string_utils::find_unquoted;
+using string_utils::is_valid_identifier;
+using string_utils::lowercase;
+using string_utils::quotes_balanced;
+using string_utils::trim;
 
 namespace {
 
@@ -29,7 +29,8 @@ size_t find_rhs_end(std::string_view rhs_full) {
     char c = rhs_full[pos];
 
     if (in_quote) {
-      if (c == in_quote) in_quote = 0;
+      if (c == in_quote)
+        in_quote = 0;
       continue;
     }
 
@@ -53,26 +54,32 @@ size_t find_rhs_end(std::string_view rhs_full) {
   return rhs_full.size();
 }
 
-/// @brief Process one or more assignments in a line and insert them into the table.
+/// @brief Process one or more assignments in a line and insert them into the
+/// table.
 void process_assignments(std::string_view sv, const std::string &curr_namelist,
-                         std::size_t line_no, const std::string &path, ParamTable &table) {
+                         std::size_t line_no, const std::string &path,
+                         ParamTable &table) {
   while (!sv.empty()) {
     auto eq = find_unquoted(sv, '=');
-    if (eq == std::string_view::npos) return;
+    if (eq == std::string_view::npos)
+      return;
 
     auto lhs = trim(sv.substr(0, eq));
     if (lhs.empty()) {
-      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": empty variable name");
+      throw std::runtime_error(path + ":" + std::to_string(line_no) +
+                               ": empty variable name");
     }
 
     auto rhs_full = sv.substr(eq + 1);
-    auto rhs_end  = find_rhs_end(rhs_full);
+    auto rhs_end = find_rhs_end(rhs_full);
     auto rhs = trim(rhs_full.substr(0, rhs_end));
 
     try {
-      table.insert(lowercase(std::string(lhs)), curr_namelist, get_value(rhs, line_no, path));
+      table.insert(lowercase(std::string(lhs)), curr_namelist,
+                   get_value(rhs, line_no, path));
     } catch (const std::runtime_error &e) {
-      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": " + e.what());
+      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": " +
+                               e.what());
     }
 
     if (rhs_end < rhs_full.size()) {
@@ -83,7 +90,8 @@ void process_assignments(std::string_view sv, const std::string &curr_namelist,
   }
 }
 
-/// @brief Parse a Fortran namelist file and add its contents to the provided table.
+/// @brief Parse a Fortran namelist file and add its contents to the provided
+/// table.
 /// @param path The file path of the namelist file to parse.
 /// @param table The ParamTable to which parsed parameters will be added.
 void add_data_from_file(const std::string &path, ParamTable &table) {
@@ -107,8 +115,10 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
   std::string accumulated_line;
 
   auto flush_accumulated = [&]() {
-    if (accumulated_line.empty()) return;
-    process_assignments(trim(accumulated_line), curr_namelist, line_no, path, table);
+    if (accumulated_line.empty())
+      return;
+    process_assignments(trim(accumulated_line), curr_namelist, line_no, path,
+                        table);
     accumulated_line.clear();
   };
 
@@ -116,15 +126,16 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
     ++line_no;
 
     std::string_view sv = trim(strip_comments(raw_line));
-    if (sv.empty()) continue;
+    if (sv.empty())
+      continue;
 
     // Check for namelist start: &namelist_name [rest...]
     if (sv.front() == '&') {
       if (!curr_namelist.empty()) {
         throw std::runtime_error(
-          path + ":" + std::to_string(line_no) +
-          ": nested namelists not allowed (missing '/' for namelist '" + curr_namelist + "')"
-        );
+            path + ":" + std::to_string(line_no) +
+            ": nested namelists not allowed (missing '/' for namelist '" +
+            curr_namelist + "')");
       }
 
       auto after_amp = sv.substr(1);
@@ -140,13 +151,15 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
 
       nml_name = trim(nml_name);
       if (nml_name.empty()) {
-        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": empty namelist name");
+        throw std::runtime_error(path + ":" + std::to_string(line_no) +
+                                 ": empty namelist name");
       }
 
       curr_namelist = lowercase(nml_name);
       accumulated_line.clear();
 
-      if (rest.empty()) continue;
+      if (rest.empty())
+        continue;
       sv = rest;
     }
 
@@ -155,22 +168,26 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
     auto slash_pos = find_unquoted(sv, '/');
     if (slash_pos != std::string_view::npos) {
       if (curr_namelist.empty()) {
-        throw std::runtime_error(path + ":" + std::to_string(line_no) + ": unexpected '/' outside of a namelist");
+        throw std::runtime_error(path + ":" + std::to_string(line_no) +
+                                 ": unexpected '/' outside of a namelist");
       }
       std::string_view before = trim(sv.substr(0, slash_pos));
-      if (!before.empty()) accumulated_line += " " + std::string(before);
+      if (!before.empty())
+        accumulated_line += " " + std::string(before);
       flush_accumulated();
       curr_namelist.clear();
       continue;
     }
 
     if (curr_namelist.empty()) {
-      throw std::runtime_error(path + ":" + std::to_string(line_no) + ": content outside of namelist block");
+      throw std::runtime_error(path + ":" + std::to_string(line_no) +
+                               ": content outside of namelist block");
     }
 
     // If this line starts a new assignment, flush any previously deferred
     // assignment (one that ended with a trailing comma).
-    if (find_unquoted(sv, '=') != std::string_view::npos) flush_accumulated();
+    if (find_unquoted(sv, '=') != std::string_view::npos)
+      flush_accumulated();
 
     accumulated_line += " " + std::string(sv);
 
@@ -194,7 +211,8 @@ void add_data_from_file(const std::string &path, ParamTable &table) {
   }
 
   if (!curr_namelist.empty()) {
-    throw std::runtime_error(path + ":EOF: unterminated namelist '" + curr_namelist + "' (missing '/')");
+    throw std::runtime_error(path + ":EOF: unterminated namelist '" +
+                             curr_namelist + "' (missing '/')");
   }
 }
 
@@ -205,21 +223,26 @@ NamelistParams::NamelistParams(const std::string &path) : path_(path) {
 }
 
 template <typename T>
-void NamelistParams::get(const std::string &key, T &value, const std::string &namelist) const {
+void NamelistParams::get(const std::string &key, T &value,
+                         const std::string &namelist) const {
   const auto &val = get_variant(key, namelist);
   if (std::holds_alternative<T>(val)) {
     value = std::get<T>(val);
     return;
   }
   throw std::runtime_error("Parameter " +
-      (namelist.empty() ? key : namelist + ":" + key) + " is not of the requested type");
+                           (namelist.empty() ? key : namelist + ":" + key) +
+                           " is not of the requested type");
 }
 
-const ParamValue &NamelistParams::get_variant(const std::string &key, const std::string &namelist) const {
+const ParamValue &
+NamelistParams::get_variant(const std::string &key,
+                            const std::string &namelist) const {
   return table_.get_variant(key, namelist);
 }
 
-bool NamelistParams::has_param(const std::string &key, const std::string &namelist) const {
+bool NamelistParams::has_param(const std::string &key,
+                               const std::string &namelist) const {
   return table_.has_param(key, namelist);
 }
 
@@ -232,13 +255,24 @@ size_t NamelistParams::get_num_parameters() const {
 }
 
 // Explicit template instantiations
-template void NamelistParams::get<bool>(const std::string &, bool &, const std::string &) const;
-template void NamelistParams::get<int>(const std::string &, int &, const std::string &) const;
-template void NamelistParams::get<double>(const std::string &, double &, const std::string &) const;
-template void NamelistParams::get<std::string>(const std::string &, std::string &, const std::string &) const;
-template void NamelistParams::get<std::vector<bool>>(const std::string &, std::vector<bool> &, const std::string &) const;
-template void NamelistParams::get<std::vector<int>>(const std::string &, std::vector<int> &, const std::string &) const;
-template void NamelistParams::get<std::vector<double>>(const std::string &, std::vector<double> &, const std::string &) const;
-template void NamelistParams::get<std::vector<std::string>>(const std::string &, std::vector<std::string> &, const std::string &) const;
+template void NamelistParams::get<bool>(const std::string &, bool &,
+                                        const std::string &) const;
+template void NamelistParams::get<int>(const std::string &, int &,
+                                       const std::string &) const;
+template void NamelistParams::get<double>(const std::string &, double &,
+                                          const std::string &) const;
+template void NamelistParams::get<std::string>(const std::string &,
+                                               std::string &,
+                                               const std::string &) const;
+template void NamelistParams::get<std::vector<bool>>(const std::string &,
+                                                     std::vector<bool> &,
+                                                     const std::string &) const;
+template void NamelistParams::get<std::vector<int>>(const std::string &,
+                                                    std::vector<int> &,
+                                                    const std::string &) const;
+template void NamelistParams::get<std::vector<double>>(
+    const std::string &, std::vector<double> &, const std::string &) const;
+template void NamelistParams::get<std::vector<std::string>>(
+    const std::string &, std::vector<std::string> &, const std::string &) const;
 
 } // namespace MOM

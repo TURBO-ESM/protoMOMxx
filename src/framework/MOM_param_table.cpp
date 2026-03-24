@@ -6,19 +6,22 @@ namespace MOM {
 
 using string_utils::lowercase;
 
-ParamTable::ParamTable(bool case_insensitive) : case_insensitive_(case_insensitive) {}
+ParamTable::ParamTable(bool case_insensitive)
+    : case_insensitive_(case_insensitive) {}
 
 std::string ParamTable::normalize(const std::string &s) const {
   return case_insensitive_ ? lowercase(s) : s;
 }
 
-void ParamTable::insert(const std::string &key, const std::string &group, ParamValue value, bool is_override) {
+void ParamTable::insert(const std::string &key, const std::string &group,
+                        ParamValue value, bool is_override) {
   auto norm_group = normalize(group);
   auto norm_key = normalize(key);
 
   if (is_override) {
     auto grp_it = table_.find(norm_group);
-    if (grp_it == table_.end() || grp_it->second.find(norm_key) == grp_it->second.end()) {
+    if (grp_it == table_.end() ||
+        grp_it->second.find(norm_key) == grp_it->second.end()) {
       throw std::runtime_error("#override requires an existing key: '" +
                                (group.empty() ? key : group + "%" + key) + "'");
     }
@@ -41,7 +44,8 @@ void ParamTable::insert(const std::string &key, const std::string &group, ParamV
   }
 }
 
-const ParamValue &ParamTable::get_variant(const std::string &key, const std::string &group) const {
+const ParamValue &ParamTable::get_variant(const std::string &key,
+                                          const std::string &group) const {
   auto norm_group = normalize(group);
   auto norm_key = normalize(key);
 
@@ -58,7 +62,8 @@ const ParamValue &ParamTable::get_variant(const std::string &key, const std::str
   return key_it->second;
 }
 
-bool ParamTable::has_param(const std::string &key, const std::string &group) const {
+bool ParamTable::has_param(const std::string &key,
+                           const std::string &group) const {
   auto grp_it = table_.find(normalize(group));
   if (grp_it == table_.end()) {
     return false;

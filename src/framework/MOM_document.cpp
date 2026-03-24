@@ -13,8 +13,8 @@
 #include <cmath>
 #include <cstdio>
 #include <limits>
-#include <type_traits>
 #include <stdexcept>
+#include <type_traits>
 
 #include "MOM_logger.h"
 
@@ -28,10 +28,12 @@ constexpr double fixed_upper_bound = 1.0e4;
 // Precision sweep bounds for real_string round-trip formatting
 constexpr int fixed_min_precision = 1;
 constexpr int sci_min_precision = 1;
-constexpr int max_precision = std::numeric_limits<double>::max_digits10; // 17; guarantees round-trip
+constexpr int max_precision =
+    std::numeric_limits<double>::max_digits10; // 17; guarantees round-trip
 constexpr int fallback_precision = max_precision;
 
-/// @brief Trim trailing zeros from a fixed-notation string, keeping at least "x.0".
+/// @brief Trim trailing zeros from a fixed-notation string, keeping at least
+/// "x.0".
 void trim_fixed_zeros(std::string &s) {
   auto dot = s.find('.');
   if (dot == std::string::npos)
@@ -43,7 +45,8 @@ void trim_fixed_zeros(std::string &s) {
     s.erase(dot + 2); // keep at least "x.0"
 }
 
-/// @brief Trim trailing zeros before the exponent in a scientific-notation string.
+/// @brief Trim trailing zeros before the exponent in a scientific-notation
+/// string.
 void trim_sci_zeros(std::string &s) {
   auto e_pos = s.find('e');
   if (e_pos == std::string::npos)
@@ -85,13 +88,14 @@ DocFileWriter::~DocFileWriter() noexcept {
   try {
     close();
   } catch (...) {
-    // Swallow errors — callers should use close() explicitly to detect I/O failures.
-    // This is just a safety net to ensure files are closed on destruction, but we don't want
-    // exceptions escaping from the destructor.
+    // Swallow errors — callers should use close() explicitly to detect I/O
+    // failures. This is just a safety net to ensure files are closed on
+    // destruction, but we don't want exceptions escaping from the destructor.
   }
 }
 
-DocFileWriter::DocFileWriter(const std::string &doc_file_base, bool complete, bool minimal, bool layout, bool debugging)
+DocFileWriter::DocFileWriter(const std::string &doc_file_base, bool complete,
+                             bool minimal, bool layout, bool debugging)
     : doc_file_base_(doc_file_base) {
   file_all_.enabled = complete;
   file_short_.enabled = minimal;
@@ -130,13 +134,17 @@ void DocFileWriter::open_files() {
     return;
 
   file_all_.open(doc_file_base_ + ".all",
-                 "! This file was written by the model and records all non-layout or debugging parameters used at run-time.\n");
+                 "! This file was written by the model and records all "
+                 "non-layout or debugging parameters used at run-time.\n");
   file_short_.open(doc_file_base_ + ".short",
-                   "! This file was written by the model and records the non-default parameters used at run-time.\n");
+                   "! This file was written by the model and records the "
+                   "non-default parameters used at run-time.\n");
   file_layout_.open(doc_file_base_ + ".layout",
-                    "! This file was written by the model and records the layout parameters used at run-time.\n");
+                    "! This file was written by the model and records the "
+                    "layout parameters used at run-time.\n");
   file_debugging_.open(doc_file_base_ + ".debugging",
-                       "! This file was written by the model and records the debugging parameters used at run-time.\n");
+                       "! This file was written by the model and records the "
+                       "debugging parameters used at run-time.\n");
 
   files_are_open_ = true;
 }
@@ -156,10 +164,13 @@ std::string DocFileWriter::real_string(double val) {
   // Fallback formatter: tries std::to_chars first, falls back to snprintf if
   // to_chars fails (e.g., buffer too small). The snprintf format specifier must
   // match the chars_format (e.g., "%.*f" for fixed, "%.*e" for scientific).
-  auto fallback_format = [&](std::chars_format fmt, const char* snprintf_fmt) -> std::string {
-    auto [end, ec] = std::to_chars(buf.data(), buf.data() + buf.size(), val, fmt, fallback_precision);
+  auto fallback_format = [&](std::chars_format fmt,
+                             const char *snprintf_fmt) -> std::string {
+    auto [end, ec] = std::to_chars(buf.data(), buf.data() + buf.size(), val,
+                                   fmt, fallback_precision);
     if (ec != std::errc{}) {
-      auto n = std::snprintf(buf.data(), buf.size(), snprintf_fmt, fallback_precision, val);
+      auto n = std::snprintf(buf.data(), buf.size(), snprintf_fmt,
+                             fallback_precision, val);
       end = buf.data() + std::max(n, 0);
     }
     return {buf.data(), end};
@@ -168,12 +179,14 @@ std::string DocFileWriter::real_string(double val) {
   if (absval >= fixed_lower_bound && absval < fixed_upper_bound) {
     // Fixed notation — try increasing precision until round-trip matches
     for (int prec = fixed_min_precision; prec <= max_precision; ++prec) {
-      auto [end, ec] = std::to_chars(buf.data(), buf.data() + buf.size(), val, std::chars_format::fixed, prec);
+      auto [end, ec] = std::to_chars(buf.data(), buf.data() + buf.size(), val,
+                                     std::chars_format::fixed, prec);
       if (ec != std::errc{})
         continue;
       std::string s(buf.data(), end);
       double reparsed = 0.0;
-      auto [rptr, rec] = std::from_chars(s.data(), s.data() + s.size(), reparsed);
+      auto [rptr, rec] =
+          std::from_chars(s.data(), s.data() + s.size(), reparsed);
       if (rec == std::errc{} && reparsed == val) {
         trim_fixed_zeros(s);
         return s;
@@ -186,7 +199,8 @@ std::string DocFileWriter::real_string(double val) {
 
   // Scientific notation
   for (int prec = sci_min_precision; prec <= max_precision; ++prec) {
-    auto [end, ec] = std::to_chars(buf.data(), buf.data() + buf.size(), val, std::chars_format::scientific, prec);
+    auto [end, ec] = std::to_chars(buf.data(), buf.data() + buf.size(), val,
+                                   std::chars_format::scientific, prec);
     if (ec != std::errc{})
       continue;
     std::string s(buf.data(), end);
@@ -202,14 +216,17 @@ std::string DocFileWriter::real_string(double val) {
   return s;
 }
 
-std::string DocFileWriter::define_string(std::string_view varname, std::string_view valstring,
+std::string DocFileWriter::define_string(std::string_view varname,
+                                         std::string_view valstring,
                                          std::string_view units) const {
   std::string result;
-  result.reserve(varname.size() + 3 + valstring.size() + comment_column_ + units.size() + 8);
+  result.reserve(varname.size() + 3 + valstring.size() + comment_column_ +
+                 units.size() + 8);
   result += varname;
   result += " = ";
   result += valstring;
-  int num_spaces = std::max(1, comment_column_ - static_cast<int>(result.size()));
+  int num_spaces =
+      std::max(1, comment_column_ - static_cast<int>(result.size()));
   result.append(num_spaces, ' ');
   result += '!';
   if (!units.empty()) {
@@ -220,12 +237,14 @@ std::string DocFileWriter::define_string(std::string_view varname, std::string_v
   return result;
 }
 
-std::string DocFileWriter::undef_string(std::string_view varname, std::string_view units) const {
+std::string DocFileWriter::undef_string(std::string_view varname,
+                                        std::string_view units) const {
   std::string result;
   result.reserve(varname.size() + 8 + comment_column_ + units.size() + 8);
   result += varname;
   result += " = False";
-  int num_spaces = std::max(1, comment_column_ - static_cast<int>(result.size()));
+  int num_spaces =
+      std::max(1, comment_column_ - static_cast<int>(result.size()));
   result.append(num_spaces, ' ');
   result += '!';
   if (!units.empty()) {
@@ -240,11 +259,15 @@ std::string DocFileWriter::undef_string(std::string_view varname, std::string_vi
 // Message writing
 // ---------------------------------------------------------------------------
 
-void DocFileWriter::write_message_and_desc(std::string_view mesg, std::string_view desc, bool value_was_default,
-                                           bool layout_param, bool debugging_param) {
+void DocFileWriter::write_message_and_desc(std::string_view mesg,
+                                           std::string_view desc,
+                                           bool value_was_default,
+                                           bool layout_param,
+                                           bool debugging_param) {
   // Determine which files to write to
   bool write_all = file_all_.is_open() && !layout_param && !debugging_param;
-  bool write_short = file_short_.is_open() && !layout_param && !debugging_param && !value_was_default;
+  bool write_short = file_short_.is_open() && !layout_param &&
+                     !debugging_param && !value_was_default;
   bool write_lay = layout_param && file_layout_.is_open();
   bool write_dbg = debugging_param && file_debugging_.is_open();
 
@@ -259,8 +282,10 @@ void DocFileWriter::write_message_and_desc(std::string_view mesg, std::string_vi
     file_debugging_.stream << mesg << "\n";
 
   auto check_io = [&] {
-    if ((write_all && !file_all_.stream) || (write_short && !file_short_.stream) ||
-        (write_lay && !file_layout_.stream) || (write_dbg && !file_debugging_.stream))
+    if ((write_all && !file_all_.stream) ||
+        (write_short && !file_short_.stream) ||
+        (write_lay && !file_layout_.stream) ||
+        (write_dbg && !file_debugging_.stream))
       throw std::runtime_error("I/O error while writing documentation file");
   };
 
@@ -303,7 +328,8 @@ void DocFileWriter::write_message_and_desc(std::string_view mesg, std::string_vi
     // Check for explicit newline in the processed description
     auto nl_pos = processed_desc.find('\n', start);
 
-    if (nl_pos != std::string::npos && nl_pos - start <= static_cast<std::size_t>(text_width)) {
+    if (nl_pos != std::string::npos &&
+        nl_pos - start <= static_cast<std::size_t>(text_width)) {
       // There's a newline within text_width, use it
       line_text = processed_desc.substr(start, nl_pos - start);
       start = nl_pos + 1; // skip the newline
@@ -336,14 +362,17 @@ void DocFileWriter::write_message_and_desc(std::string_view mesg, std::string_vi
       file_layout_.stream << comment_line << "\n";
     if (write_dbg)
       file_debugging_.stream << comment_line << "\n";
-
   }
 
   // Flush after each parameter to ensure data is written promptly
-  if (write_all)   file_all_.stream.flush();
-  if (write_short) file_short_.stream.flush();
-  if (write_lay)   file_layout_.stream.flush();
-  if (write_dbg)   file_debugging_.stream.flush();
+  if (write_all)
+    file_all_.stream.flush();
+  if (write_short)
+    file_short_.stream.flush();
+  if (write_lay)
+    file_layout_.stream.flush();
+  if (write_dbg)
+    file_debugging_.stream.flush();
   check_io();
 }
 
@@ -351,7 +380,8 @@ void DocFileWriter::write_message_and_desc(std::string_view mesg, std::string_vi
 // Duplicate detection
 // ---------------------------------------------------------------------------
 
-bool DocFileWriter::mesg_has_been_documented(std::string_view varname, std::string_view mesg) {
+bool DocFileWriter::mesg_has_been_documented(std::string_view varname,
+                                             std::string_view mesg) {
   std::string full_name = block_prefix_;
   full_name += varname;
 
@@ -359,7 +389,7 @@ bool DocFileWriter::mesg_has_been_documented(std::string_view varname, std::stri
   if (it != documented_.end()) {
     if (it->second != mesg) {
       logger::warning("Inconsistent documentation for parameter ", full_name,
-                           "\n  Previous: ", it->second, "\n  New:      ", mesg);
+                      "\n  Previous: ", it->second, "\n  New:      ", mesg);
     }
     return true;
   }
@@ -379,8 +409,10 @@ bool DocFileWriter::prepare_doc() {
   return true;
 }
 
-void DocFileWriter::finalize_doc(std::string_view varname, std::string_view desc, std::string_view mesg,
-                                 bool equals_default, const DocParamOptions &opts) {
+void DocFileWriter::finalize_doc(std::string_view varname,
+                                 std::string_view desc, std::string_view mesg,
+                                 bool equals_default,
+                                 const DocParamOptions &opts) {
   if (mesg_has_been_documented(varname, mesg))
     return;
 
@@ -390,7 +422,8 @@ void DocFileWriter::finalize_doc(std::string_view varname, std::string_view desc
 
   // Suppress from .short if the module-level all_default flag is still set
   bool suppress_short = equals_default || current_module_all_default_;
-  write_message_and_desc(mesg, desc, suppress_short, opts.layout_param, opts.debugging_param);
+  write_message_and_desc(mesg, desc, suppress_short, opts.layout_param,
+                         opts.debugging_param);
 }
 
 namespace {
@@ -412,14 +445,17 @@ std::string to_doc_string(const std::string &v) {
 // ---------------------------------------------------------------------------
 
 template <typename T>
-void DocFileWriter::doc_param(std::string_view varname, std::string_view desc, std::string_view units, const T &val,
-                              std::optional<T> default_val, const DocParamOptions &opts) {
+void DocFileWriter::doc_param(std::string_view varname, std::string_view desc,
+                              std::string_view units, const T &val,
+                              std::optional<T> default_val,
+                              const DocParamOptions &opts) {
   if (!prepare_doc())
     return;
 
   std::string mesg;
   if constexpr (std::is_same_v<T, bool>) {
-    mesg = val ? define_string(varname, "True", units) : undef_string(varname, units);
+    mesg = val ? define_string(varname, "True", units)
+               : undef_string(varname, units);
   } else {
     mesg = define_string(varname, to_doc_string(val), units);
   }
@@ -439,8 +475,10 @@ void DocFileWriter::doc_param(std::string_view varname, std::string_view desc, s
 // ---------------------------------------------------------------------------
 
 template <typename T>
-void DocFileWriter::doc_param(std::string_view varname, std::string_view desc, std::string_view units,
-                              const std::vector<T> &vals, std::optional<std::vector<T>> default_val,
+void DocFileWriter::doc_param(std::string_view varname, std::string_view desc,
+                              std::string_view units,
+                              const std::vector<T> &vals,
+                              std::optional<std::vector<T>> default_val,
                               const DocParamOptions &opts) {
   if (!prepare_doc())
     return;
@@ -480,36 +518,51 @@ void DocFileWriter::doc_param(std::string_view varname, std::string_view desc, s
 
 /// @cond
 // Explicit instantiations — scalar
-template void DocFileWriter::doc_param<bool>(std::string_view, std::string_view, std::string_view, const bool &,
-                                             std::optional<bool>, const DocParamOptions &);
-template void DocFileWriter::doc_param<int>(std::string_view, std::string_view, std::string_view, const int &,
-                                            std::optional<int>, const DocParamOptions &);
-template void DocFileWriter::doc_param<double>(std::string_view, std::string_view, std::string_view, const double &,
-                                               std::optional<double>, const DocParamOptions &);
-template void DocFileWriter::doc_param<std::string>(std::string_view, std::string_view, std::string_view,
-                                                    const std::string &, std::optional<std::string>,
-                                                    const DocParamOptions &);
+template void DocFileWriter::doc_param<bool>(std::string_view, std::string_view,
+                                             std::string_view, const bool &,
+                                             std::optional<bool>,
+                                             const DocParamOptions &);
+template void DocFileWriter::doc_param<int>(std::string_view, std::string_view,
+                                            std::string_view, const int &,
+                                            std::optional<int>,
+                                            const DocParamOptions &);
+template void DocFileWriter::doc_param<double>(std::string_view,
+                                               std::string_view,
+                                               std::string_view, const double &,
+                                               std::optional<double>,
+                                               const DocParamOptions &);
+template void DocFileWriter::doc_param<std::string>(
+    std::string_view, std::string_view, std::string_view, const std::string &,
+    std::optional<std::string>, const DocParamOptions &);
 
 // Explicit instantiations — vector
-template void DocFileWriter::doc_param<bool>(std::string_view, std::string_view, std::string_view,
-                                             const std::vector<bool> &, std::optional<std::vector<bool>>,
+template void DocFileWriter::doc_param<bool>(std::string_view, std::string_view,
+                                             std::string_view,
+                                             const std::vector<bool> &,
+                                             std::optional<std::vector<bool>>,
                                              const DocParamOptions &);
-template void DocFileWriter::doc_param<int>(std::string_view, std::string_view, std::string_view,
-                                            const std::vector<int> &, std::optional<std::vector<int>>,
+template void DocFileWriter::doc_param<int>(std::string_view, std::string_view,
+                                            std::string_view,
+                                            const std::vector<int> &,
+                                            std::optional<std::vector<int>>,
                                             const DocParamOptions &);
-template void DocFileWriter::doc_param<double>(std::string_view, std::string_view, std::string_view,
-                                               const std::vector<double> &, std::optional<std::vector<double>>,
-                                               const DocParamOptions &);
-template void DocFileWriter::doc_param<std::string>(std::string_view, std::string_view, std::string_view,
-                                                    const std::vector<std::string> &,
-                                                    std::optional<std::vector<std::string>>, const DocParamOptions &);
+template void
+DocFileWriter::doc_param<double>(std::string_view, std::string_view,
+                                 std::string_view, const std::vector<double> &,
+                                 std::optional<std::vector<double>>,
+                                 const DocParamOptions &);
+template void DocFileWriter::doc_param<std::string>(
+    std::string_view, std::string_view, std::string_view,
+    const std::vector<std::string> &, std::optional<std::vector<std::string>>,
+    const DocParamOptions &);
 /// @endcond
 
 // ---------------------------------------------------------------------------
 // Module / block documentation
 // ---------------------------------------------------------------------------
 
-void DocFileWriter::doc_module(std::string_view modname, std::string_view desc, bool layout_mod, bool debugging_mod,
+void DocFileWriter::doc_module(std::string_view modname, std::string_view desc,
+                               bool layout_mod, bool debugging_mod,
                                bool all_default) {
   open_files();
   if (!files_are_open_)
@@ -517,7 +570,8 @@ void DocFileWriter::doc_module(std::string_view modname, std::string_view desc, 
 
   // If this module is already open, skip the redundant close/reopen cycle.
   if (current_module_ == modname) {
-    logger::warning("doc_module(\"", modname, "\") called but module is already open — skipping.");
+    logger::warning("doc_module(\"", modname,
+                    "\") called but module is already open — skipping.");
     return;
   }
 
@@ -525,7 +579,8 @@ void DocFileWriter::doc_module(std::string_view modname, std::string_view desc, 
   close_module();
 
   // Blank line for delineation. Pass all_default so that when every parameter
-  // in this module equals its default, the separator is also omitted from .short.
+  // in this module equals its default, the separator is also omitted from
+  // .short.
   write_message_and_desc("", "", all_default, layout_mod, debugging_mod);
 
   std::string mesg = "! === module ";
@@ -549,10 +604,12 @@ void DocFileWriter::close_module() {
   current_module_all_default_ = false;
 }
 
-void DocFileWriter::open_block(std::string_view blockName, std::string_view desc) {
+void DocFileWriter::open_block(std::string_view blockName,
+                               std::string_view desc) {
   if (!current_block_name_.empty())
     throw std::logic_error("open_block(\"" + std::string(blockName) +
-                           "\") called while block \"" + current_block_name_ + "\" is already open");
+                           "\") called while block \"" + current_block_name_ +
+                           "\" is already open");
   open_files();
   if (!files_are_open_)
     return;
