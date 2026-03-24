@@ -22,3 +22,5 @@ target_link_libraries(test_MOM_logger GTest::gtest_main MOM_src_framework)
 
 include(GoogleTest)
 gtest_discover_tests(test_MOM_logger)
+
+add_subdirectory(config_src)
