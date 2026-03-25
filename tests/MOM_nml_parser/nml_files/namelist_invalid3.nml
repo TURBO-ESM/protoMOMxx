@@ -1,0 +1,7 @@
+! Invalid: nested namelists
+&OUTER
+  VAR1 = 100
+  &INNER
+    VAR2 = 200
+  /
+/

@@ -1,0 +1,3 @@
+! Invalid: missing closing /
+&INVALID_NML
+  VAR1 = 100

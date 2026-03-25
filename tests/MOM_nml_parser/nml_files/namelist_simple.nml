@@ -1,0 +1,8 @@
+! Simple namelist test file
+&OCEAN
+  DT = 3600
+  REENTRANT_X = .false.
+  REENTRANT_Y = .true.
+  COORD_TYPE = 'ALE'
+  GRAVITY = 9.81
+/
