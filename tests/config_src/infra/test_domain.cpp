@@ -1,3 +1,6 @@
+#include <cstddef>
+#include <stdexcept>
+
 #include <gtest/gtest.h>
 
 #include "domain.h"
