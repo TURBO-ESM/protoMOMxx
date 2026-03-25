@@ -21,5 +21,5 @@ Domain::Domain(const std::size_t ni_global, const std::size_t nj_global,
    }
 
   }
-   
-}
+
+} // namespace MOM
