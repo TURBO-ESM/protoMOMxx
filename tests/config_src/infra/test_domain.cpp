@@ -25,7 +25,7 @@ TEST(DomainConstructor, Constructor) {
   EXPECT_THROW(MOM::Domain(ni_global, nj_global, ni_halo, nj_halo, reentrant_i, true, true), std::invalid_argument);
 }
 
-// Test harness for Domain class. Additional tests can be added here as needed, such as
+// Test harness for Domain class. 
 class DomainTest : public ::testing::Test {
 protected:
   const std::size_t ni_global = 4;
