@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_subdirectory(src/framework)
 add_subdirectory(src/core)
 add_subdirectory(config_src/drivers/solo_driver)
+add_subdirectory(config_src)
 
 option(PROTOMOM_TESTS "Build unit tests" OFF)
 option(PROTOMOM_FETCH_DEPS "Fetch missing dependencies automatically" ON)

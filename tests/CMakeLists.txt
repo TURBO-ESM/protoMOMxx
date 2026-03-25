@@ -37,3 +37,5 @@ gtest_discover_tests(test_MOM_io)
 gtest_discover_tests(test_MOM_directories)
 gtest_discover_tests(test_MOM_file_parser)
 gtest_discover_tests(test_MOM_document)
+
+add_subdirectory(config_src)
