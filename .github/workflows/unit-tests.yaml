@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configure test build
-        run: cmake -S . -B buildtest -DTESTS=ON
+        run: cmake -S . -B buildtest -DPROTOMOM_TESTS=ON
 
       - name: Build tests
         run: cmake --build buildtest -j

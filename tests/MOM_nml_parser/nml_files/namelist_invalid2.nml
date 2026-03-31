@@ -1,0 +1,2 @@
+! Invalid: content outside namelist
+VAR1 = 100
