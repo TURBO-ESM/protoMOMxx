@@ -44,5 +44,5 @@ protected:
 TEST_F(DomainTest, ConstructorAgainToVerifyFixture) {
   // Just to verify that the fixture is set up correctly.
   // Checks we have access to its protected members (domain and ni_global) inside the tests derived from the fixture.
-  EXPECT_EQ(domain.ni_global, ni_global);
+  EXPECT_EQ(ni_global, domain.ni_global);
 }
