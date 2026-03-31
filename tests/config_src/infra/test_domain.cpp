@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 
-#include "domain.h"
+#include "MOM_domain.h"
 
 TEST(DomainConstructor, Constructor) {
   const std::size_t ni_global = 4;

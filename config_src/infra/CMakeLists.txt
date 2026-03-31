@@ -1,5 +1,5 @@
 add_library(MOM_config_src_infra
-  domain.cpp
+  MOM_domain.cpp
 )
 
 target_include_directories(MOM_config_src_infra

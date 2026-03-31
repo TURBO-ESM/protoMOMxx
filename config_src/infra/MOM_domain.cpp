@@ -1,7 +1,7 @@
 #include <cstddef>
 #include <stdexcept>
 
-#include "domain.h"
+#include "MOM_domain.h"
 
 namespace MOM {
 
