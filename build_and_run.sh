@@ -48,7 +48,7 @@ CMAKE_PREFIX_PATH="${AMREX_ROOT}/install"
 . ./create_env.sh
 . ./build.sh
 
-if [ "${PROTOMOM_TESTS}" == "ON" ]; then
+if [[ "${PROTOMOM_TESTS}" == "ON" ]]; then
   ctest --test-dir "${BUILD_DIR}"
 else
   ${BUILD_DIR}/protoMOMxx

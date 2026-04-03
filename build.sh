@@ -8,7 +8,7 @@
 : ${CMAKE_BUILD_TYPE:="Release"}
 : ${FRESH_BUILD:="False"}
 
-if [ "${FRESH_BUILD}" == "True" ]; then
+if [[ "${FRESH_BUILD}" == "True" || ! -d "${BUILD_DIR}" ]]; then
   cmake                                                 \
     -S .                                                \
     -B "${BUILD_DIR}"                                   \
