@@ -31,8 +31,8 @@ private:
   void DefineCellCenteredMultiFab(const int nx, const int ny, const int nz,
                                 const int max_chunk_size,
                                 amrex::MultiFab & cell_centered_MultiFab);
-  void InitializeGeometry(const int nx, const int ny,
-                        const amrex::Real dx, const amrex::Real dy,
+  void InitializeGeometry(const int nx, const int ny, const int nz,
+                        const amrex::Real dx, const amrex::Real dy, const amrex::Real dz,
                         amrex::Geometry & geom);
 };
 

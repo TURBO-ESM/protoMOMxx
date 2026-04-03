@@ -83,11 +83,11 @@ void Model::initialize_MOM() {
 
     // AMReX object to hold domain meta data... Like the physical size of the domain and if it is periodic in each direction
   amrex::Geometry geom;
-  // InitializeGeometry(nx, ny, dx, dy, geom);
+  InitializeGeometry(nx, ny, nz, dx, dy, dz, geom);
 
-  // InitializeVariables(geom, psi);
+  InitializeVariables(geom, psi);
 
-  // psi.FillBoundary(geom.periodicity());
+  psi.FillBoundary(geom.periodicity());
 
 }
 
@@ -157,23 +157,23 @@ void Model::DefineCellCenteredMultiFab(const int nx, const int ny, const int nz,
     // number of ghost cells for each array
     int Nghost = 1;
 
-    // cell_centered_MultiFab.define(cell_box_array, distribution_mapping, Ncomp, Nghost);
+    cell_centered_MultiFab.define(cell_box_array, distribution_mapping, Ncomp, Nghost);
 }
 
-void Model::InitializeGeometry(const int nx, const int ny,
-                        const amrex::Real dx, const amrex::Real dy,
+void Model::InitializeGeometry(const int nx, const int ny, const int nz,
+                        const amrex::Real dx, const amrex::Real dy, const amrex::Real dz,
                         amrex::Geometry & geom)
 {
   // lower and upper indices of domain
-  const amrex::IntVect domain_low_index(0,0, 0);
-  const amrex::IntVect domain_high_index(nx-1, ny-1, 0);
+  const amrex::IntVect domain_low_index(0,0,0);
+  const amrex::IntVect domain_high_index(nx-1, ny-1, nz-1);
 
   // create box of indicies for cells
   const amrex::Box cell_centered_box(domain_low_index, domain_high_index);
 
   // physical min and max boundaries of cells
-  const amrex::RealBox real_box({0, 0},
-                                {nx*dx, ny*dy});
+  const amrex::RealBox real_box({0, 0, 0},
+                                {nx*dx, ny*dy, nz*dz});
 
   // This, a value of 0, says we are using Cartesian coordinates
   int coordinate_system = 0;
