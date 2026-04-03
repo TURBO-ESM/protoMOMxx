@@ -25,6 +25,7 @@ while [[ "$#" -gt 0 ]]; do
             CMAKE_BUILD_TYPE="Debug" ;;
         --jobs)
             JOBS="$2"
+            # Verify that the number of jobs parsed is a valid integer > 0
             if [[ ! "${JOBS}" =~ ^[0-9]+$ ]]; then
                 echo "--jobs option ${JOBS} not a valid positive integer."
                 exit 1
