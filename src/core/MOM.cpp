@@ -1,9 +1,8 @@
-#include <AMReX.H>
-#include <AMReX_ParallelDescriptor.H>
-#include <AMReX_Array.H>
-
 #include "MOM.h"
 #include "MOM_logger.h"
+
+#include <AMReX_ParallelDescriptor.H>
+#include <AMReX_Array.H>
 
 namespace MOM {
 
@@ -61,32 +60,34 @@ Model::Model(const int ensemble_num)
 
 void Model::initialize_MOM() {
   // Number of cells on each direction
-  int nx;
-  int ny;
+  int nx = 64;
+  int ny = 64;
+  int nz = 64;
 
   // Cell size in each direction
-  amrex::Real dx;
-  amrex::Real dy;
+  amrex::Real dx = 100000;
+  amrex::Real dy = 100000;
+  amrex::Real dz = 100000;
 
   // Mesh will be broken into chunks of up to max_chunk_size
-  int max_chunk_size;
+  int max_chunk_size = 32;
 
   // Number of time steps to take
-  int n_time_steps;
+  int n_time_steps = 4000;
 
   // Size of time step
-  amrex::Real dt;
+  amrex::Real dt = 90;
 
   amrex::MultiFab psi;
-  DefineCellCenteredMultiFab(nx, ny, max_chunk_size, psi);
+  DefineCellCenteredMultiFab(nx, ny, nz, max_chunk_size, psi);
 
     // AMReX object to hold domain meta data... Like the physical size of the domain and if it is periodic in each direction
   amrex::Geometry geom;
-  InitializeGeometry(nx, ny, dx, dy, geom);
+  // InitializeGeometry(nx, ny, dx, dy, geom);
 
-  InitializeVariables(geom, psi);
+  // InitializeVariables(geom, psi);
 
-  psi.FillBoundary(geom.periodicity());
+  // psi.FillBoundary(geom.periodicity());
 
 }
 
@@ -116,9 +117,9 @@ void Model::InitializeVariables(const amrex::Geometry & geom,
 
         const amrex::Array4<amrex::Real>& phi_array = psi.array(mfi);
 
+        // [this] capture needed due to calling LinearMapCoordinates
         amrex::ParallelFor(bx, [=, this] AMREX_GPU_DEVICE(int i, int j, int k)
         {
-            // [this] capture needed due to calling LinearMapCoordinates
             const amrex::Real x_cell_center = (i+0.5) * dx;
             const amrex::Real y_cell_center = (j+0.5) * dy;
 
@@ -130,30 +131,25 @@ void Model::InitializeVariables(const amrex::Geometry & geom,
     }
 }
 
-void Model::DefineCellCenteredMultiFab(const int nx, const int ny,
-                                const int max_chunk_size,
-                                amrex::MultiFab & cell_centered_MultiFab)
+void Model::DefineCellCenteredMultiFab(const int nx, const int ny, const int nz,
+                                       const int max_chunk_size,
+                                       amrex::MultiFab & cell_centered_MultiFab)
 {
     // lower and upper indices of domain
-    const amrex::IntVect domain_low_index(0,0,0);
-    const amrex::IntVect domain_high_index(nx-1, ny-1, 0); // Need to determine number of z levels.
+    const amrex::IntVect domain_low_index(AMREX_D_DECL(0,0,0));
+    const amrex::IntVect domain_high_index(AMREX_D_DECL(nx-1, ny-1, nz-1)); // Need to determine number of z levels.
     
     // create box of indicies for cells
     const amrex::Box cell_centered_box(domain_low_index, domain_high_index);
 
     // initialize the boxarray "cell_box_array" from the single box "cell_centered_box"
     amrex::BoxArray cell_box_array(cell_centered_box);
-    //cell_box_array.define(cell_centered_box);
 
     // break up boxarray "cell_box_array" into chunks no larger than "max_chunk_size" along a direction
     cell_box_array.maxSize(max_chunk_size);
 
     // assigns processor to each box in the box array
-    amrex::DistributionMapping distribution_mapping(cell_box_array);
-
-    //amrex::Print() << "max_chunk_size: " << max_chunk_size << std::endl;
-    //amrex::Print() << "cell_box_array: " << cell_box_array << std::endl;
-    //amrex::Print() << "distribution mapping: " << distribution_mapping << std::endl;
+    amrex::DistributionMapping distribution_mapping(cell_box_array, 1);
 
     // number of components for each array
     int Ncomp = 1;
@@ -161,7 +157,7 @@ void Model::DefineCellCenteredMultiFab(const int nx, const int ny,
     // number of ghost cells for each array
     int Nghost = 1;
 
-    cell_centered_MultiFab.define(cell_box_array, distribution_mapping, Ncomp, Nghost);
+    // cell_centered_MultiFab.define(cell_box_array, distribution_mapping, Ncomp, Nghost);
 }
 
 void Model::InitializeGeometry(const int nx, const int ny,
