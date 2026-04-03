@@ -7,7 +7,9 @@
 : ${AMReX_GPU_BACKEND:="NONE"}
 : ${BUILD_DIR:="${ROOTDIR}/build"}
 : ${AMREX_ROOT:="${ROOTDIR}/dependencies/amrex"}
+: ${FRESH_BUILD:="False"}
 
+# Current default modules on Derecho
 module purge
 module load ncarenv/25.10
 module load cmake/3.31.8 gcc/14.3.0 cray-mpich/8.1.32 ncarcompilers/1.2.0
@@ -23,6 +25,8 @@ while [[ "$#" -gt 0 ]]; do
             PROTOMOM_TESTS="ON" ;;
         --debug)
             CMAKE_BUILD_TYPE="Debug" ;;
+        --fresh)
+            FRESH_BUILD="True" ;;
         --jobs)
             JOBS="$2"
             # Verify that the number of jobs parsed is a valid integer > 0
