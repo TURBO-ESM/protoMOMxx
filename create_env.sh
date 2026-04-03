@@ -6,6 +6,7 @@
 : ${JOBS:="2"}
 : ${AMReX_GPU_BACKEND:="NONE"}
 : ${AMREX_ROOT:="${DEPENDENCIES_DIR}/amrex"}
+: ${CMAKE_BUILD_TYPE:="Release"}
 
 AMREX_SRC="${AMREX_ROOT}/src"
 AMREX_BUILD_DIR="${AMREX_ROOT}/build"
@@ -20,7 +21,8 @@ if [ ! -d "${AMREX_BUILD_DIR}" ]; then
     -S "${AMREX_SRC}"                             \
     -B "${AMREX_BUILD_DIR}"                       \
     -DAMReX_GPU_BACKEND="${AMReX_GPU_BACKEND}"    \
-    -DCMAKE_INSTALL_PREFIX="${AMREX_INSTALL_DIR}"
+    -DCMAKE_INSTALL_PREFIX="${AMREX_INSTALL_DIR}" \
+    -DCMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
   cmake --build "${AMREX_BUILD_DIR}" -j "${JOBS}"
 fi
 
