@@ -187,7 +187,7 @@ void Model::InitializeGeometry(const int nx, const int ny, const int nz,
 }
 
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-amrex::Real Model::LinearMapCoordinates(const amrex::Real x, 
+amrex::Real LinearMapCoordinates(const amrex::Real x,
                                  const amrex::Real x_min, const amrex::Real x_max,
                                  const amrex::Real xi_min, const amrex::Real xi_max)
 {

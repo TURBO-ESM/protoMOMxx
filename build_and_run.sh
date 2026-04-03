@@ -19,6 +19,7 @@ while [[ "$#" -gt 0 ]]; do
         --gpu)
             module load cuda/12.9.0
             AMReX_GPU_BACKEND="CUDA"
+            PROTOMOM_CUDA="ON"
             BUILD_DIR="${ROOTDIR}/build-gpu"
             AMREX_ROOT="${ROOTDIR}/dependencies/amrex-cuda" ;;
         --tests)

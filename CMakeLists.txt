@@ -9,6 +9,7 @@ option(PROTOMOM_TESTS "Build unit tests" OFF)
 option(PROTOMOM_FETCH_DEPS "Fetch missing dependencies automatically" ON)
 
 if(PROTOMOM_CUDA)
+  enable_language(CUDA)
   find_package(AMReX REQUIRED CUDA)
   include(AMReXTargetHelpers)
 else()
