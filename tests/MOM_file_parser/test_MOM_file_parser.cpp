@@ -13,10 +13,14 @@
 using namespace MOM;
 
 // Helper function to get the absolute path to the test data directory
-std::filesystem::path get_test_data_dir() { return std::filesystem::path(__FILE__).parent_path() / "MOM_param_files"; }
+std::filesystem::path get_test_data_dir() {
+  return std::filesystem::path(__FILE__).parent_path() / "MOM_param_files";
+}
 
-// Helper function to check if a value is of a specific type and has the expected value
-template <typename T> bool check_value(const ParamValue &val, const T &expected) {
+// Helper function to check if a value is of a specific type and has the
+// expected value
+template <typename T>
+bool check_value(const ParamValue &val, const T &expected) {
   if (std::holds_alternative<T>(val)) {
     return std::get<T>(val) == expected;
   }
@@ -24,7 +28,8 @@ template <typename T> bool check_value(const ParamValue &val, const T &expected)
 }
 
 // Helper function for double comparison with tolerance
-bool check_double_value(const ParamValue &val, double expected, double tolerance = 1e-9) {
+bool check_double_value(const ParamValue &val, double expected,
+                        double tolerance = 1e-9) {
   if (std::holds_alternative<double>(val)) {
     return std::abs(std::get<double>(val) - expected) < tolerance;
   }
@@ -32,11 +37,14 @@ bool check_double_value(const ParamValue &val, double expected, double tolerance
 }
 
 // Helper function to check if a value is a vector of a specific type
-template <typename T> bool is_vector_of(const ParamValue &val) { return std::holds_alternative<std::vector<T>>(val); }
+template <typename T> bool is_vector_of(const ParamValue &val) {
+  return std::holds_alternative<std::vector<T>>(val);
+}
 
 TEST(MOMFileParserTest, ParseMOMInputSimple) {
   auto test_file_path = get_test_data_dir() / "MOM_input_simple";
-  ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";
+  ASSERT_TRUE(std::filesystem::exists(test_file_path))
+      << "Test file " << test_file_path << " does not exist";
 
   RuntimeParams rp(test_file_path.string());
 
@@ -62,7 +70,8 @@ TEST(MOMFileParserTest, ParseMOMInputSimple) {
 
 TEST(MOMFileParserTest, ParseMOMInputDirective) {
   auto test_file_path = get_test_data_dir() / "MOM_input_directive";
-  ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";
+  ASSERT_TRUE(std::filesystem::exists(test_file_path))
+      << "Test file " << test_file_path << " does not exist";
 
   RuntimeParams rp(test_file_path.string());
 
@@ -93,7 +102,8 @@ TEST(MOMFileParserTest, ParseMOMInputDirective) {
 
   bool Gamma;
   rp.get("GAMMA", Gamma);
-  EXPECT_FALSE(Gamma); // Check that #define GAMMA followed by #undef GAMMA results in GAMMA being false
+  EXPECT_FALSE(Gamma); // Check that #define GAMMA followed by #undef GAMMA
+                       // results in GAMMA being false
 
   // Check #define with block%key syntax outside a block
   bool Enabled;
@@ -109,7 +119,8 @@ TEST(MOMFileParserTest, ParseMOMInputDirective) {
 
 TEST(MOMFileParserTest, ParseMOMInputLarge1) {
   auto test_file_path = get_test_data_dir() / "MOM_input_large1";
-  ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";
+  ASSERT_TRUE(std::filesystem::exists(test_file_path))
+      << "Test file " << test_file_path << " does not exist";
 
   RuntimeParams rp(test_file_path.string());
 
@@ -123,7 +134,8 @@ TEST(MOMFileParserTest, ParseMOMInputLarge1) {
 
   // check that attempting to read niglobal as a double throws an error
   double niglobal_double;
-  EXPECT_THROW(rp.get("NIGLOBAL", niglobal_double, {.units = ""}), std::runtime_error);
+  EXPECT_THROW(rp.get("NIGLOBAL", niglobal_double, {.units = ""}),
+               std::runtime_error);
 
   int niglobal;
   rp.get("NIGLOBAL", niglobal);
@@ -134,7 +146,8 @@ TEST(MOMFileParserTest, ParseMOMInputLarge1) {
   EXPECT_EQ(njglobal, 480);
 
   rp.open_block("MLE");
-  EXPECT_TRUE(check_double_value(rp.get_variant("MLD_DECAYING_TFILTER"), 2592000.0));
+  EXPECT_TRUE(
+      check_double_value(rp.get_variant("MLD_DECAYING_TFILTER"), 2592000.0));
 
   double mld_decaying_tfilter;
   rp.get("MLD_DECAYING_TFILTER", mld_decaying_tfilter, {.units = ""});
@@ -147,7 +160,8 @@ TEST(MOMFileParserTest, ParseMOMInputLarge1) {
 
 TEST(MOMFileParserTest, ParseMOMInputModules) {
   auto test_file_path = get_test_data_dir() / "MOM_input_modules";
-  ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";
+  ASSERT_TRUE(std::filesystem::exists(test_file_path))
+      << "Test file " << test_file_path << " does not exist";
 
   RuntimeParams rp(test_file_path.string());
 
@@ -160,9 +174,11 @@ TEST(MOMFileParserTest, ParseMOMInputModules) {
     rp.get("D", D_double, {.units = ""});
     FAIL() << "Expected std::runtime_error when trying to read D as double";
   } catch (const std::runtime_error &e) {
-    EXPECT_TRUE(std::string(e.what()).find("not of the requested type") != std::string::npos);
+    EXPECT_TRUE(std::string(e.what()).find("not of the requested type") !=
+                std::string::npos);
   } catch (...) {
-    FAIL() << "Expected std::runtime_error when trying to read D as double, but caught different exception";
+    FAIL() << "Expected std::runtime_error when trying to read D as double, "
+              "but caught different exception";
   }
 
   // First, check the global scope parameters:
@@ -213,12 +229,15 @@ TEST(MOMFileParserTest, ParseMOMInputModules) {
   try {
     int N_SMOOTH;
     rp.get("N_SMOOTH", N_SMOOTH, {.fail_if_missing = true});
-    FAIL() << "Expected std::out_of_range when trying to read N_SMOOTH without specifying module, but no exception was "
+    FAIL() << "Expected std::out_of_range when trying to read N_SMOOTH without "
+              "specifying module, but no exception was "
               "thrown";
   } catch (const std::out_of_range &e) {
-    EXPECT_TRUE(std::string(e.what()).find("Key not found") != std::string::npos);
+    EXPECT_TRUE(std::string(e.what()).find("Key not found") !=
+                std::string::npos);
   } catch (...) {
-    FAIL() << "Expected std::out_of_range when trying to read N_SMOOTH without specifying module, but caught different "
+    FAIL() << "Expected std::out_of_range when trying to read N_SMOOTH without "
+              "specifying module, but caught different "
               "exception";
   }
   rp.open_block("KPP");
@@ -254,7 +273,8 @@ TEST(MOMFileParserTest, ParseMOMInputModules) {
 
 TEST(MOMFileParserTest, ParseMOMInputLists) {
   auto test_file_path = get_test_data_dir() / "MOM_input_lists";
-  ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";
+  ASSERT_TRUE(std::filesystem::exists(test_file_path))
+      << "Test file " << test_file_path << " does not exist";
 
   RuntimeParams rp(test_file_path.string());
 
@@ -307,7 +327,8 @@ TEST(MOMFileParserTest, ParseMOMInputLists) {
 
 TEST(MOMFileParserTest, ParseMOMInputScalars) {
   auto test_file_path = get_test_data_dir() / "MOM_input_lists";
-  ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";
+  ASSERT_TRUE(std::filesystem::exists(test_file_path))
+      << "Test file " << test_file_path << " does not exist";
 
   RuntimeParams rp(test_file_path.string());
 
@@ -329,9 +350,12 @@ TEST(MOMFileParserTest, ParseMOMInputScalars) {
       }(),
       3);
 
-  // Check that not_a_list and also_not_a_list are parsed as scalar strings, not lists
-  EXPECT_TRUE(std::holds_alternative<std::string>(rp.get_variant("not_a_list")));
-  EXPECT_TRUE(std::holds_alternative<std::string>(rp.get_variant("also_not_a_list")));
+  // Check that not_a_list and also_not_a_list are parsed as scalar strings, not
+  // lists
+  EXPECT_TRUE(
+      std::holds_alternative<std::string>(rp.get_variant("not_a_list")));
+  EXPECT_TRUE(
+      std::holds_alternative<std::string>(rp.get_variant("also_not_a_list")));
   EXPECT_EQ(
       [&] {
         std::string not_a_list;
@@ -370,9 +394,11 @@ TEST(MOMFileParserTest, InvalidFile1) {
     RuntimeParams rp(test_file_path.string());
     FAIL() << "Expected std::runtime_error due to missing value";
   } catch (const std::runtime_error &e) {
-    EXPECT_TRUE(std::string(e.what()).find("missing value") != std::string::npos);
+    EXPECT_TRUE(std::string(e.what()).find("missing value") !=
+                std::string::npos);
   } catch (...) {
-    FAIL() << "Expected std::runtime_error due to missing value, but caught different exception";
+    FAIL() << "Expected std::runtime_error due to missing value, but caught "
+              "different exception";
   }
 }
 
@@ -383,9 +409,11 @@ TEST(MOMFileParserTest, InvalidFile2) {
     RuntimeParams rp(test_file_path.string());
     FAIL() << "Expected std::runtime_error due to invalid key name";
   } catch (const std::runtime_error &e) {
-    EXPECT_TRUE(std::string(e.what()).find("already-open block") != std::string::npos);
+    EXPECT_TRUE(std::string(e.what()).find("already-open block") !=
+                std::string::npos);
   } catch (...) {
-    FAIL() << "Expected std::runtime_error due to invalid key name, but caught different exception";
+    FAIL() << "Expected std::runtime_error due to invalid key name, but caught "
+              "different exception";
   }
 }
 
@@ -396,9 +424,11 @@ TEST(MOMFileParserTest, InvalidFile3) {
     RuntimeParams rp(test_file_path.string());
     FAIL() << "Expected std::runtime_error due to unterminated block";
   } catch (const std::runtime_error &e) {
-    EXPECT_TRUE(std::string(e.what()).find("unterminated block") != std::string::npos);
+    EXPECT_TRUE(std::string(e.what()).find("unterminated block") !=
+                std::string::npos);
   } catch (...) {
-    FAIL() << "Expected std::runtime_error due to unterminated block, but caught different exception";
+    FAIL() << "Expected std::runtime_error due to unterminated block, but "
+              "caught different exception";
   }
 }
 
@@ -409,9 +439,11 @@ TEST(MOMFileParserTest, InvalidFile4) {
     RuntimeParams rp(test_file_path.string());
     FAIL() << "Expected std::runtime_error due to unterminated block comment";
   } catch (const std::runtime_error &e) {
-    EXPECT_TRUE(std::string(e.what()).find("unterminated block comment") != std::string::npos);
+    EXPECT_TRUE(std::string(e.what()).find("unterminated block comment") !=
+                std::string::npos);
   } catch (...) {
-    FAIL() << "Expected std::runtime_error due to unterminated block comment, but caught different exception";
+    FAIL() << "Expected std::runtime_error due to unterminated block comment, "
+              "but caught different exception";
   }
 }
 
@@ -422,9 +454,11 @@ TEST(MOMFileParserTest, InvalidFile5) {
     RuntimeParams rp(test_file_path.string());
     FAIL() << "Expected std::runtime_error due to invalid key name";
   } catch (const std::runtime_error &e) {
-    EXPECT_TRUE(std::string(e.what()).find("invalid key name") != std::string::npos);
+    EXPECT_TRUE(std::string(e.what()).find("invalid key name") !=
+                std::string::npos);
   } catch (...) {
-    FAIL() << "Expected std::runtime_error due to invalid key name, but caught different exception";
+    FAIL() << "Expected std::runtime_error due to invalid key name, but caught "
+              "different exception";
   }
 }
 
@@ -435,18 +469,22 @@ TEST(MOMFileParserTest, InvalidFile6) {
     RuntimeParams rp(test_file_path.string());
     FAIL() << "Expected std::runtime_error due to invalid module%key syntax";
   } catch (const std::runtime_error &e) {
-    EXPECT_TRUE(std::string(e.what()).find("only one '%' allowed") != std::string::npos);
+    EXPECT_TRUE(std::string(e.what()).find("only one '%' allowed") !=
+                std::string::npos);
   } catch (...) {
-    FAIL() << "Expected std::runtime_error due to invalid module%key syntax, but caught different exception";
+    FAIL() << "Expected std::runtime_error due to invalid module%key syntax, "
+              "but caught different exception";
   }
 }
 
 TEST(MOMFileParserTest, OverrideModules) {
-  std::vector<std::string> paths = {(get_test_data_dir() / "MOM_input_modules").string(),
-                                    (get_test_data_dir() / "MOM_override_modules").string()};
+  std::vector<std::string> paths = {
+      (get_test_data_dir() / "MOM_input_modules").string(),
+      (get_test_data_dir() / "MOM_override_modules").string()};
 
   RuntimeParams rp(paths);
-  // Check that the override file successfully overrides some values from the first file
+  // Check that the override file successfully overrides some values from the
+  // first file
   double H;
   rp.get("H", H, {.units = ""});
   EXPECT_EQ(H, 1e-5); // H should be overridden to 1e-5
@@ -507,7 +545,9 @@ TEST(MOMFileParserTest, GetWithDefaultFallback) {
 
   // Key missing, no default, fail_if_missing = true — should throw
   int another_missing = 0;
-  EXPECT_THROW(rp.get("NO_SUCH_PARAM", another_missing, {.fail_if_missing = true}), std::out_of_range);
+  EXPECT_THROW(
+      rp.get("NO_SUCH_PARAM", another_missing, {.fail_if_missing = true}),
+      std::out_of_range);
 
   // Key missing, no default, fail_if_missing = false — value unchanged
   int untouched = 99;
@@ -522,7 +562,8 @@ TEST(MOMFileParserTest, GetWithDoNotRead) {
   // do_not_read = true: even though the key exists, it should not be read;
   // the default value should be used instead.
   int dt_therm = 0;
-  rp.get("DT_THERM", dt_therm, {.default_value = ParamValue(999), .do_not_read = true});
+  rp.get("DT_THERM", dt_therm,
+         {.default_value = ParamValue(999), .do_not_read = true});
   EXPECT_EQ(dt_therm, 999);
 
   // do_not_read = true with no default: value should remain unchanged
@@ -541,20 +582,25 @@ TEST(MOMFileParserTest, GetTypeMismatchThrows) {
 
   // Default value type mismatch should also throw
   bool missing = false;
-  EXPECT_THROW(rp.get("NO_SUCH_PARAM", missing, {.default_value = ParamValue(42)}), std::runtime_error);
+  EXPECT_THROW(
+      rp.get("NO_SUCH_PARAM", missing, {.default_value = ParamValue(42)}),
+      std::runtime_error);
 }
 
 TEST(MOMNmlParserTest, InvalidOverride) {
-  std::vector<std::string> paths = {(get_test_data_dir() / "MOM_input_modules").string(),
-                                    (get_test_data_dir() / "MOM_override_invalid").string()};
+  std::vector<std::string> paths = {
+      (get_test_data_dir() / "MOM_input_modules").string(),
+      (get_test_data_dir() / "MOM_override_invalid").string()};
 
   // Parsing should throw an error due to a missing override directive
   try {
     RuntimeParams rp(paths);
     FAIL() << "Expected std::runtime_error due to invalid override file";
   } catch (const std::runtime_error &e) {
-    EXPECT_TRUE(std::string(e.what()).find("duplicate assignment") != std::string::npos);
+    EXPECT_TRUE(std::string(e.what()).find("duplicate assignment") !=
+                std::string::npos);
   } catch (...) {
-    FAIL() << "Expected std::runtime_error due to invalid override file, but caught different exception";
+    FAIL() << "Expected std::runtime_error due to invalid override file, but "
+              "caught different exception";
   }
 }

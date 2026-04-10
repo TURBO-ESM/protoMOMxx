@@ -1,6 +1,6 @@
+#include "MOM_logger.h"
 #include <gtest/gtest.h>
 #include <sstream>
-#include "MOM_logger.h"
 
 class MOMLoggerTest : public ::testing::Test {
 protected:
