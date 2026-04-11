@@ -1,0 +1,12 @@
+function(add_amrex_to_protomom_target)
+  foreach(PROTOMOM_TARGET IN LISTS ARGN)
+    add_mom_test("${PROTOMOM_TARGET}")
+  endforeach()
+endfunction()
+
+function(add_amrex_to_protomom_target PROTOMOM_TARGET)
+  if(PROTOMOM_CUDA)
+    set_cpp_sources_to_cuda_language(${PROTOMOM_TARGET})
+  endif()
+  target_link_libraries(${PROTOMOM_TARGET} PUBLIC AMReX::amrex)
+endfunction()

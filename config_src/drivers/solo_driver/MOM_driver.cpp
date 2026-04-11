@@ -8,14 +8,17 @@
 
 /// @brief Main entry point for the protoMOMxx driver program.
 /// @return Exit code (0 for success, non-zero for failure)
-int main() {
+int main(int argc, char* argv[]) {
   try {
 
     MOM::logger::info("Hello C++ world. This is protoMOMxx!");
 
+    amrex::Initialize(argc, argv);
+
     // Initialize the core MOM object
     const MOM::Model mom;
 
+    amrex::Finalize();
     return 0;
 
   } catch (const MOM::logger::FatalError&) {
