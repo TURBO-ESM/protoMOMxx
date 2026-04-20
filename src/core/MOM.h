@@ -10,6 +10,13 @@
 
 namespace MOM {
 
+/// @brief Scales input to be within necessary bounds
+/// @param x Global index
+/// @param x_min x min
+/// @param x_max x max
+/// @param xi_min grid x min
+/// @param xi_max grid x max
+/// @return Index within scaled space for local grid
 AMREX_GPU_DEVICE AMREX_FORCE_INLINE
 amrex::Real LinearMapCoordinates(const amrex::Real x,
                                  const amrex::Real x_min, const amrex::Real x_max,
