@@ -7,6 +7,8 @@
 #include "MOM_logger.h"
 
 /// @brief Main entry point for the protoMOMxx driver program.
+/// @param argc Number of arguments including binary name.
+/// @param argv Parameter command line as array pointers.
 /// @return Exit code (0 for success, non-zero for failure)
 int main(int argc, char* argv[]) {
   try {
