@@ -31,7 +31,7 @@ private:
   std::shared_ptr<RuntimeParams> params;
   const int ensemble_num_;
 
-  void initialize_MOM();
+  void initialize_MOM(int nx, int ny, int nz);
   void DefineCellCenteredMultiFab(const int nx, const int ny, const int nz,
                                 const int max_chunk_size,
                                 amrex::MultiFab & cell_centered_MultiFab);

@@ -92,6 +92,20 @@ Model::Model(const int ensemble_num)
                .desc = "The radius of the Earth.",
                .units = "m"});
 
+  int nx = 0;
+  params->get("NIGLOBAL", nx,
+                {.desc = "The total number of thickness grid points in the x-direction in the physical domain.",
+                 .fail_if_missing=true});
+
+  int ny = 0;
+  params->get("NJGLOBAL", ny,
+                {.desc = "The total number of thickness grid points in the y-direction in the physical domain.",
+                 .fail_if_missing=true});
+
+  int nz = 0;
+  params->get("NK", nz,
+                {.desc = "The total number of thickness grid points in the z-direction in the physical domain.",
+                 .fail_if_missing=true, });
   // todo: set_calendar_type()
   //		Functionality from TIM/time_manager/time_manager.F90
   // defer: time_interp_external_init()
@@ -124,14 +138,10 @@ Model::Model(const int ensemble_num)
   // defer: diag_mediator_end()
   // todo: MOM_end()
 
-  initialize_MOM();
+  initialize_MOM(nx, ny, nz);
 }
 
-void Model::initialize_MOM() {
-  // Number of cells on each direction
-  int nx = 64;
-  int ny = 64;
-  int nz = 64;
+void Model::initialize_MOM(int nx, int ny, int nz) {
 
   // Cell size in each direction
   amrex::Real dx = 100000;
