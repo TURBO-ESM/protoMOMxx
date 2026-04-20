@@ -31,6 +31,9 @@ public:
   /// @brief Model constructor that initializes the model with the given ensemble number.
   /// @param ensemble_num The ensemble number for the model run; default is -1 (indicating no ensemble).
   explicit Model(const int ensemble_num = -1);
+  /// @brief Initializes AMReX multifab data with static values bounded by geometry object
+  /// @param geom Bounds for variable initialization
+  /// @param psi Container of fields (variables).
   void InitializeVariables(const amrex::Geometry & geom,
                          amrex::MultiFab & psi);
 
