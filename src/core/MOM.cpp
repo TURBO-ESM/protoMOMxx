@@ -124,10 +124,10 @@ Model::Model(const int ensemble_num)
   // defer: diag_mediator_end()
   // todo: MOM_end()
 
-  initialize_MOM(params);
+  initialize_MOM();
 }
 
-void Model::initialize_MOM(std::shared_ptr<RuntimeParams> params) {
+void Model::initialize_MOM() {
 
   int ni_global = 0;
   params->get("NIGLOBAL", ni_global,
