@@ -142,7 +142,7 @@ void Model::initialize_MOM() {
   int nk = 0;
   params->get("NK", nk,
                 {.desc = "The total number of thickness grid points in the z-direction in the physical domain.",
-                 .fail_if_missing=true, });
+                 .fail_if_missing=true});
   // Cell size in each direction
   amrex::Real dx = 100000;
   amrex::Real dy = 100000;
