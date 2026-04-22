@@ -92,20 +92,6 @@ Model::Model(const int ensemble_num)
                .desc = "The radius of the Earth.",
                .units = "m"});
 
-  int nx = 0;
-  params->get("NIGLOBAL", nx,
-                {.desc = "The total number of thickness grid points in the x-direction in the physical domain.",
-                 .fail_if_missing=true});
-
-  int ny = 0;
-  params->get("NJGLOBAL", ny,
-                {.desc = "The total number of thickness grid points in the y-direction in the physical domain.",
-                 .fail_if_missing=true});
-
-  int nz = 0;
-  params->get("NK", nz,
-                {.desc = "The total number of thickness grid points in the z-direction in the physical domain.",
-                 .fail_if_missing=true, });
   // todo: set_calendar_type()
   //		Functionality from TIM/time_manager/time_manager.F90
   // defer: time_interp_external_init()
@@ -138,11 +124,25 @@ Model::Model(const int ensemble_num)
   // defer: diag_mediator_end()
   // todo: MOM_end()
 
-  initialize_MOM(nx, ny, nz);
+  initialize_MOM(params);
 }
 
-void Model::initialize_MOM(int nx, int ny, int nz) {
+void Model::initialize_MOM(std::shared_ptr<RuntimeParams> params) {
 
+  int ni_global = 0;
+  params->get("NIGLOBAL", ni_global,
+                {.desc = "The total number of thickness grid points in the x-direction in the physical domain.",
+                 .fail_if_missing=true});
+
+  int nj_global = 0;
+  params->get("NJGLOBAL", nj_global,
+                {.desc = "The total number of thickness grid points in the y-direction in the physical domain.",
+                 .fail_if_missing=true});
+
+  int nk = 0;
+  params->get("NK", nk,
+                {.desc = "The total number of thickness grid points in the z-direction in the physical domain.",
+                 .fail_if_missing=true, });
   // Cell size in each direction
   amrex::Real dx = 100000;
   amrex::Real dy = 100000;
@@ -158,11 +158,11 @@ void Model::initialize_MOM(int nx, int ny, int nz) {
   amrex::Real dt = 90;
 
   amrex::MultiFab psi;
-  DefineCellCenteredMultiFab(nx, ny, nz, max_chunk_size, psi);
+  DefineCellCenteredMultiFab(ni_global, nj_global, nk, max_chunk_size, psi);
 
     // AMReX object to hold domain meta data... Like the physical size of the domain and if it is periodic in each direction
   amrex::Geometry geom;
-  InitializeGeometry(nx, ny, nz, dx, dy, dz, geom);
+  InitializeGeometry(ni_global, nj_global, nk, dx, dy, dz, geom);
 
   InitializeVariables(geom, psi);
 
@@ -210,13 +210,13 @@ void Model::InitializeVariables(const amrex::Geometry & geom,
     }
 }
 
-void Model::DefineCellCenteredMultiFab(const int nx, const int ny, const int nz,
+void Model::DefineCellCenteredMultiFab(const int ni_global, const int nj_global, const int nk,
                                        const int max_chunk_size,
                                        amrex::MultiFab & cell_centered_MultiFab)
 {
     // lower and upper indices of domain
     const amrex::IntVect domain_low_index(AMREX_D_DECL(0,0,0));
-    const amrex::IntVect domain_high_index(AMREX_D_DECL(nx-1, ny-1, nz-1)); // Need to determine number of z levels.
+    const amrex::IntVect domain_high_index(AMREX_D_DECL(ni_global-1, nj_global-1, nk-1)); // Need to determine number of z levels.
     
     // create box of indicies for cells
     const amrex::Box cell_centered_box(domain_low_index, domain_high_index);
@@ -239,20 +239,20 @@ void Model::DefineCellCenteredMultiFab(const int nx, const int ny, const int nz,
     cell_centered_MultiFab.define(cell_box_array, distribution_mapping, Ncomp, Nghost);
 }
 
-void Model::InitializeGeometry(const int nx, const int ny, const int nz,
+void Model::InitializeGeometry(const int ni_global, const int nj_global, const int nk,
                         const amrex::Real dx, const amrex::Real dy, const amrex::Real dz,
                         amrex::Geometry & geom)
 {
   // lower and upper indices of domain
   const amrex::IntVect domain_low_index(0,0,0);
-  const amrex::IntVect domain_high_index(nx-1, ny-1, nz-1);
+  const amrex::IntVect domain_high_index(ni_global-1, nj_global-1, nk-1);
 
   // create box of indicies for cells
   const amrex::Box cell_centered_box(domain_low_index, domain_high_index);
 
   // physical min and max boundaries of cells
   const amrex::RealBox real_box({0, 0, 0},
-                                {nx*dx, ny*dy, nz*dz});
+                                {ni_global*dx, nj_global*dy, nk*dz});
 
   // This, a value of 0, says we are using Cartesian coordinates
   int coordinate_system = 0;

@@ -41,11 +41,11 @@ private:
   std::shared_ptr<RuntimeParams> params;
   const int ensemble_num_;
 
-  void initialize_MOM(int nx, int ny, int nz);
-  void DefineCellCenteredMultiFab(const int nx, const int ny, const int nz,
+  void initialize_MOM(std::shared_ptr<RuntimeParams> params);
+  void DefineCellCenteredMultiFab(const int ni_global, const int nj_global, const int nk,
                                 const int max_chunk_size,
                                 amrex::MultiFab & cell_centered_MultiFab);
-  void InitializeGeometry(const int nx, const int ny, const int nz,
+  void InitializeGeometry(const int ni_global, const int nj_global, const int nk,
                         const amrex::Real dx, const amrex::Real dy, const amrex::Real dz,
                         amrex::Geometry & geom);
 };
