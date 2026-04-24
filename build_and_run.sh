@@ -1,0 +1,51 @@
+#!/bin/bash -e
+
+: ${ROOTDIR="$(pwd)"}
+: ${JOBS:="2"}
+: ${PROTOMOM_TESTS:="OFF"}
+: ${CMAKE_BUILD_TYPE:="Release"}
+: ${AMReX_GPU_BACKEND:="NONE"}
+: ${BUILD_DIR:="${ROOTDIR}/build"}
+: ${AMREX_ROOT:="${ROOTDIR}/dependencies/amrex"}
+: ${FRESH_BUILD:="False"}
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --gpu)
+            module load cuda/12.9.0
+            AMReX_GPU_BACKEND="CUDA"
+            PROTOMOM_CUDA="ON"
+            BUILD_DIR="${ROOTDIR}/build-gpu"
+            AMREX_ROOT="${ROOTDIR}/dependencies/amrex-cuda" ;;
+        --tests)
+            PROTOMOM_TESTS="ON" ;;
+        --debug)
+            CMAKE_BUILD_TYPE="Debug" ;;
+        --fresh)
+            FRESH_BUILD="True" ;;
+        --jobs)
+            JOBS="$2"
+            # Verify that the number of jobs parsed is a valid integer > 0
+            if [[ ! "${JOBS}" =~ ^[0-9]+$ ]]; then
+                echo "--jobs option ${JOBS} not a valid positive integer."
+                exit 1
+            fi
+            if [[ ! "${JOBS}" -gt 0 ]]; then
+                echo "--jobs option ${JOBS} not greater than 0."
+                exit 1
+            fi
+            shift ;;
+    esac
+    shift
+done
+
+CMAKE_PREFIX_PATH="${AMREX_ROOT}/install"
+
+. ./create_env.sh
+. ./build.sh
+
+if [[ "${PROTOMOM_TESTS}" == "ON" ]]; then
+  ctest --test-dir "${BUILD_DIR}"
+else
+  ${BUILD_DIR}/protoMOMxx
+fi
