@@ -3,7 +3,7 @@
 : ${ROOTDIR="$(pwd)"}
 : ${JOBS:="2"}
 : ${PROTOMOM_TESTS:="OFF"}
-: ${PROTOMOM_SYSTEM_TESTS:="OFF"}
+: ${PROTOMOM_ALL_TESTS:="OFF"}
 : ${CMAKE_BUILD_TYPE:="Release"}
 : ${AMReX_GPU_BACKEND:="NONE"}
 : ${BUILD_DIR:="${ROOTDIR}/build"}
@@ -20,9 +20,9 @@ while [[ "$#" -gt 0 ]]; do
             AMREX_ROOT="${ROOTDIR}/dependencies/amrex-cuda" ;;
         --tests)
             PROTOMOM_TESTS="ON" ;;
-        --system-tests)
+        --all-tests)
             PROTOMOM_TESTS="ON"
-            PROTOMOM_SYSTEM_TESTS="ON" ;;
+            PROTOMOM_ALL_TESTS="ON" ;;
         --debug)
             CMAKE_BUILD_TYPE="Debug" ;;
         --fresh)
@@ -49,7 +49,7 @@ CMAKE_PREFIX_PATH="${AMREX_ROOT}/install"
 . ./build.sh
 
 if [[ "${PROTOMOM_TESTS}" == "ON" ]]; then
-  if [[ "${PROTOMOM_SYSTEM_TESTS}" == "ON" ]]; then
+  if [[ "${PROTOMOM_ALL_TESTS}" == "ON" ]]; then
     ctest --test-dir "${BUILD_DIR}"
   else
     # System tests (e.g. full-executable smoke tests) are excluded by default
