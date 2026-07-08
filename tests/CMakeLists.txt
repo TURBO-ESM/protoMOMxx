@@ -46,7 +46,8 @@ add_subdirectory(config_src)
 # run (`ctest -LE system`) while still being runnable on demand (`ctest -L system`).
 set(DOUBLE_GYRE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/double_gyre)
 set(DOUBLE_GYRE_RUN_DIR ${CMAKE_CURRENT_BINARY_DIR}/double_gyre)
-file(COPY ${DOUBLE_GYRE_SOURCE_DIR}/ DESTINATION ${DOUBLE_GYRE_RUN_DIR})
+file(COPY ${DOUBLE_GYRE_SOURCE_DIR}/ DESTINATION ${DOUBLE_GYRE_RUN_DIR}
+     PATTERN "MOM_parameters_doc.*" EXCLUDE)
 
 add_test(NAME double_gyre_smoke
          COMMAND $<TARGET_FILE:protoMOMxx>
