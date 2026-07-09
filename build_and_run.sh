@@ -4,6 +4,8 @@
 : ${JOBS:="2"}
 : ${PROTOMOM_TESTS:="OFF"}
 : ${PROTOMOM_ALL_TESTS:="OFF"}
+: ${PROTOMOM_SYSTEM_TESTS:="OFF"}
+: ${PROTOMOM_UNIT_TESTS:="OFF"}
 : ${CMAKE_BUILD_TYPE:="Release"}
 : ${AMReX_GPU_BACKEND:="NONE"}
 : ${BUILD_DIR:="${ROOTDIR}/build"}
@@ -19,7 +21,11 @@ while [[ "$#" -gt 0 ]]; do
             BUILD_DIR="${ROOTDIR}/build-gpu"
             AMREX_ROOT="${ROOTDIR}/dependencies/amrex-cuda" ;;
         --tests)
-            PROTOMOM_TESTS="ON" ;;
+            PROTOMOM_TESTS="ON"
+            PROTOMOM_UNIT_TESTS="ON" ;;
+        --system-tests)
+            PROTOMOM_TESTS="ON"
+            PROTOMOM_SYSTEM_TESTS="ON" ;;
         --all-tests)
             PROTOMOM_TESTS="ON"
             PROTOMOM_ALL_TESTS="ON" ;;

@@ -28,7 +28,8 @@ modules before calling `build_and_run.sh`:
 |-----------------|------------------------------------------------------------------|
 | `--gpu`         | Build with the CUDA backend (loads `cuda/12.9.0`, builds AMReX into `dependencies/amrex-cuda`, and protoMOMxx into `build-gpu`) |
 | `--tests`       | Build and run the unit tests instead of the `protoMOMxx` executable |
-| `--all-tests`   | Like `--tests`, but also run the (slower) system tests, e.g. full-executable smoke/regression tests |
+| `--system-tests`| Build and run the (slower) system tests instead, e.g. full-executable smoke/regression tests |
+| `--all-tests`   | Build and run both the unit and system tests |
 | `--debug`       | Build with `CMAKE_BUILD_TYPE=Debug` instead of `Release`       |
 | `--fresh`       | Force a fresh CMake configuration of protoMOMxx even if the build directory already exists |
 | `--jobs N`      | Build with `N` parallel jobs (default: 2)                      |
@@ -56,7 +57,9 @@ full list, e.g. `JOBS`, `BUILD_DIR`, `CMAKE_BUILD_TYPE`, `PROTOMOM_TESTS`, `PROT
 ```bash
 . ./create_env.sh
 CMAKE_PREFIX_PATH="${AMREX_ROOT}/install" PROTOMOM_TESTS=ON . ./build.sh
-ctest --test-dir build -LE system  # excludes slower system tests; drop -LE system to include them
+ctest --test-dir build -L unit    # fast unit tests
+ctest --test-dir build -L system  # slower full-executable system tests
+ctest --test-dir build            # everything
 ```
 
 The `double_gyre` system test also includes a regression check that diffs the freshly generated
