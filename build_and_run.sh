@@ -51,9 +51,11 @@ CMAKE_PREFIX_PATH="${AMREX_ROOT}/install"
 if [[ "${PROTOMOM_TESTS}" == "ON" ]]; then
   if [[ "${PROTOMOM_ALL_TESTS}" == "ON" ]]; then
     ctest --test-dir "${BUILD_DIR}"
-  else
+  elif [[ "${PROTOMOM_SYSTEM_TESTS}" == "ON" ]]; then
     # System tests (e.g. full-executable smoke tests) are excluded by default
-    ctest --test-dir "${BUILD_DIR}" -LE system
+    ctest --test-dir "${BUILD_DIR}" -L system
+  elif [[ "${PROTOMOM_UNIT_TESTS}" == "ON" ]]; then
+    ctest --test-dir ${BUILD_DIR} -L unit
   fi
 else
   ${BUILD_DIR}/protoMOMxx
