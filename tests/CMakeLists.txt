@@ -31,11 +31,35 @@ target_link_libraries(test_MOM_file_parser GTest::gtest_main MOM_src_framework)
 target_link_libraries(test_MOM_document GTest::gtest_main MOM_src_framework)
 
 include(GoogleTest)
-gtest_discover_tests(test_MOM_logger)
-gtest_discover_tests(test_MOM_nml_parser)
-gtest_discover_tests(test_MOM_io)
-gtest_discover_tests(test_MOM_directories)
-gtest_discover_tests(test_MOM_file_parser)
-gtest_discover_tests(test_MOM_document)
+gtest_discover_tests(test_MOM_logger PROPERTIES LABELS "unit")
+gtest_discover_tests(test_MOM_nml_parser PROPERTIES LABELS "unit")
+gtest_discover_tests(test_MOM_io PROPERTIES LABELS "unit")
+gtest_discover_tests(test_MOM_directories PROPERTIES LABELS "unit")
+gtest_discover_tests(test_MOM_file_parser PROPERTIES LABELS "unit")
+gtest_discover_tests(test_MOM_document PROPERTIES LABELS "unit")
 
 add_subdirectory(config_src)
+
+# System/regression test: run the full protoMOMxx executable against the double_gyre example
+# and confirm its MOM_parameters_doc.* output matches the golden copies committed under
+# double_gyre/.
+set(DOUBLE_GYRE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/double_gyre)
+set(DOUBLE_GYRE_RUN_DIR ${CMAKE_CURRENT_BINARY_DIR}/double_gyre)
+file(COPY ${DOUBLE_GYRE_SOURCE_DIR}/ DESTINATION ${DOUBLE_GYRE_RUN_DIR}
+     PATTERN "MOM_parameters_doc.*" EXCLUDE)
+
+add_test(NAME double_gyre_smoke
+         COMMAND $<TARGET_FILE:protoMOMxx>
+         WORKING_DIRECTORY ${DOUBLE_GYRE_RUN_DIR})
+set_tests_properties(double_gyre_smoke PROPERTIES
+  LABELS doubleGyreFileSetup
+  FIXTURES_SETUP DoubleGyreDataGen)
+
+add_test(NAME double_gyre_regression
+         COMMAND ${CMAKE_COMMAND}
+                 -DEXPECTED_DIR=${DOUBLE_GYRE_SOURCE_DIR}
+                 -DACTUAL_DIR=${DOUBLE_GYRE_RUN_DIR}
+                 -P ${DOUBLE_GYRE_SOURCE_DIR}/check_regression.cmake)
+set_tests_properties(double_gyre_regression PROPERTIES
+  LABELS system
+  FIXTURES_REQUIRED DoubleGyreDataGen)

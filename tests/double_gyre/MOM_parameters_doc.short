@@ -1,0 +1,16 @@
+! This file was written by the model and records the non-default parameters used at run-time.
+
+! === module MOM ===
+                                ! Main MOM ocean model module
+KPP%
+                                ! KPP module parameters
+%KPP
+NIGLOBAL = 44                   !
+                                ! The total number of thickness grid points in the x-direction in the physical
+                                ! domain.
+NJGLOBAL = 40                   !
+                                ! The total number of thickness grid points in the y-direction in the physical
+                                ! domain.
+NK = 2                          !
+                                ! The total number of thickness grid points in the z-direction in the physical
+                                ! domain.
