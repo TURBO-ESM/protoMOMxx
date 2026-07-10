@@ -51,12 +51,12 @@ For example, to build and run the unit tests with 8 parallel jobs:
   the AMReX installation.
 
 Both scripts are configured via environment variables (see the top of each script for the
-full list, e.g. `JOBS`, `BUILD_DIR`, `CMAKE_BUILD_TYPE`, `PROTOMOM_TESTS`, `PROTOMOM_CUDA`,
+full list, e.g. `JOBS`, `BUILD_DIR`, `CMAKE_BUILD_TYPE`, `PROTOMOM_ADD_TEST_TARGETS`, `PROTOMOM_CUDA`,
 `FRESH_BUILD`). For example:
 
 ```bash
 . ./create_env.sh
-CMAKE_PREFIX_PATH="${AMREX_ROOT}/install" PROTOMOM_TESTS=ON . ./build.sh
+CMAKE_PREFIX_PATH="${AMREX_ROOT}/install" PROTOMOM_ADD_TEST_TARGETS=ON . ./build.sh
 ctest --test-dir build -L unit    # fast unit tests
 ctest --test-dir build -L system  # slower full-executable system tests
 ctest --test-dir build            # everything

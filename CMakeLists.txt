@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(PROTOMOM_CUDA "Build with Cuda backend" OFF)
-option(PROTOMOM_TESTS "Build unit tests" OFF)
+option(PROTOMOM_ADD_TEST_TARGETS "Build test targets" OFF)
 option(PROTOMOM_FETCH_DEPS "Fetch missing dependencies automatically" ON)
 
 if(PROTOMOM_CUDA)
@@ -23,7 +23,7 @@ add_subdirectory(src/core)
 add_subdirectory(config_src/drivers/solo_driver)
 add_subdirectory(config_src)
 
-if(PROTOMOM_TESTS)
+if(PROTOMOM_ADD_TEST_TARGETS)
   enable_testing()
   add_subdirectory(tests)
 endif()

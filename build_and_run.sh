@@ -2,7 +2,7 @@
 
 : ${ROOTDIR="$(pwd)"}
 : ${JOBS:="2"}
-: ${PROTOMOM_TESTS:="OFF"}
+: ${PROTOMOM_ADD_TEST_TARGETS:="OFF"}
 : ${PROTOMOM_ALL_TESTS:="OFF"}
 : ${PROTOMOM_SYSTEM_TESTS:="OFF"}
 : ${PROTOMOM_UNIT_TESTS:="OFF"}
@@ -21,13 +21,10 @@ while [[ "$#" -gt 0 ]]; do
             BUILD_DIR="${ROOTDIR}/build-gpu"
             AMREX_ROOT="${ROOTDIR}/dependencies/amrex-cuda" ;;
         --tests)
-            PROTOMOM_TESTS="ON"
             PROTOMOM_UNIT_TESTS="ON" ;;
         --system-tests)
-            PROTOMOM_TESTS="ON"
             PROTOMOM_SYSTEM_TESTS="ON" ;;
         --all-tests)
-            PROTOMOM_TESTS="ON"
             PROTOMOM_ALL_TESTS="ON" ;;
         --debug)
             CMAKE_BUILD_TYPE="Debug" ;;
@@ -51,18 +48,29 @@ done
 
 CMAKE_PREFIX_PATH="${AMREX_ROOT}/install"
 
+# Tell CMake to build the test targets whenever any test category was requested.
+if [[ "${PROTOMOM_UNIT_TESTS}" == "ON" \
+      || "${PROTOMOM_SYSTEM_TESTS}" == "ON" \
+      || "${PROTOMOM_ALL_TESTS}" == "ON" ]]; then
+  PROTOMOM_ADD_TEST_TARGETS="ON"
+fi
+
 . ./create_env.sh
 . ./build.sh
 
-if [[ "${PROTOMOM_TESTS}" == "ON" ]]; then
-  if [[ "${PROTOMOM_ALL_TESTS}" == "ON" ]]; then
-    ctest --test-dir "${BUILD_DIR}"
-  elif [[ "${PROTOMOM_SYSTEM_TESTS}" == "ON" ]]; then
-    # System tests (e.g. full-executable smoke tests) are excluded by default
-    ctest --test-dir "${BUILD_DIR}" -L system
-  elif [[ "${PROTOMOM_UNIT_TESTS}" == "ON" ]]; then
-    ctest --test-dir ${BUILD_DIR} -L unit
-  fi
+if [[ "${PROTOMOM_ALL_TESTS}" == "ON" ]]; then
+  ctest --test-dir "${BUILD_DIR}"
+elif [[ "${PROTOMOM_SYSTEM_TESTS}" == "ON" ]]; then
+  # System tests (e.g. full-executable smoke tests) are excluded by default
+  ctest --test-dir "${BUILD_DIR}" -L system
+elif [[ "${PROTOMOM_UNIT_TESTS}" == "ON" ]]; then
+  ctest --test-dir "${BUILD_DIR}" -L unit
 else
-  ${BUILD_DIR}/protoMOMxx
+  # No tests. Just run the double_gyre example to verify that the build was successful.
+  # Do so in a throwaway dir so we don't overwrite the committed MOM_parameters_doc.* files.
+  echo -e "\nRunning the double_gyre example..."
+  RUN_DIR="${BUILD_DIR}/double_gyre_throwaway"
+  mkdir -p "${RUN_DIR}"
+  cp "${ROOTDIR}"/tests/double_gyre/{input.nml,MOM_input,MOM_override} "${RUN_DIR}/"
+  (cd "${RUN_DIR}" && "${BUILD_DIR}/protoMOMxx")
 fi
