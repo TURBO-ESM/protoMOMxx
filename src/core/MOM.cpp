@@ -64,14 +64,6 @@ Model::Model(const int ensemble_num)
     logger::fatal("FPMIX is only implemented for the split time stepping.");
   }
 
-  int N_SMOOTH = 0;
-  params->open_block("KPP", "KPP module parameters");
-  params->get("N_SMOOTH", N_SMOOTH,
-              {.default_value = 0,
-               .desc = "Number of times to apply the smoothing operator to the initial condition",
-               .units = "nondim"});
-  params->close_block();
-
   bool debug = false;
   params->get("DEBUG", debug,
               {.default_value = false,
@@ -85,12 +77,6 @@ Model::Model(const int ensemble_num)
                .desc = "If true, use global indexing for all I/O and internal operations. "
                        "If false, use local indexing with halo regions.",
                .layout_param = true});
-  
-  double rad_earth = 0.;
-  params->get("RAD_EARTH", rad_earth,
-              {.default_value = 6.378e6,
-               .desc = "The radius of the Earth.",
-               .units = "m"});
 
   // todo: set_calendar_type()
   //		Functionality from TIM/time_manager/time_manager.F90
