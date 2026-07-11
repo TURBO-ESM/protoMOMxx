@@ -4,6 +4,7 @@
  */
 
 #include "MOM.h"
+#include "MOM_infra.h"
 #include "MOM_logger.h"
 
 /// @brief Main entry point for the protoMOMxx driver program.
@@ -15,12 +16,13 @@ int main(int argc, char* argv[]) {
 
     MOM::logger::info("Hello C++ world. This is protoMOMxx!");
 
-    amrex::Initialize(argc, argv);
+    // Initialize the infrastructure layer (AMReX). 
+    // (It is finalized automatically when this scope exits.)
+    const MOM::Infra infra(argc, argv);
 
     // Initialize the core MOM object
     const MOM::Model mom;
 
-    amrex::Finalize();
     return 0;
 
   } catch (const MOM::logger::FatalError&) {
