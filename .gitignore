@@ -4,3 +4,4 @@ buildtest/
 dependencies/
 docs/build/
 CMakeFiles/
+.vscode/
