@@ -46,6 +46,7 @@ public:
 
   /// @brief Initialize the model (the analogue of MOM6's initialize_MOM).
   /// @param params Runtime parameters. Injected by the driver.
+  /// @pre The infrastructure layer (AMReX) is initialized.
   explicit Model(RuntimeParams &params);
 
   /// @brief Read-only access to the model configuration switches.

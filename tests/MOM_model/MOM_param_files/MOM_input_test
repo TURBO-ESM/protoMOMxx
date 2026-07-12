@@ -1,0 +1,6 @@
+! Parameter file for the Model unit tests.
+SPLIT = False
+USE_RK2 = True
+NIGLOBAL = 44
+NJGLOBAL = 40
+NK = 2

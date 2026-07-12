@@ -34,8 +34,7 @@ int main(int argc, char* argv[]) {
     // RuntimeParams reads the parameter files specified in input.nml.
     MOM::RuntimeParams params(directories.parameter_filenames(), "MOM_parameters_doc");
 
-    // todo: set_calendar_type() -- time manager (Clock) comes with the time
-    //       loop.
+    // todo: set_calendar_type(), time manager (Clock).
     // defer: time_interp_external_init()
 
     // Initialize the core MOM object (the analogue of MOM6's initialize_MOM).
