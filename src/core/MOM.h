@@ -50,6 +50,7 @@ public:
   explicit Model(RuntimeParams &params);
 
   /// @brief Read-only access to the model configuration switches.
+  /// @return Const reference to the model configuration switches.
   const Config &config() const { return config_; }
 
   /// @brief Initializes AMReX multifab data with static values bounded by geometry object
