@@ -378,18 +378,12 @@ void RuntimeParams::doc_module(const std::string &modname, const std::string &de
     bool debugging_mod, bool all_default) {
   if (doc_) {
     doc_->doc_module(modname, desc, layout_mod, debugging_mod, all_default);
-  } else {
-    logger::warning("Attempted to document module '", modname,
-                  "' but no documentation writer is attached. Provide a non-empty doc_file_base when constructing RuntimeParams to enable documentation.");
   }
 }
 
 void RuntimeParams::close_module() {
   if (doc_) {
     doc_->close_module();
-  } else {
-    logger::warning("Attempted to close module documentation but no documentation writer is attached. "
-        "Provide a non-empty doc_file_base when constructing RuntimeParams to enable documentation.");
   }
 }
 

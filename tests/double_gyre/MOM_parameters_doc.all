@@ -13,13 +13,6 @@ SPLIT_RK4 = False               ! default = False
                                 ! If true, use a version of the split explicit time stepping scheme that
                                 ! exchanges velocities with step_MOM that have the average barotropic phase over
                                 ! a baroclinic timestep rather than the instantaneous barotropic phase.
-KPP%
-                                ! KPP module parameters
-N_SMOOTH = 0                    !   [nondim] default = 0
-                                ! Number of times to apply the smoothing operator to the initial condition
-%KPP
-RAD_EARTH = 6.378e+06           !   [m] default = 6.378e+06
-                                ! The radius of the Earth.
 NIGLOBAL = 44                   !
                                 ! The total number of thickness grid points in the x-direction in the physical
                                 ! domain.

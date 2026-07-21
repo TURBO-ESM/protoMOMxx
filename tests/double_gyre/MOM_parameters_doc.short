@@ -2,9 +2,6 @@
 
 ! === module MOM ===
                                 ! Main MOM ocean model module
-KPP%
-                                ! KPP module parameters
-%KPP
 NIGLOBAL = 44                   !
                                 ! The total number of thickness grid points in the x-direction in the physical
                                 ! domain.
