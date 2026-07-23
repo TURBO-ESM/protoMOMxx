@@ -18,6 +18,22 @@ endif()
 
 include(cmake/protomomtarget.cmake)
 
+# TIM (tim/cpp) is a self-contained CMake subproject yielding the TIM::tim
+# target. Added after AMReX is found, so tim/cpp's guarded find_package(AMReX)
+# is skipped and the AMReX already found by protoMOMxx is used. TIM_SOURCE_DIR
+# defaults to the bundled extern/TIM submodule, but can be overridden to point
+# at an existing TIM checkout.
+set(TIM_SOURCE_DIR "${CMAKE_SOURCE_DIR}/extern/TIM" CACHE PATH
+  "Path to the TIM checkout (defaults to the extern/TIM submodule).")
+if(NOT EXISTS "${TIM_SOURCE_DIR}/tim/cpp/CMakeLists.txt")
+  message(FATAL_ERROR
+    "TIM sources not found under '${TIM_SOURCE_DIR}/tim/cpp'.\n"
+    "If you cloned protoMOMxx without submodules, initialize them:\n"
+    "    git submodule update --init --recursive\n"
+    "or point -DTIM_SOURCE_DIR=<path> at an existing TIM checkout.")
+endif()
+add_subdirectory(${TIM_SOURCE_DIR}/tim/cpp ${CMAKE_BINARY_DIR}/extern/TIM/tim_cpp)
+
 add_subdirectory(src/framework)
 add_subdirectory(src/core)
 add_subdirectory(config_src/drivers/solo_driver)

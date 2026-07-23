@@ -1,0 +1,3 @@
+[submodule "extern/TIM"]
+	path = extern/TIM
+	url = https://github.com/TURBO-ESM/TIM.git

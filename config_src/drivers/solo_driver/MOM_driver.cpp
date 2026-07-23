@@ -21,8 +21,9 @@ int main(int argc, char* argv[]) {
 
     MOM::logger::info("Hello C++ world. This is protoMOMxx!");
 
-    // Initialize the infrastructure layer (AMReX).
-    // (It is finalized automatically when this scope exits.)
+    // Initialize the infrastructure layer via MOM::Infra, a wrapper
+    // around TIM::Runtime. This initializes MPI and AMReX, which are
+    // finalized automatically when this scope exits.
     const MOM::Infra infra(argc, argv);
 
     // todo: ensemble manager (from the infrastructure layer.)
