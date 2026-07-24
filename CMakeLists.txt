@@ -32,7 +32,7 @@ if(NOT EXISTS "${TIM_SOURCE_DIR}/tim/cpp/CMakeLists.txt")
     "    git submodule update --init --recursive\n"
     "or point -DTIM_SOURCE_DIR=<path> at an existing TIM checkout.")
 endif()
-add_subdirectory(${TIM_SOURCE_DIR}/tim/cpp ${CMAKE_BINARY_DIR}/extern/TIM/tim_cpp)
+add_subdirectory("${TIM_SOURCE_DIR}/tim/cpp" "${CMAKE_BINARY_DIR}/extern/TIM/tim_cpp")
 
 add_subdirectory(src/framework)
 add_subdirectory(src/core)

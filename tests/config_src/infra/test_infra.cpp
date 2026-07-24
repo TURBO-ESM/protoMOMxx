@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <vector>
 
 #include <gtest/gtest.h>
 
@@ -38,17 +39,20 @@ TEST(InfraComm, OwnedCommunicatorIsUsable) {
   EXPECT_EQ(sum, size);
 }
 
-// AMReX and TIM work side by side as guests of the runtime: fill a MultiFab,
+// Check that AMReX and TIM cooperate within the runtime: fill a MultiFab,
 // check AMReX's own collective reduction (MultiFab::sum) against the analytic
-// answer, and run TIM::checksum over the box's data -- TIM's compiled code
-// computing inside this process.
+// answer, and run TIM::checksum over the local data.
 //
-// The unit-test harness runs on a single rank (bare MPI_Init, no launcher), so
-// this rank owns the whole single-box domain and calls the collectives once.
+// Both reductions are collective and rank-agnostic: the domain is chopped
+// into boxes that a DistributionMapping spreads across the ranks, so under a
+// launcher multiple ranks contribute data (a rank may own several boxes, or
+// none). The unit-test harness itself runs on a single rank (bare MPI_Init,
+// no launcher), which then owns every box.
 TEST(InfraTIMCoexistence, MultiFabReductionAndChecksum) {
   const int n = 4;
   const amrex::Box domain(amrex::IntVect(0), amrex::IntVect(n - 1));
-  const amrex::BoxArray ba(domain);
+  amrex::BoxArray ba(domain);
+  ba.maxSize(n / 2);  // 2x2x2 boxes: 8 boxes to distribute across ranks
   const amrex::DistributionMapping dm(ba);
   amrex::MultiFab mf(ba, dm, 1, 0);
   mf.setVal(1.5);
@@ -56,20 +60,25 @@ TEST(InfraTIMCoexistence, MultiFabReductionAndChecksum) {
   // AMReX collective reduction over the field of constants.
   EXPECT_DOUBLE_EQ(mf.sum(), 1.5 * n * n * n);
 
-  // On one rank there is exactly one local FAB, holding the whole domain.
-  ASSERT_EQ(mf.local_size(), 1);
-  double* data = nullptr;
-  std::size_t field_size = 0;
+  // Gather this rank's FABs into one contiguous buffer: TIM::checksum takes
+  // one buffer per rank, and every rank must make the same single collective
+  // call however many boxes it owns.
+  std::vector<double> local;
   for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi) {
-    amrex::FArrayBox& fab = mf[mfi];
-    data = fab.dataPtr();
-    field_size = static_cast<std::size_t>(fab.box().numPts());
+    const amrex::FArrayBox& fab = mf[mfi];
+    const double* p = fab.dataPtr();
+    local.insert(local.end(), p, p + fab.box().numPts());
   }
-  ASSERT_NE(data, nullptr);
-  EXPECT_EQ(field_size, static_cast<std::size_t>(n) * n * n);
 
-  const int64_t sum_a = TIM::checksum(data, field_size, /*mask_val=*/nullptr);
-  const int64_t sum_b = TIM::checksum(data, field_size, /*mask_val=*/nullptr);
+  // Across ranks, the domain is held exactly once.
+  unsigned long local_size = local.size();
+  unsigned long global_size = 0;
+  ASSERT_EQ(MPI_Allreduce(&local_size, &global_size, 1, MPI_UNSIGNED_LONG,
+                          MPI_SUM, g_infra->comm()), MPI_SUCCESS);
+  EXPECT_EQ(global_size, static_cast<unsigned long>(n) * n * n);
+
+  const int64_t sum_a = TIM::checksum(local.data(), local.size(), /*mask_val=*/nullptr);
+  const int64_t sum_b = TIM::checksum(local.data(), local.size(), /*mask_val=*/nullptr);
   EXPECT_EQ(sum_a, sum_b) << "checksum must be deterministic";
 }
 
