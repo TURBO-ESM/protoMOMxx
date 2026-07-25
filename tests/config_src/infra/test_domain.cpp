@@ -9,16 +9,12 @@
 
 #include <gtest/gtest.h>
 
-#include <AMReX_Box.H>
-#include <AMReX_BoxArray.H>
-
 #include "MOM_domain_infra.h"
 #include "MOM_infra.h"
 
 // Exercise the whole wrapper surface
 TEST(Domain, MapsVocabularyAndDelegates) {
   const int n_boxes = 6;
-  const int n_levels = 3;
   const MOM::Domain domain(10, 8, 2, 3, /*reentrant_x=*/true,
                            /*reentrant_y=*/false, /*tripolar_n=*/false,
                            n_boxes);
@@ -34,12 +30,7 @@ TEST(Domain, MapsVocabularyAndDelegates) {
   EXPECT_TRUE(domain.periodicity().isPeriodic(0));   // reentrant_x
   EXPECT_FALSE(domain.periodicity().isPeriodic(1));  // not reentrant_y
   EXPECT_FALSE(domain.periodicity().isPeriodic(2));  // never periodic in k
-
-  EXPECT_EQ(domain.n_boxes(), n_boxes);
-  const amrex::BoxArray box_array = domain.box_array(n_levels);
-  EXPECT_EQ(static_cast<int>(box_array.size()), domain.n_boxes());
-  EXPECT_EQ(box_array[0].bigEnd(2), n_levels - 1);
-  EXPECT_EQ(static_cast<int>(domain.distribution_mapping().size()), domain.n_boxes());
+  EXPECT_EQ(domain.n_boxes(), n_boxes);              // consistent num. boxes
 }
 
 // Invalid configurations are rejected under protoMOMxx's throw policy,

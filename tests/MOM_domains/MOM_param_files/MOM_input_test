@@ -1,0 +1,4 @@
+! Parameter file for the MOM_domains unit tests.
+REENTRANT_X = False
+NIGLOBAL = 44
+NJGLOBAL = 40

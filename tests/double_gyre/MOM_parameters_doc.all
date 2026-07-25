@@ -13,12 +13,28 @@ SPLIT_RK4 = False               ! default = False
                                 ! If true, use a version of the split explicit time stepping scheme that
                                 ! exchanges velocities with step_MOM that have the average barotropic phase over
                                 ! a baroclinic timestep rather than the instantaneous barotropic phase.
+
+! === module MOM_domains ===
+REENTRANT_X = False             ! default = True
+                                ! If true, the domain is zonally reentrant.
+REENTRANT_Y = False             ! default = False
+                                ! If true, the domain is meridionally reentrant.
+TRIPOLAR_N = False              ! default = False
+                                ! Use tripolar connectivity at the northern edge of the domain. With TRIPOLAR_N,
+                                ! NIGLOBAL must be even.
 NIGLOBAL = 44                   !
                                 ! The total number of thickness grid points in the x-direction in the physical
                                 ! domain.
 NJGLOBAL = 40                   !
                                 ! The total number of thickness grid points in the y-direction in the physical
                                 ! domain.
+NIHALO = 4                      ! default = 4
+                                ! The number of halo points on each side in the x-direction.
+NJHALO = 4                      ! default = 4
+                                ! The number of halo points on each side in the y-direction.
+
+! === module MOM_verticalGrid ===
+                                ! Parameters providing information about the vertical grid.
 NK = 2                          !
                                 ! The total number of thickness grid points in the z-direction in the physical
                                 ! domain.

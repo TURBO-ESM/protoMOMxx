@@ -1,4 +1,1 @@
 ! This file was written by the model and records the layout parameters used at run-time.
-GLOBAL_INDEXING = False         ! default = False
-                                ! If true, use global indexing for all I/O and internal operations. If false,
-                                ! use local indexing with halo regions.
