@@ -22,5 +22,5 @@ jobs:
       - name: Build and run tests
         run: ./build_and_run.sh --tests --fresh
 
-      - name: Run infra tests on 2 MPI ranks
-        run: mpiexec -n 2 ./build/tests/config_src/infra/test_infra
+      - name: Run the multi-rank tests on 2 MPI ranks
+        run: ctest --test-dir ./build -L mpi --output-on-failure
