@@ -6,6 +6,7 @@
 // calls on Infra's communicator, AMReX data structures/collectives, and TIM's
 // own services all work side by side in one process.
 
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -50,15 +51,16 @@ TEST(InfraComm, OwnedCommunicatorIsUsable) {
 // no launcher), which then owns every box.
 TEST(InfraTIMCoexistence, MultiFabReductionAndChecksum) {
   const int n = 4;
+  constexpr double fill_value = 1.5;
   const amrex::Box domain(amrex::IntVect(0), amrex::IntVect(n - 1));
   amrex::BoxArray ba(domain);
   ba.maxSize(n / 2);  // 2x2x2 boxes: 8 boxes to distribute across ranks
   const amrex::DistributionMapping dm(ba);
   amrex::MultiFab mf(ba, dm, 1, 0);
-  mf.setVal(1.5);
+  mf.setVal(fill_value);
 
   // AMReX collective reduction over the field of constants.
-  EXPECT_DOUBLE_EQ(mf.sum(), 1.5 * n * n * n);
+  EXPECT_DOUBLE_EQ(mf.sum(), fill_value * n * n * n);
 
   // Gather this rank's FABs into one contiguous buffer: TIM::checksum takes
   // one buffer per rank, and every rank must make the same single collective
@@ -77,9 +79,12 @@ TEST(InfraTIMCoexistence, MultiFabReductionAndChecksum) {
                           MPI_SUM, g_infra->comm()), MPI_SUCCESS);
   EXPECT_EQ(global_size, static_cast<unsigned long>(n) * n * n);
 
-  const int64_t sum_a = TIM::checksum(local.data(), local.size(), /*mask_val=*/nullptr);
-  const int64_t sum_b = TIM::checksum(local.data(), local.size(), /*mask_val=*/nullptr);
-  EXPECT_EQ(sum_a, sum_b) << "checksum must be deterministic";
+  constexpr auto fill_bits = std::bit_cast<uint64_t>(fill_value);
+  const auto expected_checksum =
+      static_cast<int64_t>(fill_bits * static_cast<uint64_t>(global_size));
+
+  EXPECT_EQ(expected_checksum,
+            TIM::checksum(local.data(), local.size(), /*mask_val=*/nullptr));
 }
 
 } // namespace
