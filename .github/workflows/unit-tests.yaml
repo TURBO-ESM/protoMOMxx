@@ -16,6 +16,11 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Build and run tests
         run: ./build_and_run.sh --tests --fresh
+
+      - name: Run the multi-rank tests on 2 MPI ranks
+        run: ctest --test-dir ./build -L mpi --output-on-failure

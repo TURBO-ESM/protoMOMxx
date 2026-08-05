@@ -6,6 +6,7 @@
 : ${PROTOMOM_ALL_TESTS:="OFF"}
 : ${PROTOMOM_SYSTEM_TESTS:="OFF"}
 : ${PROTOMOM_UNIT_TESTS:="OFF"}
+: ${PROTOMOM_MPI_TESTS:="OFF"}
 : ${CMAKE_BUILD_TYPE:="Release"}
 : ${AMReX_GPU_BACKEND:="NONE"}
 : ${BUILD_DIR:="${ROOTDIR}/build"}
@@ -24,6 +25,8 @@ while [[ "$#" -gt 0 ]]; do
             PROTOMOM_UNIT_TESTS="ON" ;;
         --system-tests)
             PROTOMOM_SYSTEM_TESTS="ON" ;;
+        --mpi-tests)
+            PROTOMOM_MPI_TESTS="ON" ;;
         --all-tests)
             PROTOMOM_ALL_TESTS="ON" ;;
         --debug)
@@ -51,6 +54,7 @@ CMAKE_PREFIX_PATH="${AMREX_ROOT}/install"
 # Tell CMake to build the test targets whenever any test category was requested.
 if [[ "${PROTOMOM_UNIT_TESTS}" == "ON" \
       || "${PROTOMOM_SYSTEM_TESTS}" == "ON" \
+      || "${PROTOMOM_MPI_TESTS}" == "ON" \
       || "${PROTOMOM_ALL_TESTS}" == "ON" ]]; then
   PROTOMOM_ADD_TEST_TARGETS="ON"
 fi
@@ -63,6 +67,8 @@ if [[ "${PROTOMOM_ALL_TESTS}" == "ON" ]]; then
 elif [[ "${PROTOMOM_SYSTEM_TESTS}" == "ON" ]]; then
   # System tests (e.g. full-executable smoke tests) are excluded by default
   ctest --test-dir "${BUILD_DIR}" -L system
+elif [[ "${PROTOMOM_MPI_TESTS}" == "ON" ]]; then
+  ctest --test-dir "${BUILD_DIR}" -L mpi
 elif [[ "${PROTOMOM_UNIT_TESTS}" == "ON" ]]; then
   ctest --test-dir "${BUILD_DIR}" -L unit
 else

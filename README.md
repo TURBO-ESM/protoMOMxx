@@ -5,6 +5,21 @@ for code modernization and GPU acceleration.
 
 The code is currently in *very* early stages of development, and is ***not yet functional.***. The goal of this project is to explore the design and implementation of a modernized MOM codebase, and to provide a testbed for new features and optimizations.
 
+# Cloning
+
+protoMOMxx includes TIM as a git submodule at `extern/TIM`, so clone recursively:
+
+```bash
+git clone --recurse-submodules https://github.com/TURBO-ESM/protoMOMxx.git
+```
+
+If you already cloned without `--recurse-submodules`, initialize the submodule
+in place:
+
+```bash
+git submodule update --init --recursive
+```
+
 # Quick Start
 
 The easiest way to build and run protoMOMxx is via the `build_and_run.sh` script, which
@@ -29,7 +44,8 @@ modules before calling `build_and_run.sh`:
 | `--gpu`         | Build with the CUDA backend (loads `cuda/12.9.0`, builds AMReX into `dependencies/amrex-cuda`, and protoMOMxx into `build-gpu`) |
 | `--tests`       | Build and run the unit tests instead of the `protoMOMxx` executable |
 | `--system-tests`| Build and run the (slower) system tests instead, e.g. full-executable smoke/regression tests |
-| `--all-tests`   | Build and run both the unit and system tests |
+| `--mpi-tests`   | Build and run the multi-rank tests instead, i.e. those launched under `mpiexec` |
+| `--all-tests`   | Build and run all test categories (unit, mpi, and system) |
 | `--debug`       | Build with `CMAKE_BUILD_TYPE=Debug` instead of `Release`       |
 | `--fresh`       | Force a fresh CMake configuration of protoMOMxx even if the build directory already exists |
 | `--jobs N`      | Build with `N` parallel jobs (default: 2)                      |
@@ -57,7 +73,8 @@ full list, e.g. `JOBS`, `BUILD_DIR`, `CMAKE_BUILD_TYPE`, `PROTOMOM_ADD_TEST_TARG
 ```bash
 . ./create_env.sh
 CMAKE_PREFIX_PATH="${AMREX_ROOT}/install" PROTOMOM_ADD_TEST_TARGETS=ON . ./build.sh
-ctest --test-dir build -L unit    # fast unit tests
+ctest --test-dir build -L unit    # fast unit tests (single rank, no launcher)
+ctest --test-dir build -L mpi     # multi-rank tests, launched under mpiexec
 ctest --test-dir build -L system  # slower full-executable system tests
 ctest --test-dir build            # everything
 ```
