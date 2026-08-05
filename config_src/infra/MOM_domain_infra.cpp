@@ -4,17 +4,15 @@
 
 namespace MOM {
 
-Domain::Domain(const int ni_global, const int nj_global,
-               const int ni_halo, const int nj_halo,
-               const bool reentrant_x, const bool reentrant_y,
-               const bool tripolar_n, const int n_boxes)
- : domain_(make_tim_domain(ni_global, nj_global, ni_halo, nj_halo,
-                           reentrant_x, reentrant_y, tripolar_n, n_boxes)) {}
+namespace {
 
-TIM::Domain Domain::make_tim_domain(const int ni_global, const int nj_global,
-                                    const int ni_halo, const int nj_halo,
-                                    const bool reentrant_x, const bool reentrant_y,
-                                    const bool tripolar_n, const int n_boxes) {
+// Validate a prospective configuration under protoMOMxx's throw-based error
+// policy before handing it to TIM (whose own checks abort), then construct
+// the TIM::Domain. Runs before Domain's member initialization.
+TIM::Domain validated_tim_domain(const int ni_global, const int nj_global,
+                                 const int ni_halo, const int nj_halo,
+                                 const bool reentrant_x, const bool reentrant_y,
+                                 const bool tripolar_n, const int n_boxes) {
 
   if (ni_global <= 0 || nj_global <= 0) {
     throw std::invalid_argument("Invalid domain configuration: ni_global and nj_global must be positive.");
@@ -40,5 +38,14 @@ TIM::Domain Domain::make_tim_domain(const int ni_global, const int nj_global,
   return TIM::Domain(ni_global, nj_global, ni_halo, nj_halo,
                      reentrant_x, reentrant_y, tripolar_n, n_boxes);
 }
+
+} // namespace
+
+Domain::Domain(const int ni_global, const int nj_global,
+               const int ni_halo, const int nj_halo,
+               const bool reentrant_x, const bool reentrant_y,
+               const bool tripolar_n, const int n_boxes)
+ : domain_(validated_tim_domain(ni_global, nj_global, ni_halo, nj_halo,
+                                reentrant_x, reentrant_y, tripolar_n, n_boxes)) {}
 
 } // namespace MOM

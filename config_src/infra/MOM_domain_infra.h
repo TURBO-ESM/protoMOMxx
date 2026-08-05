@@ -100,14 +100,6 @@ public:
   amrex::Periodicity periodicity() const { return domain_.periodicity(); }
 
 private:
-  /// @brief Validate a prospective configuration before handing it to TIM.
-  /// Parameters mirror the public constructor.
-  /// @return The validated, constructed TIM::Domain.
-  static TIM::Domain make_tim_domain(const int ni_global, const int nj_global,
-                                     const int ni_halo, const int nj_halo,
-                                     const bool reentrant_x, const bool reentrant_y,
-                                     const bool tripolar_n, const int n_boxes);
-
   /// @brief The underlying TIM domain: the decomposition mechanics.
   TIM::Domain domain_;
 };
