@@ -20,7 +20,7 @@ namespace MOM {
 /// mechanics (the cell-centered amrex::BoxArray, the amrex::DistributionMapping
 /// that assigns boxes to ranks, and the periodicity used for halo exchanges)
 /// live in TIM. This class maps MOM's vocabulary (reentrant_{x|y}, tripolar_n)
-//  onto TIM's plain connectivity flags, applies protoMOMxx's error policy, and
+/// onto TIM's plain connectivity flags, applies protoMOMxx's error policy, and
 /// is the home for future MOM-specific domain policy.
 ///
 /// The Domain stays agnostic of the vertical grid: the decomposition and the
