@@ -1,4 +1,5 @@
 #include "MOM_domains.h"
+#include "MOM_logger.h"
 
 namespace MOM {
 
@@ -27,6 +28,15 @@ Domain make_domain(RuntimeParams &params) {
               .desc = "Use tripolar connectivity at the northern edge of the domain. "
                       "With TRIPOLAR_N, NIGLOBAL must be even."});
 
+  if (reentrant_y && tripolar_n) {
+    logger::fatal("make_domain: REENTRANT_Y and TRIPOLAR_N cannot both be true.");
+  }
+
+  // defer: tripolar connectivity.
+  if (tripolar_n) {
+    logger::fatal("make_domain: TRIPOLAR_N is not implemented yet.");
+  }
+
   params.get("NIGLOBAL", ni_global,
              {.desc = "The total number of thickness grid points in "
                       "the x-direction in the physical domain.",
@@ -37,6 +47,10 @@ Domain make_domain(RuntimeParams &params) {
                       "the y-direction in the physical domain.",
               .fail_if_missing = true});
 
+  if (ni_global < 1 || nj_global < 1) {
+    logger::fatal("make_domain: NIGLOBAL and NJGLOBAL must be positive.");
+  }
+
   params.get("NIHALO", ni_halo,
              {.default_value = 4,
               .desc = "The number of halo points on each side in the x-direction."});
@@ -44,6 +58,10 @@ Domain make_domain(RuntimeParams &params) {
   params.get("NJHALO", nj_halo,
              {.default_value = 4,
               .desc = "The number of halo points on each side in the y-direction."});
+
+  if (ni_halo < 0 || nj_halo < 0) {
+    logger::fatal("make_domain: NIHALO and NJHALO must be non-negative.");
+  }
 
   // defer: MASKTABLE, AUTO_MASKTABLE, LAYOUT, IO_LAYOUT (MOM6's processor
   //        layout machinery; the domain's one-box-per-rank decomposition and

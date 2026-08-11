@@ -20,8 +20,8 @@ namespace MOM {
 /// mechanics (the cell-centered amrex::BoxArray, the amrex::DistributionMapping
 /// that assigns boxes to ranks, and the periodicity used for halo exchanges)
 /// live in TIM. This class maps MOM's vocabulary (reentrant_{x|y}, tripolar_n)
-/// onto TIM's plain connectivity flags, applies protoMOMxx's error policy, and
-/// is the home for future MOM-specific domain policy.
+/// onto TIM's plain connectivity flags and is the home for future MOM-specific
+/// domain policy.
 ///
 /// The Domain stays agnostic of the vertical grid: the decomposition and the
 /// number of levels are combined at field-creation sites via box_array(),
@@ -38,11 +38,12 @@ public:
   /// @param reentrant_x Whether the i-direction is periodic (reentrant).
   /// @param reentrant_y Whether the j-direction is periodic (reentrant).
   /// @param tripolar_n  Whether the domain uses a tripolar grid at the
-  ///        northern boundary. Not implemented yet; throws if true.
+  ///        northern boundary. Not implemented yet.
   /// @param n_boxes Number of boxes to decompose the domain into, or 0
   ///        (the default) for one box per rank.
   /// @pre The infrastructure layer (MOM::Infra) is initialized.
-  /// @throws std::invalid_argument on an inconsistent configuration.
+  /// @pre The values are consistent (TIM aborts otherwise); the
+  ///      configuration-driven path validates them in make_domain first.
   Domain(const int ni_global, const int nj_global,
          const int ni_halo, const int nj_halo,
          const bool reentrant_x, const bool reentrant_y,

@@ -5,8 +5,6 @@
 // A Domain requires the infra layer to be initialized, hence the main()
 // below, which instantiates a MOM::Infra.
 
-#include <stdexcept>
-
 #include <gtest/gtest.h>
 
 #include "MOM_domain_infra.h"
@@ -33,21 +31,9 @@ TEST(Domain, MapsVocabularyAndDelegates) {
   EXPECT_EQ(domain.n_boxes(), n_boxes);              // consistent num. boxes
 }
 
-// Invalid configurations are rejected under protoMOMxx's throw policy,
-// before they can reach TIM's abort-based checks.
-TEST(Domain, InvalidConfigurationsThrow) {
-  const auto make = [](int ni_global, int nj_global, int ni_halo, int nj_halo,
-                       bool reentrant_x, bool reentrant_y, bool tripolar_n,
-                       int n_boxes = 0) {
-    return MOM::Domain(ni_global, nj_global, ni_halo, nj_halo,
-                       reentrant_x, reentrant_y, tripolar_n, n_boxes);
-  };
-  EXPECT_THROW(make(0, 8, 2, 2, false, false, false), std::invalid_argument);      // non-positive extent
-  EXPECT_THROW(make(4, 8, -1, 2, false, false, false), std::invalid_argument);     // negative halo
-  EXPECT_THROW(make(4, 8, 2, 2, false, true, true), std::invalid_argument);        // reentrant_y with tripolar_n
-  EXPECT_THROW(make(4, 8, 2, 2, false, false, true), std::invalid_argument);       // tripolar_n not implemented yet
-  EXPECT_THROW(make(4, 8, 2, 2, false, false, false, -1), std::invalid_argument);  // negative n_boxes
-}
+// (Invalid plain values aborting is TIM::Domain's contract, tested in TIM's
+// suite; the configuration-driven path is validated under protoMOMxx's throw
+// policy in make_domain and tested in tests/MOM_domains.)
 
 /// @brief Test-binary entry point: initialize GTest, bring up the
 /// infrastructure layer, and run all tests.

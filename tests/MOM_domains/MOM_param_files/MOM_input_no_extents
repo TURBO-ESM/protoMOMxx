@@ -1,2 +1,0 @@
-! Parameter file for the MOM_domains unit tests: NIGLOBAL/NJGLOBAL missing.
-REENTRANT_X = False
