@@ -1,5 +1,9 @@
+#include <string>
+#include <vector>
+
 #include "MOM_domains.h"
 #include "MOM_logger.h"
+#include "MOM_obsolete_params.h"
 
 namespace MOM {
 
@@ -63,9 +67,19 @@ Domain make_domain(RuntimeParams &params) {
     logger::fatal("make_domain: NIHALO and NJHALO must be non-negative.");
   }
 
-  // defer: MASKTABLE, AUTO_MASKTABLE, LAYOUT, IO_LAYOUT (MOM6's processor
-  //        layout machinery; the domain's one-box-per-rank decomposition and
-  //        AMReX's DistributionMapping take over that role).
+  retired_param(params, "GLOBAL_INDEXING", true,
+                "protoMOMxx always uses global index conventions; local "
+                "indexing is not supported.");
+  retired_param(params, "LAYOUT", std::vector<int>{0, 0},
+                "the decomposition and its processor assignment are set "
+                "automatically.");
+  retired_param(params, "IO_LAYOUT", std::vector<int>{1, 1},
+                "writing distributed files via an I/O processor layout is "
+                "not supported.");
+  retired_param(params, "MASKTABLE", std::string{},
+                "masking out land-only processors via a table is not supported.");
+  retired_param(params, "AUTO_MASKTABLE", false,
+                "masking out land-only processors via a table is not supported.");
 
   return Domain(ni_global, nj_global, ni_halo, nj_halo,
                 reentrant_x, reentrant_y, tripolar_n);
