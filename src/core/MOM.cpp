@@ -102,9 +102,8 @@ void Model::initialize_state(RuntimeParams &params) {
   // real state initialization. Until then, this demo exercises the AMReX
   // machinery on the decomposition the Domain owns.
   const int n_components = 1;
-  const int n_ghost = 1;
   amrex::MultiFab psi(domain_.box_array(nk_), domain_.distribution_mapping(),
-                      n_components, n_ghost);
+                      n_components, domain_.nghost());
 
   fill_psi_demo(psi);
 

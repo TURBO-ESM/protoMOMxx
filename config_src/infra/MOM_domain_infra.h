@@ -7,6 +7,7 @@
 
 #include <AMReX_BoxArray.H>
 #include <AMReX_DistributionMapping.H>
+#include <AMReX_IntVect.H>
 #include <AMReX_Periodicity.H>
 
 #include "core/tim_domain.hpp"
@@ -69,6 +70,11 @@ public:
   /// @brief Number of halo points in the j-direction.
   /// @return The j-direction halo width.
   int nj_halo() const { return domain_.nj_halo(); }
+
+  /// @brief The halo widths as a MultiFab ghost-cell vector. Horizontal-only:
+  /// the k-component is always 0.
+  /// @return {ni_halo, nj_halo, 0}.
+  amrex::IntVect nghost() const { return domain_.nghost(); }
 
   /// @brief True if the i-direction is periodic (reentrant).
   /// @return The zonal reentrancy flag.
