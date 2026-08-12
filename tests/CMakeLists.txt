@@ -44,6 +44,11 @@ gtest_discover_tests(test_MOM_document PROPERTIES LABELS "unit")
 gtest_discover_tests(test_MOM_model PROPERTIES LABELS "unit")
 gtest_discover_tests(test_MOM_domains PROPERTIES LABELS "unit")
 
+add_test(NAME test_MOM_domains_mpi
+         COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+                 ${MPIEXEC_PREFLAGS} $<TARGET_FILE:test_MOM_domains> ${MPIEXEC_POSTFLAGS})
+set_tests_properties(test_MOM_domains_mpi PROPERTIES LABELS "mpi" PROCESSORS 2)
+
 add_subdirectory(config_src)
 
 # System/regression test: run the full protoMOMxx executable against the double_gyre example

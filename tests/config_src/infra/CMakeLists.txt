@@ -12,3 +12,7 @@ add_test(NAME test_infra_mpi
          COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
                  ${MPIEXEC_PREFLAGS} $<TARGET_FILE:test_infra> ${MPIEXEC_POSTFLAGS})
 set_tests_properties(test_infra_mpi PROPERTIES LABELS "mpi" PROCESSORS 2)
+add_test(NAME test_domain_mpi
+         COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+                 ${MPIEXEC_PREFLAGS} $<TARGET_FILE:test_domain> ${MPIEXEC_POSTFLAGS})
+set_tests_properties(test_domain_mpi PROPERTIES LABELS "mpi" PROCESSORS 2)
