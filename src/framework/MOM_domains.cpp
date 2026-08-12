@@ -81,8 +81,13 @@ Domain make_domain(RuntimeParams &params) {
   retired_param(params, "AUTO_MASKTABLE", false,
                 "masking out land-only processors via a table is not supported.");
 
-  return Domain(ni_global, nj_global, ni_halo, nj_halo,
-                reentrant_x, reentrant_y, tripolar_n);
+  return Domain({.ni_global = ni_global,
+                 .nj_global = nj_global,
+                 .ni_halo = ni_halo,
+                 .nj_halo = nj_halo,
+                 .reentrant_x = reentrant_x,
+                 .reentrant_y = reentrant_y,
+                 .tripolar_n = tripolar_n});
 }
 
 } // namespace MOM

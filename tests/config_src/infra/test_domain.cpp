@@ -13,9 +13,10 @@
 // Exercise the whole wrapper surface
 TEST(Domain, MapsVocabularyAndDelegates) {
   const int n_boxes = 6;
-  const MOM::Domain domain(10, 8, 2, 3, /*reentrant_x=*/true,
-                           /*reentrant_y=*/false, /*tripolar_n=*/false,
-                           n_boxes);
+  const MOM::Domain domain({.ni_global = 10, .nj_global = 8,
+                            .ni_halo = 2, .nj_halo = 3,
+                            .reentrant_x = true,
+                            .n_boxes = n_boxes});
 
   EXPECT_EQ(domain.ni_global(), 10);
   EXPECT_EQ(domain.nj_global(), 8);

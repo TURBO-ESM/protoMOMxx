@@ -3,6 +3,8 @@
 /// @brief The MOM::Domain object is a thin wrapper over TIM::Domain (via composition).
 ///        The analogue of MOM6's MOM_domain_infra, which wraps FMS mpp domains.
 
+#include <optional>
+
 #include <AMReX_BoxArray.H>
 #include <AMReX_DistributionMapping.H>
 #include <AMReX_Periodicity.H>
@@ -10,6 +12,21 @@
 #include "core/tim_domain.hpp"
 
 namespace MOM {
+
+/// @brief The construction specification of a Domain.
+struct DomainSpec {
+  int ni_global = 0;  ///< Number of global grid points in the i-direction (x).
+  int nj_global = 0;  ///< Number of global grid points in the j-direction (y).
+  int ni_halo = 0;    ///< Number of halo points in the i-direction.
+  int nj_halo = 0;    ///< Number of halo points in the j-direction.
+  bool reentrant_x = false;  ///< Whether the i-direction is periodic (reentrant).
+  bool reentrant_y = false;  ///< Whether the j-direction is periodic (reentrant).
+  bool tripolar_n = false;   ///< Whether the domain uses a tripolar grid at the
+                             ///< northern boundary. Not implemented yet.
+  /// @brief Number of boxes to decompose the domain into; nullopt (the
+  /// default) means one box per rank.
+  std::optional<int> n_boxes = std::nullopt;
+};
 
 /// @class Domain
 /// @brief The computational domain of a model instance: global horizontal
@@ -31,23 +48,11 @@ namespace MOM {
 class Domain {
 public:
   /// @brief Construct the domain and its horizontal decomposition.
-  /// @param ni_global Number of global grid points in the i-direction (x).
-  /// @param nj_global Number of global grid points in the j-direction (y).
-  /// @param ni_halo   Number of halo points in the i-direction.
-  /// @param nj_halo   Number of halo points in the j-direction.
-  /// @param reentrant_x Whether the i-direction is periodic (reentrant).
-  /// @param reentrant_y Whether the j-direction is periodic (reentrant).
-  /// @param tripolar_n  Whether the domain uses a tripolar grid at the
-  ///        northern boundary. Not implemented yet.
-  /// @param n_boxes Number of boxes to decompose the domain into, or 0
-  ///        (the default) for one box per rank.
+  /// @param spec The domain specification; see DomainSpec.
   /// @pre The infrastructure layer (MOM::Infra) is initialized.
   /// @pre The values are consistent (TIM aborts otherwise); the
   ///      configuration-driven path validates them in make_domain first.
-  Domain(const int ni_global, const int nj_global,
-         const int ni_halo, const int nj_halo,
-         const bool reentrant_x, const bool reentrant_y,
-         const bool tripolar_n, const int n_boxes = 0);
+  explicit Domain(const DomainSpec &spec);
 
   /// @brief Number of global grid points in the i-direction (x).
   /// @return The global i-extent.
