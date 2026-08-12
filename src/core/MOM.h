@@ -58,6 +58,8 @@ public:
   const Domain &domain() const { return domain_; }
 
 private:
+  // config_ initialization must precede domain_: its initializer sets the log 
+  // verbosity in effect for the later initializers' messages.
   Config config_;
 
   /// @brief The computational domain: global extents, connectivity, halo
