@@ -3,7 +3,7 @@
 
 #include "MOM_domains.h"
 #include "MOM_logger.h"
-#include "MOM_obsolete_params.h"
+#include "MOM_unsupported_params.h"
 
 namespace MOM {
 
@@ -67,19 +67,21 @@ Domain make_domain(RuntimeParams &params) {
     logger::fatal("make_domain: NIHALO and NJHALO must be non-negative.");
   }
 
-  retired_param(params, "GLOBAL_INDEXING", true,
-                "protoMOMxx always uses global index conventions; local "
-                "indexing is not supported.");
-  retired_param(params, "LAYOUT", std::vector<int>{0, 0},
-                "the decomposition and its processor assignment are set "
-                "automatically.");
-  retired_param(params, "IO_LAYOUT", std::vector<int>{1, 1},
-                "writing distributed files via an I/O processor layout is "
-                "not supported.");
-  retired_param(params, "MASKTABLE", std::string{},
-                "masking out land-only processors via a table is not supported.");
-  retired_param(params, "AUTO_MASKTABLE", false,
-                "masking out land-only processors via a table is not supported.");
+  unsupported_param(params, "GLOBAL_INDEXING", true,
+                    "protoMOMxx always uses global index conventions; local "
+                    "indexing is not supported.");
+  unsupported_param(params, "LAYOUT", std::vector<int>{0, 0},
+                    "the decomposition and its processor assignment are set "
+                    "automatically.");
+  unsupported_param(params, "IO_LAYOUT", std::vector<int>{1, 1},
+                    "writing distributed files via an I/O processor layout is "
+                    "not supported.");
+  unsupported_param(params, "MASKTABLE", std::string{},
+                    "masking out land-only processors via a table is not "
+                    "supported.");
+  unsupported_param(params, "AUTO_MASKTABLE", false,
+                    "masking out land-only processors via a table is not "
+                    "supported.");
 
   return Domain({.ni_global = ni_global,
                  .nj_global = nj_global,
