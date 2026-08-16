@@ -1,0 +1,5 @@
+! Parameter file for the Model unit tests: a second, smaller configuration
+! for the two-instances-in-one-process test.
+NIGLOBAL = 14
+NJGLOBAL = 10
+NK = 3

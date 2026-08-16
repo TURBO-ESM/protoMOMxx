@@ -1,0 +1,4 @@
+! Parameter file for the MOM_domains unit tests: a non-positive extent
+! (standing in for the make_domain value checks).
+NIGLOBAL = 0
+NJGLOBAL = 40

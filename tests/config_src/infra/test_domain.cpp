@@ -1,48 +1,45 @@
-#include <cstddef>
-#include <stdexcept>
+// Unit tests for the Domain class (config_src/infra/MOM_domain_infra.cpp),
+// a thin wrapper over TIM::Domain. These tests cover what the wrapper adds.
+// The decomposition mechanics are TIM::Domain's concern, tested in TIM's suite.
+//
+// A Domain requires the infra layer to be initialized, hence the main()
+// below, which instantiates a MOM::Infra.
 
 #include <gtest/gtest.h>
 
-#include "MOM_domain.h"
+#include "MOM_domain_infra.h"
+#include "MOM_infra.h"
 
-TEST(DomainConstructor, Constructor) {
-  const std::size_t ni_global = 4;
-  const std::size_t nj_global = 8;
-  const std::size_t ni_halo = 2;
-  const std::size_t nj_halo = 2;
-  const bool reentrant_i = false;
-  const bool reentrant_j = false;
-  const bool tripolar_N = false;
+// Exercise the whole wrapper surface
+TEST(Domain, MapsVocabularyAndDelegates) {
+  const int n_boxes = 6;
+  const MOM::Domain domain({.ni_global = 10, .nj_global = 8,
+                            .ni_halo = 2, .nj_halo = 3,
+                            .reentrant_x = true,
+                            .n_boxes = n_boxes});
 
-  // Test valid configuration
-  MOM::Domain domain(ni_global, nj_global, ni_halo, nj_halo, reentrant_i, reentrant_j, tripolar_N);
-  EXPECT_EQ(ni_global, domain.ni_global);
-  EXPECT_EQ(nj_global, domain.nj_global);
-  EXPECT_EQ(ni_halo, domain.ni_halo);
-  EXPECT_EQ(nj_halo, domain.nj_halo);
-  EXPECT_EQ(reentrant_i, domain.reentrant_i);
-  EXPECT_EQ(reentrant_j, domain.reentrant_j);
-  EXPECT_EQ(tripolar_N, domain.tripolar_N);
+  EXPECT_EQ(domain.ni_global(), 10);
+  EXPECT_EQ(domain.nj_global(), 8);
+  EXPECT_EQ(domain.ni_halo(), 2);
+  EXPECT_EQ(domain.nj_halo(), 3);
+  EXPECT_TRUE(domain.reentrant_x());
+  EXPECT_FALSE(domain.reentrant_y());
+  EXPECT_FALSE(domain.tripolar_n());
 
-  // Test invalid configuration: reentrant_j and tripolar_N cannot both be true
-  EXPECT_THROW(MOM::Domain(ni_global, nj_global, ni_halo, nj_halo, reentrant_i, true, true), std::invalid_argument);
+  EXPECT_TRUE(domain.periodicity().isPeriodic(0));   // reentrant_x
+  EXPECT_FALSE(domain.periodicity().isPeriodic(1));  // not reentrant_y
+  EXPECT_FALSE(domain.periodicity().isPeriodic(2));  // never periodic in k
+  EXPECT_EQ(domain.n_boxes(), n_boxes);              // consistent num. boxes
 }
 
-// Test harness for Domain class. 
-class DomainTest : public ::testing::Test {
-protected:
-  const std::size_t ni_global = 4;
-  const std::size_t nj_global = 8;
-  const std::size_t ni_halo = 2;
-  const std::size_t nj_halo = 2;
-  const bool reentrant_i = false;
-  const bool reentrant_j = false;
-  const bool tripolar_N = false;
-  MOM::Domain domain = MOM::Domain(ni_global, nj_global, ni_halo, nj_halo, reentrant_i, reentrant_j, tripolar_N);
-};
+// (Invalid plain values aborting is TIM::Domain's contract, tested in TIM's
+// suite; the configuration-driven path is validated under protoMOMxx's throw
+// policy in make_domain and tested in tests/MOM_domains.)
 
-TEST_F(DomainTest, ConstructorAgainToVerifyFixture) {
-  // Just to verify that the fixture is set up correctly.
-  // Checks we have access to its protected members (domain and ni_global) inside the tests derived from the fixture.
-  EXPECT_EQ(ni_global, domain.ni_global);
+/// @brief Test-binary entry point: initialize GTest, bring up the
+/// infrastructure layer, and run all tests.
+int main(int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  const MOM::Infra infra(argc, argv);
+  return RUN_ALL_TESTS();
 }

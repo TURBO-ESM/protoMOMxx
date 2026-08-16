@@ -1,5 +1,5 @@
 add_library(MOM_config_src_infra
-  MOM_domain.cpp
+  MOM_domain_infra.cpp
   MOM_infra.cpp
 )
 
@@ -11,6 +11,5 @@ target_include_directories(MOM_config_src_infra
 target_link_libraries(MOM_config_src_infra
   PUBLIC
     TIM::tim
-    MOM_src_framework
 )
 add_amrex_to_protomom_target(MOM_config_src_infra)
