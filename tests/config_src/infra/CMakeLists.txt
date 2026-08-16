@@ -1,5 +1,5 @@
 add_executable(test_domain test_domain.cpp)
-target_link_libraries(test_domain GTest::gtest_main MOM_config_src_infra)
+target_link_libraries(test_domain GTest::gtest MOM_config_src_infra)
 add_executable(test_infra test_infra.cpp)
 target_link_libraries(test_infra GTest::gtest MOM_config_src_infra)
 
@@ -12,3 +12,7 @@ add_test(NAME test_infra_mpi
          COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
                  ${MPIEXEC_PREFLAGS} $<TARGET_FILE:test_infra> ${MPIEXEC_POSTFLAGS})
 set_tests_properties(test_infra_mpi PROPERTIES LABELS "mpi" PROCESSORS 2)
+add_test(NAME test_domain_mpi
+         COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+                 ${MPIEXEC_PREFLAGS} $<TARGET_FILE:test_domain> ${MPIEXEC_POSTFLAGS})
+set_tests_properties(test_domain_mpi PROPERTIES LABELS "mpi" PROCESSORS 2)

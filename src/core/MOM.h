@@ -5,6 +5,7 @@
 #include <AMReX.H>
 #include <AMReX_MultiFab.H>
 
+#include "MOM_domain_infra.h"
 #include "MOM_file_parser.h"
 
 namespace MOM {
@@ -27,8 +28,8 @@ amrex::Real LinearMapCoordinates(const amrex::Real x,
 /// The constructor performs the full initialization. It is the analogue of
 /// MOM6's initialize_MOM (src/core/MOM.F90). The constructor is decomposed
 /// into phases that mirror the topology of MOM6's initialize_MOM where each
-/// phase is currently a stub that will be filled in by upcoming PRs (Domain,
-/// HorGrid, VerticalGrid, State, Dynamics). The initialize_state stub runs
+/// remaining phase is currently a stub that will be filled in by upcoming PRs
+/// (HorGrid, VerticalGrid, State, Dynamics). The initialize_state stub runs
 /// the original psi (stream function) demo, which exercises the AMReX machinery
 /// its real replacement will use.
 class Model {
@@ -41,7 +42,6 @@ public:
     bool use_RK2 = false;         ///< Use RK2 (not RK3) in unsplit stepping.
     bool fpmix = false;           ///< Use the FPMIX algorithm.
     bool debug = false;           ///< Write verbose debugging data.
-    bool global_indexing = false; ///< Use global indexing (see MOM_domains).
   };
 
   /// @brief Initialize the model (the analogue of MOM6's initialize_MOM).
@@ -53,29 +53,25 @@ public:
   /// @return Const reference to the model configuration switches.
   const Config &config() const { return config_; }
 
-  /// @brief Initializes AMReX multifab data with static values bounded by geometry object
-  /// @param geom Bounds for variable initialization
-  /// @param psi Container of fields (variables).
-  void InitializeVariables(const amrex::Geometry & geom,
-                         amrex::MultiFab & psi);
+  /// @brief Read-only access to the computational domain.
+  /// @return Const reference to the model's domain.
+  const Domain &domain() const { return domain_; }
 
 private:
+  // config_ initialization must precede domain_: its initializer sets the log 
+  // verbosity in effect for the later initializers' messages.
   Config config_;
 
-  // tmp: global grid extents, kept as scalar members until the Domain and
-  // VerticalGrid classes take ownership of them.
-  int ni_global_ = 0;
-  int nj_global_ = 0;
+  /// @brief The computational domain: global extents, connectivity, halo
+  /// metadata, and the horizontal decomposition.
+  Domain domain_;
+
+  // tmp: vertical grid extent, kept as a scalar member until the
+  // VerticalGrid class takes ownership of it.
   int nk_ = 0;
 
   /// @brief Read the scalar configuration switches into a Config object.
   static Config read_config_switches(RuntimeParams &params);
-
-  /// @brief Initialize the time-invariant setup: domain decomposition,
-  /// horizontal grid metrics, topography, masks, and rotation.
-  /// Analogue of MOM6's MOM_domains_init + MOM_grid_init +
-  /// MOM_initialize_fixed. (stub)
-  void initialize_fixed(RuntimeParams &params);
 
   /// @brief Initialize the vertical grid and coordinate: nk, reduced
   /// gravities, target densities. Analogue of MOM6's verticalGridInit +
@@ -92,12 +88,9 @@ private:
   /// initialize_dyn_* four-way dispatch. (stub)
   void initialize_dynamics(RuntimeParams &params);
 
-  void DefineCellCenteredMultiFab(const int ni_global, const int nj_global, const int nk,
-                                const int max_chunk_size,
-                                amrex::MultiFab & cell_centered_MultiFab);
-  void InitializeGeometry(const int ni_global, const int nj_global, const int nk,
-                        const amrex::Real dx, const amrex::Real dy, const amrex::Real dz,
-                        amrex::Geometry & geom);
+  /// @brief tmp: fill the psi (stream function) demo field on the domain's
+  /// decomposition. Retires with the demo when the real State arrives.
+  void fill_psi_demo(amrex::MultiFab &psi) const;
 };
 
 } // namespace MOM

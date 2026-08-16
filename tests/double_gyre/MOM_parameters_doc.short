@@ -2,12 +2,19 @@
 
 ! === module MOM ===
                                 ! Main MOM ocean model module
+
+! === module MOM_domains ===
+REENTRANT_X = False             ! default = True
+                                ! If true, the domain is zonally reentrant.
 NIGLOBAL = 44                   !
                                 ! The total number of thickness grid points in the x-direction in the physical
                                 ! domain.
 NJGLOBAL = 40                   !
                                 ! The total number of thickness grid points in the y-direction in the physical
                                 ! domain.
+
+! === module MOM_verticalGrid ===
+                                ! Parameters providing information about the vertical grid.
 NK = 2                          !
                                 ! The total number of thickness grid points in the z-direction in the physical
                                 ! domain.
