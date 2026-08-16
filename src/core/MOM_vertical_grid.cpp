@@ -12,6 +12,7 @@ namespace {
 // set_coord_from_gprime (MOM_coord_initialization.F90), Boussinesq branch.
 void set_coord_from_gprime(RuntimeParams &params,
                            const amrex::Real g_Earth, const amrex::Real Rho0,
+                           const bool Boussinesq,
                            std::vector<amrex::Real> &g_prime,
                            std::vector<amrex::Real> &Rlay) {
 
@@ -43,13 +44,17 @@ void set_coord_from_gprime(RuntimeParams &params,
     g_prime[k] = g_int;
   }
 
-  // defer: the non-Boussinesq branch of this recursion,
-  //          Rlay[k] = Rlay[k-1] * (g_Earth + 0.5*g_prime[k])
-  //                              / (g_Earth - 0.5*g_prime[k]),
-  //        taken only when BOUSSINESQ and SEMI_BOUSSINESQ are both false.
   Rlay[0] = Rlay_ref;
-  for (int k = 1; k < nk; ++k) {
-    Rlay[k] = Rlay[k - 1] + g_prime[k] * (Rho0 / g_Earth);
+  if (Boussinesq) {
+    for (int k = 1; k < nk; ++k) {
+      Rlay[k] = Rlay[k - 1] + g_prime[k] * (Rho0 / g_Earth);
+    }
+  } else {
+    // defer: the non-Boussinesq branch of this recursion,
+    //          Rlay[k] = Rlay[k-1] * (g_Earth + 0.5*g_prime[k])
+    //                              / (g_Earth - 0.5*g_prime[k]),
+    //        taken only when BOUSSINESQ and SEMI_BOUSSINESQ are both false.
+    logger::fatal("set_coord_from_gprime: the non-Boussinesq mode is not implemented.");
   }
 }
 
@@ -78,13 +83,21 @@ VerticalGrid::VerticalGrid(RuntimeParams &params) {
     logger::fatal("VerticalGrid: RHO_0 must be positive.");
   }
 
-  // defer: the remaining verticalGridInit content -- BOUSSINESQ /
-  //        SEMI_BOUSSINESQ (the Boussinesq approximation is assumed here),
-  //        ANGSTROM and the subroundoff thicknesses, and H_RESCALE_POWER
-  //        with the thickness-unit conversion factor family (H_to_m,
-  //        Z_to_H, ...), all of which land with the thickness/units layer,
-  //        and the mixed-layer layer counts (nkml, nk_rho_varies), 
-  //        which wiil be implemented with the bulk mixed layer.
+  params.get("BOUSSINESQ", Boussinesq_,
+             {.default_value = true,
+              .desc = "If true, make the Boussinesq approximation."});
+  if (!Boussinesq_) {
+    logger::fatal("VerticalGrid: the non-Boussinesq mode is not implemented.");
+  }
+
+  // defer: the remaining verticalGridInit content. SEMI_BOUSSINESQ and
+  //        RHO_KV_CONVERT (both only meaningful when BOUSSINESQ is false,
+  //        which aborts above), ANGSTROM and the subroundoff thicknesses,
+  //        and H_RESCALE_POWER with the thickness-unit conversion factor
+  //        family (H_to_m, Z_to_H, ...), all of which will be implemented
+  //        with the thickness/units layer, and the mixed-layer layer counts
+  //        (nkml, nk_rho_varies), which will be implemented with the bulk
+  //        mixed layer.
 
   params.get("NK", nk_,
              {.desc = "The number of model layers.",
@@ -134,7 +147,7 @@ VerticalGrid::VerticalGrid(RuntimeParams &params) {
   Rlay_.assign(nk_, 0.0);
 
   if (coord_config == "gprime") {
-    set_coord_from_gprime(params, g_Earth_, Rho0_, g_prime_, Rlay_);
+    set_coord_from_gprime(params, g_Earth_, Rho0_, Boussinesq_, g_prime_, Rlay_);
   } else {
     // defer: the remaining COORD_CONFIG options (none/ALE, file, BFB, linear,
     //        layer_ref, ts_ref, ts_range, ts_profile, USER).

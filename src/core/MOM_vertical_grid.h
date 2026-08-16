@@ -28,7 +28,7 @@ namespace MOM {
 class VerticalGrid {
 public:
   /// @brief Construct the vertical grid from runtime parameters: read the
-  /// vertical grid parameters (NK, G_EARTH, RHO_0, MAXIMUM_DEPTH) and the
+  /// vertical grid parameters (NK, G_EARTH, RHO_0, BOUSSINESQ, MAXIMUM_DEPTH) and the
   /// coordinate configuration (COORD_CONFIG, GFS, GINT, ...), and set up the
   /// coordinate values. The analogue of MOM6's verticalGridInit
   /// (MOM_verticalGrid.F90) + MOM_initialize_coord (MOM_coord_initialization.F90).
@@ -53,6 +53,10 @@ public:
   /// @return The Boussinesq reference density.
   amrex::Real Rho0() const { return Rho0_; }
 
+  /// @brief Whether the Boussinesq approximation is made.
+  /// @return True if the Boussinesq approximation is made.
+  bool Boussinesq() const { return Boussinesq_; }
+
   /// @brief Reduced gravity across each interface [L2 Z-1 T-2 ~> m s-2].
   /// The bottom value (index nk) does not matter physically and is set only
   /// to avoid an uninitialized value in output, as in MOM6.
@@ -69,6 +73,7 @@ private:
   amrex::Real max_depth_ = 0.0;       ///< Maximum ocean depth [Z ~> m].
   amrex::Real g_Earth_ = 0.0;         ///< Gravitational acceleration [L2 Z-1 T-2 ~> m s-2].
   amrex::Real Rho0_ = 0.0;            ///< Boussinesq reference density [R ~> kg m-3].
+  bool Boussinesq_ = true;            ///< Whether the Boussinesq approximation is made.
   std::vector<amrex::Real> g_prime_;  ///< Interface reduced gravities (nk+1) [L2 Z-1 T-2 ~> m s-2].
   std::vector<amrex::Real> Rlay_;     ///< Layer target densities (nk) [R ~> kg m-3].
 };
