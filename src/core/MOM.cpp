@@ -6,14 +6,14 @@ namespace MOM {
 
 Model::Model(RuntimeParams &params)
   : config_(read_config_switches(params)),
-    domain_(make_domain(params)) {
+    domain_(make_domain(params)),
+    vgrid_(params) {
 
   // todo: HorGrid member: grid metrics (GRID_CONFIG), topography
   //       (TOPO_CONFIG), masks, and rotation, constructed from params and
   //       domain_. Analogue of MOM6's MOM_grid_init + MOM_initialize_fixed.
 
   // Initialization phases, in the order of MOM6's initialize_MOM:
-  initialize_vertical(params);
   initialize_state(params);
   initialize_dynamics(params);
 
@@ -74,21 +74,6 @@ Model::Config Model::read_config_switches(RuntimeParams &params) {
   return config;
 }
 
-void Model::initialize_vertical(RuntimeParams &params) {
-
-  logger::note("initialize_vertical: (stub)");
-
-  params.doc_module("MOM_verticalGrid", "Parameters providing information about the vertical grid.");
-
-  params.get("NK", nk_,
-             {.desc = "The total number of thickness grid points in the z-direction in the physical domain.",
-              .fail_if_missing = true});
-
-  // todo: VerticalGrid class: nk, reduced gravities (g_prime), target
-  //       densities (Rlay) from COORD_CONFIG. Analogue of MOM6's
-  //       verticalGridInit + MOM_initialize_coord.
-}
-
 void Model::initialize_state(RuntimeParams &params) {
 
   logger::note("initialize_state: (stub)");
@@ -102,7 +87,7 @@ void Model::initialize_state(RuntimeParams &params) {
   // real state initialization. Until then, this demo exercises the AMReX
   // machinery on the decomposition the Domain owns.
   const int n_components = 1;
-  amrex::MultiFab psi(domain_.box_array(nk_), domain_.distribution_mapping(),
+  amrex::MultiFab psi(domain_.box_array(vgrid_.nk()), domain_.distribution_mapping(),
                       n_components, domain_.nghost());
 
   fill_psi_demo(psi);

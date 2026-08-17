@@ -7,6 +7,7 @@
 
 #include "MOM_domain_infra.h"
 #include "MOM_file_parser.h"
+#include "MOM_vertical_grid.h"
 
 namespace MOM {
 
@@ -29,7 +30,7 @@ amrex::Real LinearMapCoordinates(const amrex::Real x,
 /// MOM6's initialize_MOM (src/core/MOM.F90). The constructor is decomposed
 /// into phases that mirror the topology of MOM6's initialize_MOM where each
 /// remaining phase is currently a stub that will be filled in by upcoming PRs
-/// (HorGrid, VerticalGrid, State, Dynamics). The initialize_state stub runs
+/// (HorGrid, State, Dynamics). The initialize_state stub runs
 /// the original psi (stream function) demo, which exercises the AMReX machinery
 /// its real replacement will use.
 class Model {
@@ -57,6 +58,10 @@ public:
   /// @return Const reference to the model's domain.
   const Domain &domain() const { return domain_; }
 
+  /// @brief Read-only access to the vertical grid and coordinate.
+  /// @return Const reference to the model's vertical grid and coordinate.
+  const VerticalGrid &vertical_grid() const { return vgrid_; }
+
 private:
   // config_ initialization must precede domain_: its initializer sets the log 
   // verbosity in effect for the later initializers' messages.
@@ -66,17 +71,13 @@ private:
   /// metadata, and the horizontal decomposition.
   Domain domain_;
 
-  // tmp: vertical grid extent, kept as a scalar member until the
-  // VerticalGrid class takes ownership of it.
-  int nk_ = 0;
+  /// @brief The vertical grid and coordinate: nk, reduced gravities,
+  /// target densities. Analogue of MOM6's GV (verticalGridInit) and the
+  /// coordinate values set by MOM_initialize_coord.
+  VerticalGrid vgrid_;
 
   /// @brief Read the scalar configuration switches into a Config object.
   static Config read_config_switches(RuntimeParams &params);
-
-  /// @brief Initialize the vertical grid and coordinate: nk, reduced
-  /// gravities, target densities. Analogue of MOM6's verticalGridInit +
-  /// MOM_initialize_coord. (stub)
-  void initialize_vertical(RuntimeParams &params);
 
   /// @brief Initialize the prognostic state (u, v, h, ...). Analogue of
   /// MOM6's MOM_initialize_state. (stub -- currently runs the original psi
