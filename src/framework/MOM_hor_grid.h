@@ -38,12 +38,14 @@ struct HorGridSpec {
 /// protoMOMxx carries one horizontal grid type: MOM6's transient
 /// dyn_horgrid_type / ocean_grid_type duplication (an artifact of static
 /// -memory support and the rotated-grid verification machinery) is dropped.
+/// It lives in src/framework -- dyn_horgrid's MOM6 home -- below
+/// src/initialization (which constructs it) and src/core, keeping the
+/// directory-level library dependencies one-way.
 class HorGrid {
 public:
-  /// @brief Construct the horizontal grid: define  and set the grid metrics
-  /// and the planetary rotation. The analogues of MOM6's set_grid_metrics_*
-  /// (MOM_grid_initialize.F90) and set_rotation_planetary
-  /// (MOM_shared_initialization.F90).
+  /// @brief Construct the horizontal grid: create the metric fields on the
+  /// domain's decomposition and set the spherical grid metrics and the
+  /// planetary rotation (set_grid_metrics_spherical, set_rotation_planetary).
   /// @param domain The computational domain: provides the decomposition the
   ///        metric fields are created on and the halo widths. Not retained.
   /// @param spec The grid specification; see HorGridSpec.
@@ -174,17 +176,19 @@ private:
   amrex::MultiFab CoriolisBu_;  ///< The Coriolis parameter at q points [T-1 ~> s-1].
 
   /// @brief Set the geographic locations, grid spacings, and cell areas of a
-  /// simple spherical grid, over the full grown boxes (halos included). The
-  /// analogue of MOM6's set_grid_metrics_spherical (MOM_grid_initialize.F90).
+  /// simple spherical grid (GRID_CONFIG = "spherical"), over the full grown
+  /// boxes (halos included). The analogue of MOM6's set_grid_metrics_spherical
+  /// (MOM_grid_initialize.F90).
   /// @param domain The computational domain (global extents).
   /// @param spec The grid specification.
   void set_grid_metrics_spherical(const Domain &domain, const HorGridSpec &spec);
 
-  /// @brief Set the Coriolis parameter, f = 2 OMEGA sin(latitude), at q
-  /// points from the already-set q-point latitudes. The analogue of MOM6's
-  /// set_rotation_planetary (MOM_shared_initialization.F90).
+  /// @brief Set the Coriolis parameter, f = 2 OMEGA sin(latitude), at q points
+  /// from the already-set q-point latitudes, over the full grown boxes (halos
+  /// included). The analogue of MOM6's set_rotation_planetary
+  /// (MOM_shared_initialization.F90).
   /// @param spec The grid specification (the rotation rate).
-  void init_rotation(const HorGridSpec &spec);
+  void set_rotation_planetary(const HorGridSpec &spec);
 };
 
 } // namespace MOM

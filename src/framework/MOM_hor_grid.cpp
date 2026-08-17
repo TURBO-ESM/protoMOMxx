@@ -44,11 +44,11 @@ HorGrid::HorGrid(const Domain &domain, const HorGridSpec &spec)
   // todo: init_topography (TOPO_CONFIG: bathyT, MINIMUM_DEPTH/MAXIMUM_DEPTH)
   //       and init_masks (land/sea masks at h/q/u/v points).
 
-  init_rotation(spec);
+  set_rotation_planetary(spec);
 
   // defer: the derived metrics -- the reciprocals (IdxT, IdyCu, IareaT, ...),
   //        the q-cell area (areaBu) and the u/v-cell area averages
-  //        (areaCu/areaCv) of MOM6's set_derived_dyn_horgrid,until their
+  //        (areaCu/areaCv) of MOM6's set_derived_dyn_horgrid, until their
   //        first consumer (the dynamics kernels).
 }
 
@@ -145,7 +145,7 @@ void HorGrid::set_grid_metrics_spherical(const Domain &domain, const HorGridSpec
   }
 }
 
-void HorGrid::init_rotation(const HorGridSpec &spec) {
+void HorGrid::set_rotation_planetary(const HorGridSpec &spec) {
 
   const amrex::Real PI = 4.0 * std::atan(1.0);
   const amrex::Real omega = spec.omega;

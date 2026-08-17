@@ -13,6 +13,22 @@ NJGLOBAL = 40                   !
                                 ! The total number of thickness grid points in the y-direction in the physical
                                 ! domain.
 
+! === module MOM_grid_init ===
+GRID_CONFIG = "spherical"       !
+                                ! A character string that determines the method for defining the horizontal
+                                ! grid. Current options are:
+                                !    mosaic - read the grid from a mosaic (supergrid)
+                                !      file set by GRID_FILE.
+                                !    cartesian - use a (flat) Cartesian grid.
+                                !    spherical - use a simple spherical grid.
+                                !    mercator - use a Mercator spherical grid.
+SOUTHLAT = 30.0                 !   [degrees_N]
+                                ! The southern latitude of the domain.
+LENLAT = 20.0                   !   [degrees_N]
+                                ! The latitudinal length of the domain.
+LENLON = 22.0                   !   [degrees_E]
+                                ! The longitudinal length of the domain.
+
 ! === module MOM_verticalGrid ===
                                 ! Parameters providing information about the vertical grid.
 NK = 2                          !

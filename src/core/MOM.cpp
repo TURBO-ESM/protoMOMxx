@@ -1,16 +1,14 @@
 #include "MOM.h"
 #include "MOM_domains.h"
+#include "MOM_fixed_initialization.h"
 #include "MOM_logger.h"
 
 namespace MOM {
 
 Model::Model(RuntimeParams &params)
   : config_(read_config_switches(params)),
-    domain_(make_domain(params)) {
-
-  // todo: HorGrid member: grid metrics (GRID_CONFIG), topography
-  //       (TOPO_CONFIG), masks, and rotation, constructed from params and
-  //       domain_. Analogue of MOM6's MOM_grid_init + MOM_initialize_fixed.
+    domain_(make_domain(params)),
+    grid_(make_hor_grid(domain_, params)) {
 
   // Initialization phases, in the order of MOM6's initialize_MOM:
   initialize_vertical(params);
@@ -122,9 +120,9 @@ void Model::initialize_dynamics(RuntimeParams &params) {
 
 void Model::fill_psi_demo(amrex::MultiFab &psi) const
 {
-    // tmp: nominal cell sizes and physical extents. The real grid metrics
-    // arrive with HorGrid (GRID_CONFIG); until then the demo assumes a
-    // uniform Cartesian grid.
+    // tmp: nominal cell sizes and physical extents. The demo deliberately
+    // keeps its uniform Cartesian sizes (rather than adopting the HorGrid
+    // metrics) until it retires with the real State initialization.
     const amrex::Real dx = 100000;
     const amrex::Real dy = 100000;
 

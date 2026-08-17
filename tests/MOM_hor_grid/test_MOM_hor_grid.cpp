@@ -1,4 +1,4 @@
-// Sanity/smoke tests for the HorGrid class (src/core/MOM_hor_grid.cpp):
+// Sanity/smoke tests for the HorGrid class (src/framework/MOM_hor_grid.cpp):
 // construction on the double_gyre configuration, staggering, boundary
 // alignment, and a few simple physical properties.
 //

@@ -1,7 +1,6 @@
 # CMake configuration for src/core
 add_library(MOM_src_core
   MOM.cpp
-  MOM_hor_grid.cpp
 )
 
 target_include_directories(MOM_src_core
@@ -11,6 +10,6 @@ target_include_directories(MOM_src_core
 
 target_link_libraries(MOM_src_core
   PUBLIC
-    MOM_src_framework
+    MOM_src_initialization
 )
 add_amrex_to_protomom_target(MOM_src_core)
