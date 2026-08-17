@@ -8,11 +8,16 @@
 #include <AMReX_BoxArray.H>
 #include <AMReX_DistributionMapping.H>
 #include <AMReX_IntVect.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_Periodicity.H>
 
 #include "core/tim_domain.hpp"
+#include "core/tim_stagger.hpp"
 
 namespace MOM {
+
+/// @brief The staggering (grid residency) of a field. An alias of TIM::Stagger
+using Stagger = TIM::Stagger;
 
 /// @brief The construction specification of a Domain.
 struct DomainSpec {
@@ -105,6 +110,21 @@ public:
   /// @return The distribution mapping of the horizontal decomposition.
   const amrex::DistributionMapping &distribution_mapping() const {
     return domain_.distribution_mapping();
+  }
+
+  /// @brief Create a distributed field on this domain's decomposition: a
+  /// MultiFab with the requested staggering, vertical extent, and component
+  /// count, carrying the domain's halo widths as ghost cells unless overridden.
+  /// @param stagger Where the field's values sit within a grid cell.
+  /// @param n_levels Number of vertical levels of the field. Must be positive.
+  /// @param ncomp Number of field components. Must be positive.
+  /// @param nghost Ghost-cell widths of the field. The default is the domain's
+  ///        halo widths. Halos are horizontal-only.
+  /// @return The newly created field.
+  amrex::MultiFab make_field(const Stagger stagger, const int n_levels,
+                             const int ncomp,
+                             const std::optional<amrex::IntVect> nghost = std::nullopt) const {
+    return domain_.make_field(stagger, n_levels, ncomp, nghost);
   }
 
   /// @brief The domain's periodicity, for halo exchanges.
