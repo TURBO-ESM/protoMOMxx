@@ -1,18 +1,23 @@
-// Sanity/smoke tests for the HorGrid class (src/framework/MOM_hor_grid.cpp):
-// construction on the double_gyre configuration, staggering, boundary
-// alignment, and a few simple physical properties.
+// Sanity/smoke tests for the HorGrid class and the spherical metric/rotation
+// setup (src/core/MOM_hor_grid.cpp, src/initialization): construction on the
+// double_gyre configuration, staggering, boundary alignment, and a few simple
+// physical properties.
 //
-// A HorGrid requires the infra layer to be initialized, hence the main()
-// below, which instantiates a MOM::Infra.
+// A HorGrid requires the infra layer to be initialized, hence the main() below,
+// which instantiates a MOM::Infra.
 
 #include <cmath>
+#include <utility>
 #include <gtest/gtest.h>
 
 #include <AMReX_MultiFab.H>
 
 #include "MOM_domain_infra.h"
 #include "MOM_hor_grid.h"
+#include "MOM_grid_initialize.h"
 #include "MOM_infra.h"
+#include "MOM_logger.h"
+#include "MOM_shared_initialization.h"
 
 namespace {
 
@@ -30,15 +35,23 @@ constexpr int HALO = 2;
 
 double deg2rad(const double deg) { return deg * std::acos(-1.0) / 180.0; }
 
+// Compute-then-construct, as initialize_fixed does past the parameter reading.
+MOM::HorGrid make_spherical_grid(const MOM::Domain &domain, const MOM::HorGridSpec &spec) {
+  MOM::HorGridFields fields = MOM::spherical_grid_fields(domain, spec);
+  fields.CoriolisBu = MOM::planetary_rotation(domain, spec, fields.geoLatBu);
+  return MOM::HorGrid(std::move(fields));
+}
+
 } // namespace
 
 TEST(HorGrid, DoubleGyreGridSanity) {
   const MOM::Domain domain({.ni_global = NI, .nj_global = NJ,
                             .ni_halo = HALO, .nj_halo = HALO,
                             .reentrant_x = false});
-  const MOM::HorGrid grid(domain, {.south_lat = SOUTH_LAT, .len_lat = LEN_LAT,
-                                   .west_lon = WEST_LON, .len_lon = LEN_LON,
-                                   .rad_earth = RAD_EARTH, .omega = OMEGA});
+  const MOM::HorGrid grid = make_spherical_grid(
+      domain, {.south_lat = SOUTH_LAT, .len_lat = LEN_LAT,
+               .west_lon = WEST_LON, .len_lon = LEN_LON,
+               .rad_earth = RAD_EARTH, .omega = OMEGA});
 
   // The spec scalars are retained.
   EXPECT_DOUBLE_EQ(grid.south_lat(), SOUTH_LAT);
@@ -94,13 +107,27 @@ TEST(HorGrid, ReentrantXGeoLonKeepsMonotonicExtrapolation) {
   ASSERT_TRUE(domain.reentrant_x());
 
   const double len_lon = 360.0;
-  const MOM::HorGrid grid(domain, {.south_lat = -60.0, .len_lat = 30.0,
-                                   .west_lon = 0.0, .len_lon = len_lon,
-                                   .rad_earth = RAD_EARTH, .omega = OMEGA});
+  const MOM::HorGrid grid = make_spherical_grid(
+      domain, {.south_lat = -60.0, .len_lat = 30.0,
+               .west_lon = 0.0, .len_lon = len_lon,
+               .rad_earth = RAD_EARTH, .omega = OMEGA});
 
   const double dlon = len_lon / ni;
   EXPECT_DOUBLE_EQ(grid.geoLonT().norminf(0, 1, domain.nghost()),
                    len_lon + (HALO - 0.5) * dlon);
+}
+
+// The HorGrid constructor checks that every field is created.
+TEST(HorGrid, ConstructorRejectsMissingFields) {
+  const MOM::Domain domain({.ni_global = NI, .nj_global = NJ,
+                            .ni_halo = HALO, .nj_halo = HALO,
+                            .reentrant_x = false});
+  const MOM::HorGridSpec spec = {.south_lat = SOUTH_LAT, .len_lat = LEN_LAT,
+                              .west_lon = WEST_LON, .len_lon = LEN_LON,
+                              .rad_earth = RAD_EARTH, .omega = OMEGA};
+
+  MOM::HorGridFields fields = MOM::spherical_grid_fields(domain, spec);
+  EXPECT_THROW(MOM::HorGrid(std::move(fields)), MOM::logger::FatalError);
 }
 
 /// @brief Test-binary entry point: initialize GTest, bring up the

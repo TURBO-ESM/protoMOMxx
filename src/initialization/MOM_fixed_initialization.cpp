@@ -1,15 +1,17 @@
 #include <string>
 
 #include "MOM_fixed_initialization.h"
+#include "MOM_grid_initialize.h"
 #include "MOM_logger.h"
+#include "MOM_shared_initialization.h"
 
 namespace MOM {
 
 namespace {
 
 // Read the extents of a simple spherical grid into the spec. The analogue of
-// the parameter reads of MOM6's set_grid_metrics_spherical
-// (MOM_grid_initialize.F90); the metric computation itself lives in HorGrid.
+// the parameter reads of MOM6's set_grid_metrics_spherical; the metric
+// computation itself lives in MOM_grid_initialize.
 void read_spherical_grid_params(RuntimeParams &params, HorGridSpec &spec) {
 
   params.get("SOUTHLAT", spec.south_lat,
@@ -38,15 +40,15 @@ void read_spherical_grid_params(RuntimeParams &params, HorGridSpec &spec) {
               .units = "m"});
 
   if (!(spec.len_lat > 0.0) || !(spec.len_lon > 0.0)) {
-    logger::fatal("make_hor_grid: LENLAT and LENLON must be positive.");
+    logger::fatal("initialize_fixed: LENLAT and LENLON must be positive.");
   }
   if (!(spec.rad_earth > 0.0)) {
-    logger::fatal("make_hor_grid: RAD_EARTH must be positive.");
+    logger::fatal("initialize_fixed: RAD_EARTH must be positive.");
   }
 }
 
 // Read the planetary rotation configuration into the spec. The analogue of
-// MOM6's MOM_initialize_rotation + set_rotation_planetary
+// the parameter reads of MOM6's MOM_initialize_rotation
 // (MOM_shared_initialization.F90).
 void read_rotation_params(RuntimeParams &params, HorGridSpec &spec) {
 
@@ -66,16 +68,16 @@ void read_rotation_params(RuntimeParams &params, HorGridSpec &spec) {
                 .units = "s-1"});
   } else if (rotation == "beta" || rotation == "betaplane") {
     // defer: the beta-plane/f-plane rotation (set_rotation_beta_plane).
-    logger::fatal("make_hor_grid: ROTATION \"", rotation,
+    logger::fatal("initialize_fixed: ROTATION \"", rotation,
                   "\" is not implemented yet.");
   } else {
-    logger::fatal("make_hor_grid: Unrecognized rotation setup \"", rotation, "\".");
+    logger::fatal("initialize_fixed: Unrecognized rotation setup \"", rotation, "\".");
   }
 }
 
 } // namespace
 
-HorGrid make_hor_grid(const Domain &domain, RuntimeParams &params) {
+HorGridFields initialize_fixed(const Domain &domain, RuntimeParams &params) {
 
   params.doc_module("MOM_grid_init", "");
 
@@ -91,29 +93,37 @@ HorGrid make_hor_grid(const Domain &domain, RuntimeParams &params) {
               .fail_if_missing = true});
 
   HorGridSpec spec;
+  HorGridFields fields;
   if (config == "spherical") {
     read_spherical_grid_params(params, spec);
+    fields = spherical_grid_fields(domain, spec);
   } else if (config == "mosaic" || config == "cartesian" || config == "mercator") {
     // defer: the mosaic (file-based), cartesian, and mercator grid
     //        configurations.
-    logger::fatal("make_hor_grid: GRID_CONFIG \"", config,
+    logger::fatal("initialize_fixed: GRID_CONFIG \"", config,
                   "\" is not implemented yet.");
   } else if (config == "file") {
     // Retired in MOM6 itself; carry its message.
-    logger::fatal("make_hor_grid: GRID_CONFIG \"file\" is no longer a supported "
+    logger::fatal("initialize_fixed: GRID_CONFIG \"file\" is no longer a supported "
                   "option. Use a mosaic file (\"mosaic\") or one of the analytic "
                   "forms instead.");
   } else {
-    logger::fatal("make_hor_grid: Unrecognized grid configuration \"", config, "\".");
+    logger::fatal("initialize_fixed: Unrecognized grid configuration \"", config, "\".");
   }
 
   // todo: topography (TOPO_CONFIG, MINIMUM_DEPTH, MAXIMUM_DEPTH) and the
-  //       land/sea masks are read here, between the metrics and the
+  //       land/sea masks are read and set here, between the metrics and the
   //       rotation, matching MOM6's MOM_initialize_fixed order.
 
   read_rotation_params(params, spec);
+  fields.CoriolisBu = planetary_rotation(domain, spec, fields.geoLatBu);
 
-  return HorGrid(domain, spec);
+  // defer: the derived metrics -- the reciprocals (IdxT, IdyCu, IareaT, ...),
+  //        the q-cell area (areaBu) and the u/v-cell area averages
+  //        (areaCu/areaCv) of MOM6's set_derived_dyn_horgrid, until their
+  //        first consumer (the dynamics kernels).
+
+  return fields;
 }
 
 } // namespace MOM

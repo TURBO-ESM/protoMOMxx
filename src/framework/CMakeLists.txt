@@ -8,7 +8,6 @@ add_library(MOM_src_framework
   MOM_file_parser.cpp
   MOM_document.cpp
   MOM_domains.cpp
-  MOM_hor_grid.cpp
 )
 
 target_include_directories(MOM_src_framework
