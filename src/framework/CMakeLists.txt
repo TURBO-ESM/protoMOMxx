@@ -20,3 +20,4 @@ target_link_libraries(MOM_src_framework
   PUBLIC
     MOM_config_src_infra
 )
+add_amrex_to_protomom_target(MOM_src_framework)
