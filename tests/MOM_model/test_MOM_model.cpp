@@ -28,6 +28,7 @@ TEST(MOMModelTest, ConstructsFromInjectedParams) {
   EXPECT_TRUE(model.config().use_RK2);
   EXPECT_EQ(model.domain().ni_global(), 44);
   EXPECT_EQ(model.domain().nj_global(), 40);
+  EXPECT_EQ(model.vertical_grid().nk(), 2);
 }
 
 // Two Model instances can coexist in one process (multi-instance mode).
@@ -58,6 +59,8 @@ TEST(MOMModelTest, TwoInstancesCoexist) {
   EXPECT_EQ(model_b.domain().nj_global(), 10);
   EXPECT_TRUE(model_b.domain().reentrant_x());  // default in b, off in a
   EXPECT_FALSE(model_a.domain().reentrant_x());
+  EXPECT_EQ(model_a.vertical_grid().nk(), 2);
+  EXPECT_EQ(model_b.vertical_grid().nk(), 3);
 }
 
 /// @brief Test-binary entry point: initialize GTest, bring up the infrastructure
