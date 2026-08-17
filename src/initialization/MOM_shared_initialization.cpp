@@ -4,7 +4,7 @@
 
 namespace MOM {
 
-amrex::MultiFab planetary_rotation(const Domain &domain, const HorGridSpec &spec,
+amrex::MultiFab planetary_rotation(const Domain &domain, const GridSpec &spec,
                                    const amrex::MultiFab &geoLatBu) {
 
   const int n_levels = 1;

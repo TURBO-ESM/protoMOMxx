@@ -1,9 +1,9 @@
 #pragma once
-/// @file MOM_hor_grid_fields.h
+/// @file MOM_grid_fields.h
 /// @brief The construction-phase counterpart of the horizontal grid: the
 ///        grid specification read from the runtime parameters, and the
 ///        struct of grid fields that src/initialization computes and the
-///        HorGrid constructor (src/core) takes over. The analogue of MOM6's
+///        Grid constructor (src/core) takes over. The analogue of MOM6's
 ///        MOM_dyn_horgrid (dyn_horgrid_type).
 
 #include <AMReX_MultiFab.H>
@@ -19,7 +19,7 @@ namespace MOM {
 /// extents of a simple spherical grid (GRID_CONFIG = "spherical") and the
 /// planetary rotation rate. Other grid configurations (mosaic, cartesian,
 /// mercator) will extend this specification when they are implemented.
-struct HorGridSpec {
+struct GridSpec {
   amrex::Real south_lat = 0.0;      ///< The southern latitude of the domain [degrees_N].
   amrex::Real len_lat = 0.0;        ///< The latitudinal length of the domain [degrees_N].
   amrex::Real west_lon = 0.0;       ///< The western longitude of the domain [degrees_E].
@@ -32,13 +32,13 @@ struct HorGridSpec {
 /// Coriolis parameter) and the geographic extents they were computed from.
 /// The analogue of MOM6's dyn_horgrid_type.
 ///
-/// This is the construction-phase counterpart of HorGrid (src/core): a plain
+/// This is the construction-phase counterpart of Grid (src/core): a plain
 /// struct with no behavior of its own, so the setup functions in
 /// src/initialization can fill it freely. Each field is empty until its
 /// setup function creates and computes it. Once complete, the struct is
-/// moved into the HorGrid constructor, which checks that every field is
+/// moved into the Grid constructor, which checks that every field is
 /// created and becomes the read-only owner.
-struct HorGridFields {
+struct GridFields {
   amrex::Real south_lat = 0.0;  ///< The southern latitude of the domain [degrees_N].
   amrex::Real len_lat = 0.0;    ///< The latitudinal length of the domain [degrees_N].
   amrex::Real west_lon = 0.0;   ///< The western longitude of the domain [degrees_E].

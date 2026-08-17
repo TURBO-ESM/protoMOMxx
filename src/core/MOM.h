@@ -7,7 +7,7 @@
 
 #include "MOM_domain_infra.h"
 #include "MOM_file_parser.h"
-#include "MOM_hor_grid.h"
+#include "MOM_grid.h"
 
 namespace MOM {
 
@@ -60,7 +60,7 @@ public:
 
   /// @brief Read-only access to the horizontal grid.
   /// @return Const reference to the model's horizontal grid.
-  const HorGrid &grid() const { return grid_; }
+  const Grid &grid() const { return grid_; }
 
 private:
   // config_ initialization must precede domain_: its initializer sets the log 
@@ -73,7 +73,7 @@ private:
 
   /// @brief The horizontal grid: metric fields at the h/q/u/v points and the
   /// Coriolis parameter, on domain_'s decomposition.
-  HorGrid grid_;
+  Grid grid_;
 
   // tmp: vertical grid extent, kept as a scalar member until the
   // VerticalGrid class takes ownership of it.

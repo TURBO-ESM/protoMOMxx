@@ -1,9 +1,9 @@
-// Sanity/smoke tests for the HorGrid class and the spherical metric/rotation
-// setup (src/core/MOM_hor_grid.cpp, src/initialization): construction on the
+// Sanity/smoke tests for the Grid class and the spherical metric/rotation
+// setup (src/core/MOM_grid.cpp, src/initialization): construction on the
 // double_gyre configuration, staggering, boundary alignment, and a few simple
 // physical properties.
 //
-// A HorGrid requires the infra layer to be initialized, hence the main() below,
+// A Grid requires the infra layer to be initialized, hence the main() below,
 // which instantiates a MOM::Infra.
 
 #include <cmath>
@@ -13,7 +13,7 @@
 #include <AMReX_MultiFab.H>
 
 #include "MOM_domain_infra.h"
-#include "MOM_hor_grid.h"
+#include "MOM_grid.h"
 #include "MOM_grid_initialize.h"
 #include "MOM_infra.h"
 #include "MOM_logger.h"
@@ -36,19 +36,19 @@ constexpr int HALO = 2;
 double deg2rad(const double deg) { return deg * std::acos(-1.0) / 180.0; }
 
 // Compute-then-construct, as initialize_fixed does past the parameter reading.
-MOM::HorGrid make_spherical_grid(const MOM::Domain &domain, const MOM::HorGridSpec &spec) {
-  MOM::HorGridFields fields = MOM::spherical_grid_fields(domain, spec);
+MOM::Grid make_spherical_grid(const MOM::Domain &domain, const MOM::GridSpec &spec) {
+  MOM::GridFields fields = MOM::spherical_grid_fields(domain, spec);
   fields.CoriolisBu = MOM::planetary_rotation(domain, spec, fields.geoLatBu);
-  return MOM::HorGrid(std::move(fields));
+  return MOM::Grid(std::move(fields));
 }
 
 } // namespace
 
-TEST(HorGrid, DoubleGyreGridSanity) {
+TEST(Grid, DoubleGyreGridSanity) {
   const MOM::Domain domain({.ni_global = NI, .nj_global = NJ,
                             .ni_halo = HALO, .nj_halo = HALO,
                             .reentrant_x = false});
-  const MOM::HorGrid grid = make_spherical_grid(
+  const MOM::Grid grid = make_spherical_grid(
       domain, {.south_lat = SOUTH_LAT, .len_lat = LEN_LAT,
                .west_lon = WEST_LON, .len_lon = LEN_LON,
                .rad_earth = RAD_EARTH, .omega = OMEGA});
@@ -99,7 +99,7 @@ TEST(HorGrid, DoubleGyreGridSanity) {
 // extrapolation rather than wrapping: the halo cell centers east of the wrap
 // continue past 360 degrees (here up to 375 with 10-degree cells); wrapped
 // values would stay below 360.
-TEST(HorGrid, ReentrantXGeoLonKeepsMonotonicExtrapolation) {
+TEST(Grid, ReentrantXGeoLonKeepsMonotonicExtrapolation) {
   const int ni = 36, nj = 10;
   const MOM::Domain domain({.ni_global = ni, .nj_global = nj,
                             .ni_halo = HALO, .nj_halo = HALO,
@@ -107,7 +107,7 @@ TEST(HorGrid, ReentrantXGeoLonKeepsMonotonicExtrapolation) {
   ASSERT_TRUE(domain.reentrant_x());
 
   const double len_lon = 360.0;
-  const MOM::HorGrid grid = make_spherical_grid(
+  const MOM::Grid grid = make_spherical_grid(
       domain, {.south_lat = -60.0, .len_lat = 30.0,
                .west_lon = 0.0, .len_lon = len_lon,
                .rad_earth = RAD_EARTH, .omega = OMEGA});
@@ -117,17 +117,17 @@ TEST(HorGrid, ReentrantXGeoLonKeepsMonotonicExtrapolation) {
                    len_lon + (HALO - 0.5) * dlon);
 }
 
-// The HorGrid constructor checks that every field is created.
-TEST(HorGrid, ConstructorRejectsMissingFields) {
+// The Grid constructor checks that every field is created.
+TEST(Grid, ConstructorRejectsMissingFields) {
   const MOM::Domain domain({.ni_global = NI, .nj_global = NJ,
                             .ni_halo = HALO, .nj_halo = HALO,
                             .reentrant_x = false});
-  const MOM::HorGridSpec spec = {.south_lat = SOUTH_LAT, .len_lat = LEN_LAT,
+  const MOM::GridSpec spec = {.south_lat = SOUTH_LAT, .len_lat = LEN_LAT,
                               .west_lon = WEST_LON, .len_lon = LEN_LON,
                               .rad_earth = RAD_EARTH, .omega = OMEGA};
 
-  MOM::HorGridFields fields = MOM::spherical_grid_fields(domain, spec);
-  EXPECT_THROW(MOM::HorGrid(std::move(fields)), MOM::logger::FatalError);
+  MOM::GridFields fields = MOM::spherical_grid_fields(domain, spec);
+  EXPECT_THROW(MOM::Grid(std::move(fields)), MOM::logger::FatalError);
 }
 
 /// @brief Test-binary entry point: initialize GTest, bring up the

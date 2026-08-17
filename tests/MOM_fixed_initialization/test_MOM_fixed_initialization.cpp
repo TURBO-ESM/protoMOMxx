@@ -1,7 +1,7 @@
 // Unit tests for initialize_fixed (src/initialization/MOM_fixed_initialization.cpp):
 // the parameter-driven computation of the grid fields, including defaults and
 // the rejection of invalid extents. The grid values themselves are covered in
-// tests/MOM_hor_grid.
+// tests/MOM_grid.
 //
 // initialize_fixed requires the infra layer to be initialized, hence the
 // main() below, which instantiates a MOM::Infra.
@@ -11,7 +11,7 @@
 
 #include "MOM_domains.h"
 #include "MOM_fixed_initialization.h"
-#include "MOM_hor_grid.h"
+#include "MOM_grid.h"
 #include "MOM_infra.h"
 #include "MOM_logger.h"
 
@@ -23,12 +23,12 @@ std::filesystem::path get_test_data_dir() {
 }
 
 // Construct the domain and the grid from one parameter file.
-MOM::HorGrid grid_from_param_file(const std::string &file_name) {
+MOM::Grid grid_from_param_file(const std::string &file_name) {
   const auto path = get_test_data_dir() / file_name;
   EXPECT_TRUE(std::filesystem::exists(path)) << "Test file " << path << " does not exist";
   MOM::RuntimeParams params(path.string());
   const MOM::Domain domain = MOM::make_domain(params);
-  return MOM::HorGrid(MOM::initialize_fixed(domain, params));
+  return MOM::Grid(MOM::initialize_fixed(domain, params));
 }
 
 } // namespace
@@ -37,7 +37,7 @@ MOM::HorGrid grid_from_param_file(const std::string &file_name) {
 // defaults applied for the parameters the file omits (WESTLON, RAD_EARTH,
 // ROTATION, OMEGA).
 TEST(MOMFixedInitTest, InitializeFixedFromParamFile) {
-  const MOM::HorGrid grid = grid_from_param_file("MOM_input_test");
+  const MOM::Grid grid = grid_from_param_file("MOM_input_test");
 
   EXPECT_DOUBLE_EQ(grid.south_lat(), 30.0);
   EXPECT_DOUBLE_EQ(grid.len_lat(), 20.0);

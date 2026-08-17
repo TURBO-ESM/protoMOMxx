@@ -1,24 +1,24 @@
 #pragma once
-/// @file MOM_hor_grid.h
+/// @file MOM_grid.h
 /// @brief The horizontal ocean grid of a model instance: the geographic
 ///        locations, grid spacings, and cell areas at the h/q/u/v points of
 ///        the Arakawa C-grid, and the Coriolis parameter. The analogue of
 ///        MOM6's MOM_grid (ocean_grid_type). The field values are computed
 ///        in src/initialization and handed to the constructor as a
-///        HorGridFields struct (MOM_hor_grid_fields.h).
+///        GridFields struct (MOM_grid_fields.h).
 
 #include <AMReX_MultiFab.H>
 
-#include "MOM_hor_grid_fields.h"
+#include "MOM_grid_fields.h"
 
 namespace MOM {
 
-/// @class HorGrid
+/// @class Grid
 /// @brief The horizontal grid: metric fields at the four C-grid point types
 /// (h: cell centers, q: cell corners, u: east faces, v: north faces) and the
 /// Coriolis parameter at q points.
 ///
-/// HorGridFields is the construction-phase counterpart of this class. The
+/// GridFields is the construction-phase counterpart of this class. The
 /// field values are computed in src/initialization (where the GRID_CONFIG
 /// options are handled), but the grid itself should be immutable (nearly
 /// every part of the model reads the grid throughout the run, and none of
@@ -26,17 +26,17 @@ namespace MOM {
 /// the constructor as a plain struct, and the constructor validates them
 /// and takes ownership. MOM6 does the same job
 /// with two full grid types: it fills dyn_horgrid_type, copies it into
-/// ocean_grid_type, and both remain mutable. Here the precursor (HorGridFields)
+/// ocean_grid_type, and both remain mutable. Here the precursor (GridFields)
 /// is a bare struct with no behavior of its own, the handoff is a move
-/// rather than a copy, and the resulting grid is read-only. So a HorGrid
+/// rather than a copy, and the resulting grid is read-only. So a Grid
 /// is complete by construction and cannot be altered afterwards.
-class HorGrid {
+class Grid {
 public:
   /// @brief Construct the grid: check that every field is created and take
   /// ownership.
   /// @param fields The computed grid fields; moved from.
   /// @pre The infrastructure layer (MOM::Infra) is initialized.
-  explicit HorGrid(HorGridFields &&fields);
+  explicit Grid(GridFields &&fields);
 
   /// @brief The southern latitude of the domain [degrees_N].
   /// @return The southern latitude.
@@ -131,7 +131,7 @@ public:
   const amrex::MultiFab &CoriolisBu() const { return fields_.CoriolisBu; }
 
 private:
-  HorGridFields fields_;  ///< The grid fields (owned).
+  GridFields fields_;  ///< The grid fields (owned).
 };
 
 } // namespace MOM

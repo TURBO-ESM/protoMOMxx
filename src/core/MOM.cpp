@@ -121,7 +121,7 @@ void Model::initialize_dynamics(RuntimeParams &params) {
 void Model::fill_psi_demo(amrex::MultiFab &psi) const
 {
     // tmp: nominal cell sizes and physical extents. The demo deliberately
-    // keeps its uniform Cartesian sizes (rather than adopting the HorGrid
+    // keeps its uniform Cartesian sizes (rather than adopting the Grid
     // metrics) until it retires with the real State initialization.
     const amrex::Real dx = 100000;
     const amrex::Real dy = 100000;

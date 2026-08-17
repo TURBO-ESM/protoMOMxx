@@ -12,7 +12,7 @@ namespace {
 // Read the extents of a simple spherical grid into the spec. The analogue of
 // the parameter reads of MOM6's set_grid_metrics_spherical; the metric
 // computation itself lives in MOM_grid_initialize.
-void read_spherical_grid_params(RuntimeParams &params, HorGridSpec &spec) {
+void read_spherical_grid_params(RuntimeParams &params, GridSpec &spec) {
 
   params.get("SOUTHLAT", spec.south_lat,
              {.desc = "The southern latitude of the domain.",
@@ -50,7 +50,7 @@ void read_spherical_grid_params(RuntimeParams &params, HorGridSpec &spec) {
 // Read the planetary rotation configuration into the spec. The analogue of
 // the parameter reads of MOM6's MOM_initialize_rotation
 // (MOM_shared_initialization.F90).
-void read_rotation_params(RuntimeParams &params, HorGridSpec &spec) {
+void read_rotation_params(RuntimeParams &params, GridSpec &spec) {
 
   std::string rotation = "2omegasinlat";
   params.get("ROTATION", rotation,
@@ -77,7 +77,7 @@ void read_rotation_params(RuntimeParams &params, HorGridSpec &spec) {
 
 } // namespace
 
-HorGridFields initialize_fixed(const Domain &domain, RuntimeParams &params) {
+GridFields initialize_fixed(const Domain &domain, RuntimeParams &params) {
 
   params.doc_module("MOM_grid_init", "");
 
@@ -92,8 +92,8 @@ HorGridFields initialize_fixed(const Domain &domain, RuntimeParams &params) {
                       "\t mercator - use a Mercator spherical grid.",
               .fail_if_missing = true});
 
-  HorGridSpec spec;
-  HorGridFields fields;
+  GridSpec spec;
+  GridFields fields;
   if (config == "spherical") {
     read_spherical_grid_params(params, spec);
     fields = spherical_grid_fields(domain, spec);

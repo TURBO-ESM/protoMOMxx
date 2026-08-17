@@ -7,7 +7,7 @@
 #include <AMReX_MultiFab.H>
 
 #include "MOM_domain_infra.h"
-#include "MOM_hor_grid_fields.h"
+#include "MOM_grid_fields.h"
 
 namespace MOM {
 
@@ -19,7 +19,7 @@ namespace MOM {
 /// @param spec The grid specification (the rotation rate).
 /// @param geoLatBu The geographic latitude at q points [degrees_N].
 /// @return The computed Coriolis parameter field [T-1 ~> s-1].
-amrex::MultiFab planetary_rotation(const Domain &domain, const HorGridSpec &spec,
+amrex::MultiFab planetary_rotation(const Domain &domain, const GridSpec &spec,
                                    const amrex::MultiFab &geoLatBu);
 
 } // namespace MOM

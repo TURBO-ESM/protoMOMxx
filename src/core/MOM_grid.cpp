@@ -1,6 +1,6 @@
 #include <string_view>
 
-#include "MOM_hor_grid.h"
+#include "MOM_grid.h"
 
 #include "MOM_logger.h"
 
@@ -13,13 +13,13 @@ namespace {
 // created is one whose setup step was skipped.
 void check_field(const amrex::MultiFab &field, const std::string_view name) {
   if (field.empty()) {
-    logger::fatal("HorGrid: the ", name, " field is not created.");
+    logger::fatal("Grid: the ", name, " field is not created.");
   }
 }
 
 } // namespace
 
-HorGrid::HorGrid(HorGridFields &&fields)
+Grid::Grid(GridFields &&fields)
   : fields_(std::move(fields)) {
 
   check_field(fields_.geoLatT, "geoLatT");

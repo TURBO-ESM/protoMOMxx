@@ -6,7 +6,7 @@
 ///        (initialize_masks) lands here with the topography PR.
 
 #include "MOM_domain_infra.h"
-#include "MOM_hor_grid_fields.h"
+#include "MOM_grid_fields.h"
 
 namespace MOM {
 
@@ -18,6 +18,6 @@ namespace MOM {
 /// @param spec The grid specification.
 /// @return The computed grid fields (the Coriolis parameter is left to
 ///         planetary_rotation).
-HorGridFields spherical_grid_fields(const Domain &domain, const HorGridSpec &spec);
+GridFields spherical_grid_fields(const Domain &domain, const GridSpec &spec);
 
 } // namespace MOM

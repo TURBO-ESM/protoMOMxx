@@ -4,14 +4,14 @@
 
 namespace MOM {
 
-HorGridFields spherical_grid_fields(const Domain &domain, const HorGridSpec &spec) {
+GridFields spherical_grid_fields(const Domain &domain, const GridSpec &spec) {
 
   // The metric fields are 2-D (single-level) fields on the domain's
   // horizontal decomposition, created through the domain's field factory.
   const int n_levels = 1;
   const int ncomp = 1;
 
-  HorGridFields fields;
+  GridFields fields;
 
   fields.south_lat = spec.south_lat;
   fields.len_lat = spec.len_lat;
