@@ -1,5 +1,5 @@
 // Sanity/smoke tests for the Grid class and the spherical metric/rotation
-// setup (src/core/MOM_grid.cpp, src/initialization): construction on the
+// setup (src/types/MOM_grid.cpp, src/initialization): construction on the
 // double_gyre configuration, staggering, boundary alignment, and a few simple
 // physical properties.
 //
@@ -35,7 +35,7 @@ constexpr int HALO = 2;
 
 double deg2rad(const double deg) { return deg * std::acos(-1.0) / 180.0; }
 
-// Compute-then-construct, as initialize_fixed does past the parameter reading.
+// Compute-then-construct, as make_grid does past the parameter reading.
 MOM::Grid make_spherical_grid(const MOM::Domain &domain, const MOM::GridSpec &spec) {
   MOM::GridFields fields = MOM::spherical_grid_fields(domain, spec);
   fields.CoriolisBu = MOM::planetary_rotation(domain, spec, fields.geoLatBu);

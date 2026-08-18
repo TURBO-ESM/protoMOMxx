@@ -1,4 +1,5 @@
 #include <string>
+#include <utility>
 
 #include "MOM_fixed_initialization.h"
 #include "MOM_grid_initialize.h"
@@ -40,10 +41,10 @@ void read_spherical_grid_params(RuntimeParams &params, GridSpec &spec) {
               .units = "m"});
 
   if (!(spec.len_lat > 0.0) || !(spec.len_lon > 0.0)) {
-    logger::fatal("initialize_fixed: LENLAT and LENLON must be positive.");
+    logger::fatal("make_grid: LENLAT and LENLON must be positive.");
   }
   if (!(spec.rad_earth > 0.0)) {
-    logger::fatal("initialize_fixed: RAD_EARTH must be positive.");
+    logger::fatal("make_grid: RAD_EARTH must be positive.");
   }
 }
 
@@ -68,16 +69,16 @@ void read_rotation_params(RuntimeParams &params, GridSpec &spec) {
                 .units = "s-1"});
   } else if (rotation == "beta" || rotation == "betaplane") {
     // defer: the beta-plane/f-plane rotation (set_rotation_beta_plane).
-    logger::fatal("initialize_fixed: ROTATION \"", rotation,
+    logger::fatal("make_grid: ROTATION \"", rotation,
                   "\" is not implemented yet.");
   } else {
-    logger::fatal("initialize_fixed: Unrecognized rotation setup \"", rotation, "\".");
+    logger::fatal("make_grid: Unrecognized rotation setup \"", rotation, "\".");
   }
 }
 
 } // namespace
 
-GridFields initialize_fixed(const Domain &domain, RuntimeParams &params) {
+Grid make_grid(const Domain &domain, RuntimeParams &params) {
 
   params.doc_module("MOM_grid_init", "");
 
@@ -100,15 +101,15 @@ GridFields initialize_fixed(const Domain &domain, RuntimeParams &params) {
   } else if (config == "mosaic" || config == "cartesian" || config == "mercator") {
     // defer: the mosaic (file-based), cartesian, and mercator grid
     //        configurations.
-    logger::fatal("initialize_fixed: GRID_CONFIG \"", config,
+    logger::fatal("make_grid: GRID_CONFIG \"", config,
                   "\" is not implemented yet.");
   } else if (config == "file") {
     // Retired in MOM6 itself; carry its message.
-    logger::fatal("initialize_fixed: GRID_CONFIG \"file\" is no longer a supported "
+    logger::fatal("make_grid: GRID_CONFIG \"file\" is no longer a supported "
                   "option. Use a mosaic file (\"mosaic\") or one of the analytic "
                   "forms instead.");
   } else {
-    logger::fatal("initialize_fixed: Unrecognized grid configuration \"", config, "\".");
+    logger::fatal("make_grid: Unrecognized grid configuration \"", config, "\".");
   }
 
   // todo: topography (TOPO_CONFIG, MINIMUM_DEPTH, MAXIMUM_DEPTH) and the
@@ -123,7 +124,7 @@ GridFields initialize_fixed(const Domain &domain, RuntimeParams &params) {
   //        (areaCu/areaCv) of MOM6's set_derived_dyn_horgrid, until their
   //        first consumer (the dynamics kernels).
 
-  return fields;
+  return Grid(std::move(fields));
 }
 
 } // namespace MOM

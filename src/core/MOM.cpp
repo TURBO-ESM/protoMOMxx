@@ -8,7 +8,7 @@ namespace MOM {
 Model::Model(RuntimeParams &params)
   : config_(read_config_switches(params)),
     domain_(make_domain(params)),
-    grid_(initialize_fixed(domain_, params)) {
+    grid_(make_grid(domain_, params)) {
 
   // Initialization phases, in the order of MOM6's initialize_MOM:
   initialize_vertical(params);
