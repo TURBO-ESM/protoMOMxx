@@ -19,26 +19,26 @@ GridFields spherical_grid_fields(const Domain &domain, const GridSpec &spec) {
   fields.len_lon = spec.len_lon;
   fields.rad_earth = spec.rad_earth;
 
-  fields.geoLatT = domain.make_field(Stagger::Cell, n_levels, ncomp);
-  fields.geoLonT = domain.make_field(Stagger::Cell, n_levels, ncomp);
-  fields.dxT = domain.make_field(Stagger::Cell, n_levels, ncomp);
-  fields.dyT = domain.make_field(Stagger::Cell, n_levels, ncomp);
-  fields.areaT = domain.make_field(Stagger::Cell, n_levels, ncomp);
+  fields.geoLatT = domain.make_h_field(n_levels, ncomp);
+  fields.geoLonT = domain.make_h_field(n_levels, ncomp);
+  fields.dxT = domain.make_h_field(n_levels, ncomp);
+  fields.dyT = domain.make_h_field(n_levels, ncomp);
+  fields.areaT = domain.make_h_field(n_levels, ncomp);
 
-  fields.geoLatCu = domain.make_field(Stagger::XFace, n_levels, ncomp);
-  fields.geoLonCu = domain.make_field(Stagger::XFace, n_levels, ncomp);
-  fields.dxCu = domain.make_field(Stagger::XFace, n_levels, ncomp);
-  fields.dyCu = domain.make_field(Stagger::XFace, n_levels, ncomp);
+  fields.geoLatCu = domain.make_u_field(n_levels, ncomp);
+  fields.geoLonCu = domain.make_u_field(n_levels, ncomp);
+  fields.dxCu = domain.make_u_field(n_levels, ncomp);
+  fields.dyCu = domain.make_u_field(n_levels, ncomp);
 
-  fields.geoLatCv = domain.make_field(Stagger::YFace, n_levels, ncomp);
-  fields.geoLonCv = domain.make_field(Stagger::YFace, n_levels, ncomp);
-  fields.dxCv = domain.make_field(Stagger::YFace, n_levels, ncomp);
-  fields.dyCv = domain.make_field(Stagger::YFace, n_levels, ncomp);
+  fields.geoLatCv = domain.make_v_field(n_levels, ncomp);
+  fields.geoLonCv = domain.make_v_field(n_levels, ncomp);
+  fields.dxCv = domain.make_v_field(n_levels, ncomp);
+  fields.dyCv = domain.make_v_field(n_levels, ncomp);
 
-  fields.geoLatBu = domain.make_field(Stagger::Node, n_levels, ncomp);
-  fields.geoLonBu = domain.make_field(Stagger::Node, n_levels, ncomp);
-  fields.dxBu = domain.make_field(Stagger::Node, n_levels, ncomp);
-  fields.dyBu = domain.make_field(Stagger::Node, n_levels, ncomp);
+  fields.geoLatBu = domain.make_q_field(n_levels, ncomp);
+  fields.geoLonBu = domain.make_q_field(n_levels, ncomp);
+  fields.dxBu = domain.make_q_field(n_levels, ncomp);
+  fields.dyBu = domain.make_q_field(n_levels, ncomp);
 
   const amrex::Real PI = 4.0 * std::atan(1.0);
   const amrex::Real PI_180 = PI / 180.0;

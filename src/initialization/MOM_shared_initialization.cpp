@@ -9,7 +9,7 @@ amrex::MultiFab planetary_rotation(const Domain &domain, const GridSpec &spec,
 
   const int n_levels = 1;
   const int ncomp = 1;
-  amrex::MultiFab CoriolisBu = domain.make_field(Stagger::Node, n_levels, ncomp);
+  amrex::MultiFab CoriolisBu = domain.make_q_field(n_levels, ncomp);
 
   const amrex::Real PI = 4.0 * std::atan(1.0);
   const amrex::Real omega = spec.omega;
