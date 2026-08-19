@@ -19,6 +19,10 @@ namespace MOM {
 /// @brief The staggering (grid residency) of a field. An alias of TIM::Stagger
 using Stagger = TIM::Stagger;
 
+/// @brief An alias of TIM::FieldOpts - optional arguments for make_field. 
+/// ncomp: number of components (default 1), nghost: halo width (default domain.nghost())
+using FieldOpts = TIM::FieldOpts;
+
 /// @brief The construction specification of a Domain.
 struct DomainSpec {
   int ni_global = 0;  ///< Number of global grid points in the i-direction (x).
@@ -94,12 +98,12 @@ public:
   bool tripolar_n() const { return domain_.tripolar_n(); }
 
   /// @brief Cell-centered BoxArray covering the global domain.
-  /// @param n_levels Number of vertical levels of the field to be created:
+  /// @param nlevel Number of vertical levels of the field to be created:
   ///        1 for 2-D fields, NK for 3-D layer fields, NK+1 for interface
   ///        fields, etc.
   /// @return The cell-centered BoxArray with the requested k-extent.
-  amrex::BoxArray box_array(const int n_levels) const {
-    return domain_.boxArray(n_levels);
+  amrex::BoxArray box_array(const int nlevel) const {
+    return domain_.boxArray(nlevel);
   }
 
   /// @brief Number of boxes in the horizontal decomposition.
@@ -113,47 +117,35 @@ public:
   }
 
   /// @brief Create a field at h points (cell centers) on this domain.
-  /// @param n_levels Number of vertical levels of the field. Must be positive.
-  /// @param ncomp Number of field components. Must be positive.
-  /// @param nghost Ghost-cell widths of the field. The default is the domain's
-  ///        halo widths.
+  /// @param nlevel Number of vertical levels of the field. Must be positive.
+  /// @param opts The optional arguments; see FieldOpts.
   /// @return The newly created field.
-  amrex::MultiFab make_h_field(const int n_levels, const int ncomp,
-                               const std::optional<amrex::IntVect> nghost = std::nullopt) const {
-    return domain_.make_field(Stagger::Cell, n_levels, ncomp, nghost);
+  amrex::MultiFab make_h_field(const int nlevel, const FieldOpts opts = {}) const {
+    return domain_.make_field(Stagger::Cell, nlevel, opts);
   }
 
   /// @brief Create a field at u points (east faces) on this domain.
-  /// @param n_levels Number of vertical levels of the field. Must be positive.
-  /// @param ncomp Number of field components. Must be positive.
-  /// @param nghost Ghost-cell widths of the field. The default is the domain's
-  ///        halo widths.
+  /// @param nlevel Number of vertical levels of the field. Must be positive.
+  /// @param opts The optional arguments; see FieldOpts.
   /// @return The newly created field.
-  amrex::MultiFab make_u_field(const int n_levels, const int ncomp,
-                               const std::optional<amrex::IntVect> nghost = std::nullopt) const {
-    return domain_.make_field(Stagger::XFace, n_levels, ncomp, nghost);
+  amrex::MultiFab make_u_field(const int nlevel, const FieldOpts opts = {}) const {
+    return domain_.make_field(Stagger::XFace, nlevel, opts);
   }
 
   /// @brief Create a field at v points (north faces) on this domain.
-  /// @param n_levels Number of vertical levels of the field. Must be positive.
-  /// @param ncomp Number of field components. Must be positive.
-  /// @param nghost Ghost-cell widths of the field. The default is the domain's
-  ///        halo widths.
+  /// @param nlevel Number of vertical levels of the field. Must be positive.
+  /// @param opts The optional arguments; see FieldOpts.
   /// @return The newly created field.
-  amrex::MultiFab make_v_field(const int n_levels, const int ncomp,
-                               const std::optional<amrex::IntVect> nghost = std::nullopt) const {
-    return domain_.make_field(Stagger::YFace, n_levels, ncomp, nghost);
+  amrex::MultiFab make_v_field(const int nlevel, const FieldOpts opts = {}) const {
+    return domain_.make_field(Stagger::YFace, nlevel, opts);
   }
 
   /// @brief Create a field at q points (cell corners) on this domain.
-  /// @param n_levels Number of vertical levels of the field. Must be positive.
-  /// @param ncomp Number of field components. Must be positive.
-  /// @param nghost Ghost-cell widths of the field. The default is the domain's
-  ///        halo widths.
+  /// @param nlevel Number of vertical levels of the field. Must be positive.
+  /// @param opts The optional arguments; see FieldOpts.
   /// @return The newly created field.
-  amrex::MultiFab make_q_field(const int n_levels, const int ncomp,
-                               const std::optional<amrex::IntVect> nghost = std::nullopt) const {
-    return domain_.make_field(Stagger::Node, n_levels, ncomp, nghost);
+  amrex::MultiFab make_q_field(const int nlevel, const FieldOpts opts = {}) const {
+    return domain_.make_field(Stagger::Node, nlevel, opts);
   }
 
   /// @brief The domain's periodicity, for halo exchanges.

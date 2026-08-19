@@ -52,10 +52,10 @@ TEST(MOMDomainsTest, NonPositiveExtentIsFatal) {
 TEST(MOMDomainsTest, PointVocabularyFactories) {
   const MOM::Domain domain({.ni_global = 8, .nj_global = 6});
 
-  EXPECT_TRUE(domain.make_h_field(1, 1).ixType().cellCentered());
-  EXPECT_EQ(domain.make_u_field(1, 1).ixType(), amrex::IndexType(amrex::IntVect(1, 0, 0)));
-  EXPECT_EQ(domain.make_v_field(1, 1).ixType(), amrex::IndexType(amrex::IntVect(0, 1, 0)));
-  EXPECT_EQ(domain.make_q_field(1, 1).ixType(), amrex::IndexType(amrex::IntVect(1, 1, 0)));
+  EXPECT_EQ(domain.make_h_field(1).ixType(), amrex::IndexType(TIM::nodality(MOM::Stagger::Cell)));
+  EXPECT_EQ(domain.make_u_field(1).ixType(), amrex::IndexType(TIM::nodality(MOM::Stagger::XFace)));
+  EXPECT_EQ(domain.make_v_field(1).ixType(), amrex::IndexType(TIM::nodality(MOM::Stagger::YFace)));
+  EXPECT_EQ(domain.make_q_field(1).ixType(), amrex::IndexType(TIM::nodality(MOM::Stagger::Node)));
 }
 
 /// @brief Test-binary entry point: initialize GTest, bring up the
