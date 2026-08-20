@@ -80,7 +80,7 @@ GridFields spherical_grid_fields(const Domain &domain, const GridSpec &spec) {
     });
   }
 
-  // u points (east faces: corner longitudes, cell-center latitudes)
+  // u points (west faces: corner longitudes, cell-center latitudes)
   for (amrex::MFIter mfi(fields.geoLatCu); mfi.isValid(); ++mfi) {
     const amrex::Box bx = mfi.growntilebox();
     const amrex::Array4<amrex::Real> geoLatCu = fields.geoLatCu.array(mfi);
@@ -96,7 +96,7 @@ GridFields spherical_grid_fields(const Domain &domain, const GridSpec &spec) {
     });
   }
 
-  // v points (north faces: cell-center longitudes, corner latitudes)
+  // v points (south faces: cell-center longitudes, corner latitudes)
   for (amrex::MFIter mfi(fields.geoLatCv); mfi.isValid(); ++mfi) {
     const amrex::Box bx = mfi.growntilebox();
     const amrex::Array4<amrex::Real> geoLatCv = fields.geoLatCv.array(mfi);

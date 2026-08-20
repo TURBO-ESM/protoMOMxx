@@ -63,6 +63,13 @@ struct DomainSpec {
 /// like MOM6 combining G and GV at allocation. Halo widths are metadata to be
 /// consumed at field creation (AMReX halos are per-field ghost cells), not
 /// baked into the domain's index space.
+///
+/// The field factories follow AMReX's southwest convention, where a nodal index
+/// sits on the low side of its cell: u point (i,j) is the west face of cell
+/// (i,j), v point (i,j) its south face, and q point (i,j) its southwest
+/// corner. MOM6 uses the northeast convention (u(I=i,j) is the east face of
+/// h(i,j)), so transcribed stencils shift by one: MOM6's
+/// uh(I,j) - uh(I-1,j) becomes uh(i+1,j) - uh(i,j) here.
 class Domain {
 public:
   /// @brief Construct the domain and its horizontal decomposition.
@@ -133,7 +140,7 @@ public:
                                .ncomp = spec.ncomp, .nghost = spec.nghost});
   }
 
-  /// @brief Create a field at u points (east faces) on this domain.
+  /// @brief Create a field at u points (west faces) on this domain.
   /// @param spec The field specification; see FieldSpec. Aborts if the
   ///        required argument (nk) is unset or invalid.
   /// @return The newly created field.
@@ -142,7 +149,7 @@ public:
                                .ncomp = spec.ncomp, .nghost = spec.nghost});
   }
 
-  /// @brief Create a field at v points (north faces) on this domain.
+  /// @brief Create a field at v points (south faces) on this domain.
   /// @param spec The field specification; see FieldSpec. Aborts if the
   ///        required argument (nk) is unset or invalid.
   /// @return The newly created field.
