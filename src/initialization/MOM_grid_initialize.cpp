@@ -17,26 +17,26 @@ GridFields spherical_grid_fields(const Domain &domain, const GridSpec &spec) {
   fields.len_lon = spec.len_lon;
   fields.rad_earth = spec.rad_earth;
 
-  fields.geoLatT = domain.make_h_field(1);
-  fields.geoLonT = domain.make_h_field(1);
-  fields.dxT = domain.make_h_field(1);
-  fields.dyT = domain.make_h_field(1);
-  fields.areaT = domain.make_h_field(1);
+  fields.geoLatT = domain.make_h_field({.nk = 1});
+  fields.geoLonT = domain.make_h_field({.nk = 1});
+  fields.dxT = domain.make_h_field({.nk = 1});
+  fields.dyT = domain.make_h_field({.nk = 1});
+  fields.areaT = domain.make_h_field({.nk = 1});
 
-  fields.geoLatCu = domain.make_u_field(1);
-  fields.geoLonCu = domain.make_u_field(1);
-  fields.dxCu = domain.make_u_field(1);
-  fields.dyCu = domain.make_u_field(1);
+  fields.geoLatCu = domain.make_u_field({.nk = 1});
+  fields.geoLonCu = domain.make_u_field({.nk = 1});
+  fields.dxCu = domain.make_u_field({.nk = 1});
+  fields.dyCu = domain.make_u_field({.nk = 1});
 
-  fields.geoLatCv = domain.make_v_field(1);
-  fields.geoLonCv = domain.make_v_field(1);
-  fields.dxCv = domain.make_v_field(1);
-  fields.dyCv = domain.make_v_field(1);
+  fields.geoLatCv = domain.make_v_field({.nk = 1});
+  fields.geoLonCv = domain.make_v_field({.nk = 1});
+  fields.dxCv = domain.make_v_field({.nk = 1});
+  fields.dyCv = domain.make_v_field({.nk = 1});
 
-  fields.geoLatBu = domain.make_q_field(1);
-  fields.geoLonBu = domain.make_q_field(1);
-  fields.dxBu = domain.make_q_field(1);
-  fields.dyBu = domain.make_q_field(1);
+  fields.geoLatBu = domain.make_q_field({.nk = 1});
+  fields.geoLonBu = domain.make_q_field({.nk = 1});
+  fields.dxBu = domain.make_q_field({.nk = 1});
+  fields.dyBu = domain.make_q_field({.nk = 1});
 
   const amrex::Real PI = std::numbers::pi_v<amrex::Real>;
   const amrex::Real PI_180 = PI / 180.0;

@@ -8,7 +8,7 @@ namespace MOM {
 amrex::MultiFab planetary_rotation(const Domain &domain, const GridSpec &spec,
                                    const amrex::MultiFab &geoLatBu) {
 
-  amrex::MultiFab CoriolisBu = domain.make_q_field(1);
+  amrex::MultiFab CoriolisBu = domain.make_q_field({.nk = 1});
 
   const amrex::Real PI = std::numbers::pi_v<amrex::Real>;
   const amrex::Real omega = spec.omega;
