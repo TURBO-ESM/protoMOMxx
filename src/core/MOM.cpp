@@ -1,3 +1,5 @@
+#include <numbers>
+
 #include "MOM.h"
 #include "MOM_domains.h"
 #include "MOM_fixed_initialization.h"
@@ -137,7 +139,7 @@ void Model::fill_psi_demo(amrex::MultiFab &psi) const
 
     // coefficient for initialization psi
     const amrex::Real a = 1000000;
-    const double pi = 4. * std::atan(1.);
+    const double pi = std::numbers::pi;
 
     for (amrex::MFIter mfi(psi); mfi.isValid(); ++mfi)
     {

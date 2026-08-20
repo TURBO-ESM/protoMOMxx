@@ -7,6 +7,7 @@
 // which instantiates a MOM::Infra.
 
 #include <cmath>
+#include <numbers>
 #include <utility>
 #include <gtest/gtest.h>
 
@@ -33,7 +34,7 @@ constexpr double RAD_EARTH = 6.378e6;   // [m]
 constexpr double OMEGA = 7.2921e-5;     // [s-1]
 constexpr int HALO = 2;
 
-double deg2rad(const double deg) { return deg * std::acos(-1.0) / 180.0; }
+double deg2rad(const double deg) { return deg * std::numbers::pi / 180.0; }
 
 // Compute-then-construct, as make_grid does past the parameter reading.
 MOM::Grid make_spherical_grid(const MOM::Domain &domain, const MOM::GridSpec &spec) {

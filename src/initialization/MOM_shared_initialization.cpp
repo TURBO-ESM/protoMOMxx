@@ -1,4 +1,5 @@
 #include <cmath>
+#include <numbers>
 
 #include "MOM_shared_initialization.h"
 
@@ -9,7 +10,7 @@ amrex::MultiFab planetary_rotation(const Domain &domain, const GridSpec &spec,
 
   amrex::MultiFab CoriolisBu = domain.make_q_field(1);
 
-  const amrex::Real PI = 4.0 * std::atan(1.0);
+  const amrex::Real PI = std::numbers::pi_v<amrex::Real>;
   const amrex::Real omega = spec.omega;
 
   for (amrex::MFIter mfi(CoriolisBu); mfi.isValid(); ++mfi) {

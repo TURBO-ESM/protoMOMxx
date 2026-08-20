@@ -1,4 +1,5 @@
 #include <cmath>
+#include <numbers>
 
 #include "MOM_grid_initialize.h"
 
@@ -37,7 +38,7 @@ GridFields spherical_grid_fields(const Domain &domain, const GridSpec &spec) {
   fields.dxBu = domain.make_q_field(1);
   fields.dyBu = domain.make_q_field(1);
 
-  const amrex::Real PI = 4.0 * std::atan(1.0);
+  const amrex::Real PI = std::numbers::pi_v<amrex::Real>;
   const amrex::Real PI_180 = PI / 180.0;
 
   // The change in longitude/latitude between successive grid points [degrees].
