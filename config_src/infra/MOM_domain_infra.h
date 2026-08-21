@@ -26,9 +26,12 @@ struct FieldSpec {
   /// for 3-D layer fields, NK+1 for interface fields. Must be positive.
   int nk = 0;
   int ncomp = 1;  ///< Number of field components. Must be positive.
-  /// @brief Ghost-cell width of the field, applied in both horizontal
-  /// directions. The default (nullopt) is the domain's halo widths.
-  std::optional<int> nghost = std::nullopt;
+  /// @brief Ghost-cell width of the field in the i-direction. The default
+  /// (nullopt) is the domain's ni_halo.
+  std::optional<int> nghost_i = std::nullopt;
+  /// @brief Ghost-cell width of the field in the j-direction. The default
+  /// (nullopt) is the domain's nj_halo.
+  std::optional<int> nghost_j = std::nullopt;
 };
 
 /// @brief The construction specification of a Domain.
@@ -137,7 +140,8 @@ public:
   /// @return The newly created field.
   amrex::MultiFab make_h_field(const FieldSpec spec) const {
     return domain_.make_field({.stagger = Stagger::Cell, .nk = spec.nk,
-                               .ncomp = spec.ncomp, .nghost = spec.nghost});
+                               .ncomp = spec.ncomp,
+                               .nghost_i = spec.nghost_i, .nghost_j = spec.nghost_j});
   }
 
   /// @brief Create a field at u points (west faces) on this domain.
@@ -146,7 +150,8 @@ public:
   /// @return The newly created field.
   amrex::MultiFab make_u_field(const FieldSpec spec) const {
     return domain_.make_field({.stagger = Stagger::XFace, .nk = spec.nk,
-                               .ncomp = spec.ncomp, .nghost = spec.nghost});
+                               .ncomp = spec.ncomp,
+                               .nghost_i = spec.nghost_i, .nghost_j = spec.nghost_j});
   }
 
   /// @brief Create a field at v points (south faces) on this domain.
@@ -155,7 +160,8 @@ public:
   /// @return The newly created field.
   amrex::MultiFab make_v_field(const FieldSpec spec) const {
     return domain_.make_field({.stagger = Stagger::YFace, .nk = spec.nk,
-                               .ncomp = spec.ncomp, .nghost = spec.nghost});
+                               .ncomp = spec.ncomp,
+                               .nghost_i = spec.nghost_i, .nghost_j = spec.nghost_j});
   }
 
   /// @brief Create a field at q points (cell corners) on this domain.
@@ -164,7 +170,8 @@ public:
   /// @return The newly created field.
   amrex::MultiFab make_q_field(const FieldSpec spec) const {
     return domain_.make_field({.stagger = Stagger::Node, .nk = spec.nk,
-                               .ncomp = spec.ncomp, .nghost = spec.nghost});
+                               .ncomp = spec.ncomp,
+                               .nghost_i = spec.nghost_i, .nghost_j = spec.nghost_j});
   }
 
   /// @brief The domain's periodicity, for halo exchanges.
