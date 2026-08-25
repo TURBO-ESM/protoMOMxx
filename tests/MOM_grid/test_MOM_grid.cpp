@@ -76,6 +76,17 @@ TEST(Grid, DoubleGyreGridSanity) {
   EXPECT_GT(grid.geoLatT().min(0), SOUTH_LAT);
   EXPECT_LT(grid.geoLatT().max(0), SOUTH_LAT + LEN_LAT);
 
+  // u points share q's longitudes and h's latitudes; v points share h's
+  // longitudes and q's latitudes.
+  EXPECT_DOUBLE_EQ(grid.geoLonCu().min(0), grid.geoLonBu().min(0));
+  EXPECT_DOUBLE_EQ(grid.geoLonCu().max(0), grid.geoLonBu().max(0));
+  EXPECT_DOUBLE_EQ(grid.geoLatCu().min(0), grid.geoLatT().min(0));
+  EXPECT_DOUBLE_EQ(grid.geoLatCu().max(0), grid.geoLatT().max(0));
+  EXPECT_DOUBLE_EQ(grid.geoLonCv().min(0), grid.geoLonT().min(0));
+  EXPECT_DOUBLE_EQ(grid.geoLonCv().max(0), grid.geoLonT().max(0));
+  EXPECT_DOUBLE_EQ(grid.geoLatCv().min(0), grid.geoLatBu().min(0));
+  EXPECT_DOUBLE_EQ(grid.geoLatCv().max(0), grid.geoLatBu().max(0));
+
   // Halos extrapolate the coordinates beyond the boundaries (MOM6's convention)
   EXPECT_DOUBLE_EQ(grid.geoLatT().norminf(0, 1, domain.nghost()),
                    SOUTH_LAT + LEN_LAT + (HALO - 0.5) * (LEN_LAT / NJ));
@@ -88,6 +99,20 @@ TEST(Grid, DoubleGyreGridSanity) {
   EXPECT_GT(grid.dxT().min(0), 0.0);
   EXPECT_LT(grid.dxT().min(0), grid.dxT().max(0));
   EXPECT_LT(grid.dxT().max(0), grid.dyT().max(0));
+
+  // dx follows the latitude of its own point type, so u matches h and v
+  // matches q; dy is the same constant at all four point types.
+  EXPECT_DOUBLE_EQ(grid.dxCu().min(0), grid.dxT().min(0));
+  EXPECT_DOUBLE_EQ(grid.dxCu().max(0), grid.dxT().max(0));
+  EXPECT_DOUBLE_EQ(grid.dxCv().min(0), grid.dxBu().min(0));
+  EXPECT_DOUBLE_EQ(grid.dxCv().max(0), grid.dxBu().max(0));
+  EXPECT_DOUBLE_EQ(grid.dyCu().min(0), grid.dyT().min(0));
+  EXPECT_DOUBLE_EQ(grid.dyCv().min(0), grid.dyT().min(0));
+  EXPECT_DOUBLE_EQ(grid.dyBu().min(0), grid.dyT().min(0));
+
+  // With dy uniform, the largest T-cell area is exactly the product of the
+  // dx and dy extremes.
+  EXPECT_DOUBLE_EQ(grid.areaT().max(0), grid.dxT().max(0) * grid.dyT().max(0));
 
   // f = 2 OMEGA sin(lat) increases northward from the southern boundary,
   // where sin(30 degrees N) = 1/2 makes f equal to OMEGA itself.
