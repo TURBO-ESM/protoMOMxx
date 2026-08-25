@@ -15,7 +15,7 @@ namespace MOM {
 
 /// @class Grid
 /// @brief The horizontal grid: metric fields at the four C-grid point types
-/// (h: cell centers, q: cell corners, u: east faces, v: north faces) and the
+/// (h: cell centers, q: cell corners, u: west faces, v: south faces) and the
 /// Coriolis parameter at q points.
 ///
 /// GridFields is the construction-phase counterpart of this class. The
