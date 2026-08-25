@@ -37,6 +37,7 @@ GridFields spherical_grid_fields(const Domain &domain, const GridSpec &spec) {
   fields.geoLonBu = domain.make_q_field({.nk = 1});
   fields.dxBu = domain.make_q_field({.nk = 1});
   fields.dyBu = domain.make_q_field({.nk = 1});
+  fields.areaBu = domain.make_q_field({.nk = 1});
 
   const amrex::Real PI = std::numbers::pi_v<amrex::Real>;
   const amrex::Real PI_180 = PI / 180.0;
@@ -119,12 +120,14 @@ GridFields spherical_grid_fields(const Domain &domain, const GridSpec &spec) {
     const amrex::Array4<amrex::Real> geoLonBu = fields.geoLonBu.array(mfi);
     const amrex::Array4<amrex::Real> dxBu = fields.dxBu.array(mfi);
     const amrex::Array4<amrex::Real> dyBu = fields.dyBu.array(mfi);
+    const amrex::Array4<amrex::Real> areaBu = fields.areaBu.array(mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
       geoLonBu(i, j, k) = west_lon + dLon * i;
       geoLatBu(i, j, k) = amrex::min(amrex::max(south_lat + dLat * j,
                                                 amrex::Real(-90.0)), amrex::Real(90.0));
       dxBu(i, j, k) = rad_earth * std::cos(geoLatBu(i, j, k) * PI_180) * dL_di;
       dyBu(i, j, k) = dy;
+      areaBu(i, j, k) = dxBu(i, j, k) * dyBu(i, j, k);
     });
   }
 

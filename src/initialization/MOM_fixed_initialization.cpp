@@ -119,10 +119,11 @@ Grid make_grid(const Domain &domain, RuntimeParams &params) {
   read_rotation_params(params, spec);
   fields.CoriolisBu = planetary_rotation(domain, spec, fields.geoLatBu);
 
-  // defer: the derived metrics -- the reciprocals (IdxT, IdyCu, IareaT, ...),
-  //        the q-cell area (areaBu) and the u/v-cell area averages
-  //        (areaCu/areaCv) of MOM6's set_derived_dyn_horgrid, until their
-  //        first consumer (the dynamics kernels).
+  // defer: the reciprocals (IdxT, IdyCu, IareaT, ...) of MOM6's
+  //        set_derived_dyn_horgrid, until their first user (the dynamics
+  //        kernels), and the u/v-cell areas (areaCu/areaCv), which are
+  //        mask-dependent (areaCu = dxCu * dy_Cu with dy_Cu = mask2dCu * dyCu
+  //        in MOM6's initialize_masks), until the masks are introduced.
 
   return Grid(std::move(fields));
 }

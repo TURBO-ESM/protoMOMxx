@@ -42,6 +42,7 @@ Grid::Grid(GridFields &&fields)
   check_field(fields_.geoLonBu, "geoLonBu");
   check_field(fields_.dxBu, "dxBu");
   check_field(fields_.dyBu, "dyBu");
+  check_field(fields_.areaBu, "areaBu");
 
   check_field(fields_.CoriolisBu, "CoriolisBu");
 }

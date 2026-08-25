@@ -126,6 +126,10 @@ public:
   /// @return The q-point meridional grid spacing.
   const amrex::MultiFab &dyBu() const { return fields_.dyBu; }
 
+  /// @brief The area of a q-cell [L2 ~> m2].
+  /// @return The q-cell area field.
+  const amrex::MultiFab &areaBu() const { return fields_.areaBu; }
+
   /// @brief The Coriolis parameter at q points [T-1 ~> s-1].
   /// @return The q-point Coriolis parameter field.
   const amrex::MultiFab &CoriolisBu() const { return fields_.CoriolisBu; }

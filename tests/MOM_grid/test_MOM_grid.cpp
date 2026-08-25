@@ -110,9 +110,10 @@ TEST(Grid, DoubleGyreGridSanity) {
   EXPECT_DOUBLE_EQ(grid.dyCv().min(0), grid.dyT().min(0));
   EXPECT_DOUBLE_EQ(grid.dyBu().min(0), grid.dyT().min(0));
 
-  // With dy uniform, the largest T-cell area is exactly the product of the
+  // With dy uniform, the largest cell areas are exactly the products of the
   // dx and dy extremes.
   EXPECT_DOUBLE_EQ(grid.areaT().max(0), grid.dxT().max(0) * grid.dyT().max(0));
+  EXPECT_DOUBLE_EQ(grid.areaBu().max(0), grid.dxBu().max(0) * grid.dyBu().max(0));
 
   // f = 2 OMEGA sin(lat) increases northward from the southern boundary,
   // where sin(30 degrees N) = 1/2 makes f equal to OMEGA itself.

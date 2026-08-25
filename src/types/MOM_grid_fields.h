@@ -65,6 +65,7 @@ struct GridFields {
   amrex::MultiFab geoLonBu;  ///< The geographic longitude at q points [degrees_E].
   amrex::MultiFab dxBu;      ///< Delta x at q points [L ~> m].
   amrex::MultiFab dyBu;      ///< Delta y at q points [L ~> m].
+  amrex::MultiFab areaBu;    ///< The area of a q-cell [L2 ~> m2].
 
   amrex::MultiFab CoriolisBu;  ///< The Coriolis parameter at q points [T-1 ~> s-1].
 };
