@@ -157,6 +157,22 @@ TEST(Grid, ConstructorRejectsMissingFields) {
   EXPECT_THROW(MOM::Grid(std::move(fields)), MOM::logger::FatalError);
 }
 
+// The constructor also checks the positive-definite extent scalars, which
+// are copied from the spec one at a time (a missed copy leaves 0.0).
+TEST(Grid, ConstructorRejectsUnsetScalars) {
+  const MOM::Domain domain({.ni_global = NI, .nj_global = NJ,
+                            .ni_halo = HALO, .nj_halo = HALO,
+                            .reentrant_x = false});
+  const MOM::GridSpec spec = {.south_lat = SOUTH_LAT, .len_lat = LEN_LAT,
+                              .west_lon = WEST_LON, .len_lon = LEN_LON,
+                              .rad_earth = RAD_EARTH, .omega = OMEGA};
+
+  MOM::GridFields fields = MOM::spherical_grid_fields(domain, spec);
+  fields.CoriolisBu = MOM::planetary_rotation(domain, spec, fields.geoLatBu);
+  fields.rad_earth = 0.0;
+  EXPECT_THROW(MOM::Grid(std::move(fields)), MOM::logger::FatalError);
+}
+
 /// @brief Test-binary entry point: initialize GTest, bring up the
 /// infrastructure layer, and run all tests.
 int main(int argc, char **argv) {
