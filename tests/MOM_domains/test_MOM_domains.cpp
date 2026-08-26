@@ -5,6 +5,8 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 
+#include <AMReX_MultiFab.H>
+
 #include "MOM_domains.h"
 #include "MOM_infra.h"
 #include "MOM_logger.h"
@@ -45,6 +47,16 @@ TEST(MOMDomainsTest, NonPositiveExtentIsFatal) {
 // (Missing mandatory parameters -- NIGLOBAL, NJGLOBAL -- throwing is the
 // parameter table's contract, tested in test_MOM_file_parser; it is
 // deliberately not re-verified here.)
+
+// The h/u/v/q field factories map onto the right staggerings.
+TEST(MOMDomainsTest, PointVocabularyFactories) {
+  const MOM::Domain domain({.ni_global = 8, .nj_global = 6});
+
+  EXPECT_EQ(domain.make_h_field({.nk = 1}).ixType(), amrex::IndexType(TIM::nodality(MOM::Stagger::Cell)));
+  EXPECT_EQ(domain.make_u_field({.nk = 1}).ixType(), amrex::IndexType(TIM::nodality(MOM::Stagger::XFace)));
+  EXPECT_EQ(domain.make_v_field({.nk = 1}).ixType(), amrex::IndexType(TIM::nodality(MOM::Stagger::YFace)));
+  EXPECT_EQ(domain.make_q_field({.nk = 1}).ixType(), amrex::IndexType(TIM::nodality(MOM::Stagger::Node)));
+}
 
 /// @brief Test-binary entry point: initialize GTest, bring up the
 /// infrastructure layer, and run all tests.

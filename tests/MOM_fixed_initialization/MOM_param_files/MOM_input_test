@@ -1,10 +1,7 @@
-! Parameter file for the Model unit tests.
-SPLIT = False
-USE_RK2 = True
+! Parameter file for the MOM_fixed_initialization unit tests.
 REENTRANT_X = False
 NIGLOBAL = 44
 NJGLOBAL = 40
-NK = 2
 GRID_CONFIG = "spherical"
 SOUTHLAT = 30.0
 LENLAT = 20.0

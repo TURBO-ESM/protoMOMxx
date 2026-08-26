@@ -28,6 +28,7 @@ TEST(MOMModelTest, ConstructsFromInjectedParams) {
   EXPECT_TRUE(model.config().use_RK2);
   EXPECT_EQ(model.domain().ni_global(), 44);
   EXPECT_EQ(model.domain().nj_global(), 40);
+  EXPECT_DOUBLE_EQ(model.grid().south_lat(), 30.0);  // grid wired from params
 }
 
 // Two Model instances can coexist in one process (multi-instance mode).

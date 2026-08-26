@@ -33,6 +33,34 @@ NIHALO = 4                      ! default = 4
 NJHALO = 4                      ! default = 4
                                 ! The number of halo points on each side in the y-direction.
 
+! === module MOM_grid_init ===
+GRID_CONFIG = "spherical"       !
+                                ! A character string that determines the method for defining the horizontal
+                                ! grid. Current options are:
+                                !    mosaic - read the grid from a mosaic (supergrid)
+                                !      file set by GRID_FILE.
+                                !    cartesian - use a (flat) Cartesian grid.
+                                !    spherical - use a simple spherical grid.
+                                !    mercator - use a Mercator spherical grid.
+SOUTHLAT = 30.0                 !   [degrees_N]
+                                ! The southern latitude of the domain.
+LENLAT = 20.0                   !   [degrees_N]
+                                ! The latitudinal length of the domain.
+WESTLON = 0.0                   !   [degrees_E] default = 0.0
+                                ! The western longitude of the domain.
+LENLON = 22.0                   !   [degrees_E]
+                                ! The longitudinal length of the domain.
+RAD_EARTH = 6.378e+06           !   [m] default = 6.378e+06
+                                ! The radius of the Earth.
+ROTATION = "2omegasinlat"       ! default = "2omegasinlat"
+                                ! This specifies how the Coriolis parameter is specified:
+                                !    2omegasinlat - Use twice the planetary rotation rate
+                                !      times the sine of latitude.
+                                !    betaplane - Use a beta-plane or f-plane.
+                                !    USER - call a user modified routine.
+OMEGA = 7.2921e-05              !   [s-1] default = 7.2921e-05
+                                ! The rotation rate of the earth.
+
 ! === module MOM_verticalGrid ===
                                 ! Parameters providing information about the vertical grid.
 NK = 2                          !

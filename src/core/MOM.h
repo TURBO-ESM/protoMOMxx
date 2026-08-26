@@ -7,6 +7,7 @@
 
 #include "MOM_domain_infra.h"
 #include "MOM_file_parser.h"
+#include "MOM_grid.h"
 
 namespace MOM {
 
@@ -29,7 +30,7 @@ amrex::Real LinearMapCoordinates(const amrex::Real x,
 /// MOM6's initialize_MOM (src/core/MOM.F90). The constructor is decomposed
 /// into phases that mirror the topology of MOM6's initialize_MOM where each
 /// remaining phase is currently a stub that will be filled in by upcoming PRs
-/// (HorGrid, VerticalGrid, State, Dynamics). The initialize_state stub runs
+/// (VerticalGrid, State, Dynamics). The initialize_state stub runs
 /// the original psi (stream function) demo, which exercises the AMReX machinery
 /// its real replacement will use.
 class Model {
@@ -57,6 +58,10 @@ public:
   /// @return Const reference to the model's domain.
   const Domain &domain() const { return domain_; }
 
+  /// @brief Read-only access to the horizontal grid.
+  /// @return Const reference to the model's horizontal grid.
+  const Grid &grid() const { return grid_; }
+
 private:
   // config_ initialization must precede domain_: its initializer sets the log 
   // verbosity in effect for the later initializers' messages.
@@ -65,6 +70,10 @@ private:
   /// @brief The computational domain: global extents, connectivity, halo
   /// metadata, and the horizontal decomposition.
   Domain domain_;
+
+  /// @brief The horizontal grid: metric fields at the h/q/u/v points and the
+  /// Coriolis parameter, on domain_'s decomposition.
+  Grid grid_;
 
   // tmp: vertical grid extent, kept as a scalar member until the
   // VerticalGrid class takes ownership of it.
