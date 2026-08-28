@@ -50,8 +50,7 @@ MOM::Grid make_spherical_grid(const MOM::Domain &domain, const MOM::GridExtents 
                                                    spec, fields.geoLatT,
                                                    fields.geoLonT);
   MOM::limit_topography(fields.bathyT, spec);
-  // todo: adopt new boundary exchange mechanism when it lands.
-  fields.bathyT.FillBoundary(domain.periodicity());
+  domain.pass_var(fields.bathyT);
   fields.CoriolisBu =
       MOM::set_rotation_planetary(domain, fields.geoLatBu, {.omega = OMEGA});
   return MOM::Grid(std::move(fields));

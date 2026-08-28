@@ -79,8 +79,7 @@ Grid make_grid(const Domain &domain, RuntimeParams &params) {
   fields.bathyT = initialize_topography(domain, fields.geoLatT,
                                         fields.geoLonT, params);
 
-  // todo: adopt new boundary exchange mechanism when it lands.
-  fields.bathyT.FillBoundary(domain.periodicity());
+  domain.pass_var(fields.bathyT);
 
   // todo: the land/sea masks (mask2dT/Cu/Cv/Bu)
 
