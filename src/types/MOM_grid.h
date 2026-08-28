@@ -58,6 +58,11 @@ public:
   /// @return The h-cell area field.
   const amrex::MultiFab &areaT() const { return fields_.areaT; }
 
+  /// @brief The ocean bottom depth at h points, positive below the surface
+  /// [Z ~> m].
+  /// @return The h-point bottom depth field.
+  const amrex::MultiFab &bathyT() const { return fields_.bathyT; }
+
   /// @brief The geographic latitude at u points [degrees_N].
   /// @return The u-point latitude field.
   const amrex::MultiFab &geoLatCu() const { return fields_.geoLatCu; }

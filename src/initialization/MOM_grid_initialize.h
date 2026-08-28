@@ -40,8 +40,7 @@ GridFields set_grid_metrics(const Domain &domain, RuntimeParams &params);
 /// boxes (halos included). The analogue of MOM6's set_grid_metrics_spherical.
 /// @param domain The computational domain the fields are created on.
 /// @param extents The geographic extents of the grid.
-/// @return The computed grid fields (the Coriolis parameter is left to
-///         MOM_initialize_rotation).
+/// @return The computed grid fields.
 /// @throws logger::FatalError on non-positive extents.
 GridFields spherical_grid_fields(const Domain &domain, const GridExtents &extents);
 

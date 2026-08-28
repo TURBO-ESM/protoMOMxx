@@ -14,8 +14,9 @@ namespace MOM {
 // protoMOMxx doesn't implement a unit scaling yet, so all values are in the
 // MKS units on the right-hand side of "~>".
 
-/// @brief The grid fields: the metrics at the four C-grid point types and the
-/// Coriolis parameter. The analogue of MOM6's dyn_horgrid_type.
+/// @brief The grid fields: the metrics at the four C-grid point types, the
+/// bottom topography, and the Coriolis parameter. The analogue of MOM6's
+/// dyn_horgrid_type.
 ///
 /// This is the construction-phase counterpart of Grid: a plain
 /// struct with no behavior of its own, so the setup functions in
@@ -29,6 +30,8 @@ struct GridFields {
   amrex::MultiFab dxT;       ///< Delta x at h points [L ~> m].
   amrex::MultiFab dyT;       ///< Delta y at h points [L ~> m].
   amrex::MultiFab areaT;     ///< The area of an h-cell [L2 ~> m2].
+  amrex::MultiFab bathyT;    ///< The ocean bottom depth at h points, positive below
+                             ///< the surface [Z ~> m].
 
   amrex::MultiFab geoLatCu;  ///< The geographic latitude at u points [degrees_N].
   amrex::MultiFab geoLonCu;  ///< The geographic longitude at u points [degrees_E].

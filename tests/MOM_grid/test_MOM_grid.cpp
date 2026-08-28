@@ -1,5 +1,5 @@
-// Sanity/smoke tests for the Grid class and the spherical metric/rotation
-// setup (src/types/MOM_grid.cpp, src/initialization): construction on the
+// Sanity/smoke tests for the Grid class and the spherical metric, topography,
+// and rotation setup (src/types/MOM_grid.cpp, src/initialization): construction on the
 // double_gyre configuration, staggering, boundary alignment, and a few simple
 // physical properties.
 //
@@ -8,6 +8,8 @@
 
 #include <cmath>
 #include <numbers>
+#include <optional>
+#include <string>
 #include <utility>
 #include <gtest/gtest.h>
 
@@ -32,16 +34,39 @@ constexpr double WEST_LON = 0.0;    // [degrees_E]
 constexpr double LEN_LON = 22.0;    // [degrees_E]
 constexpr double RAD_EARTH = 6.378e6;   // [m]
 constexpr double OMEGA = 7.2921e-5;     // [s-1]
+constexpr double MINIMUM_DEPTH = 1.0;    // [m]
+constexpr double MAXIMUM_DEPTH = 2000.0; // [m]
+constexpr double EDGE_DEPTH = 100.0;     // [m] (the MOM6 default)
 constexpr int HALO = 2;
 
 double deg2rad(const double deg) { return deg * std::numbers::pi / 180.0; }
 
 // Compute-then-construct, as make_grid does past the parameter reading.
-MOM::Grid make_spherical_grid(const MOM::Domain &domain, const MOM::GridExtents &extents) {
+MOM::Grid make_spherical_grid(const MOM::Domain &domain, const MOM::GridExtents &extents,
+                              const std::string &topo_config) {
   MOM::GridFields fields = MOM::spherical_grid_fields(domain, extents);
+  const MOM::TopoSpec spec = {.min_depth = MINIMUM_DEPTH, .max_depth = MAXIMUM_DEPTH};
+  fields.bathyT = MOM::initialize_topography_named(domain, topo_config, extents,
+                                                   spec, fields.geoLatT,
+                                                   fields.geoLonT);
+  MOM::limit_topography(fields.bathyT, spec);
+  // todo: adopt new boundary exchange mechanism when it lands.
+  fields.bathyT.FillBoundary(domain.periodicity());
   fields.CoriolisBu =
       MOM::set_rotation_planetary(domain, fields.geoLatBu, {.omega = OMEGA});
   return MOM::Grid(std::move(fields));
+}
+
+// The value of a single-level field at point (i, j), searched over the local
+// boxes grown by their ghost cells.
+std::optional<double> value_at(const amrex::MultiFab &mf, const int i, const int j) {
+  std::optional<double> value;
+  for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi) {
+    if (mfi.growntilebox().contains(amrex::IntVect(i, j, 0))) {
+      value = mf.const_array(mfi)(i, j, 0);
+    }
+  }
+  return value;
 }
 
 } // namespace
@@ -52,7 +77,8 @@ TEST(Grid, DoubleGyreGridSanity) {
                             .reentrant_x = false});
   const MOM::Grid grid = make_spherical_grid(
       domain, {.south_lat = SOUTH_LAT, .len_lat = LEN_LAT, .west_lon = WEST_LON,
-               .len_lon = LEN_LON, .rad_earth = RAD_EARTH});
+               .len_lon = LEN_LON, .rad_earth = RAD_EARTH},
+      "spoon");
 
   // Each field sits at its C-grid point type, observable as AMReX nodality.
   EXPECT_TRUE(grid.dxT().ixType().cellCentered());
@@ -113,7 +139,33 @@ TEST(Grid, DoubleGyreGridSanity) {
   EXPECT_NEAR(grid.CoriolisBu().min(0), OMEGA, 1e-12 * OMEGA);
   EXPECT_GT(grid.CoriolisBu().max(0), OMEGA);
   EXPECT_LT(grid.CoriolisBu().max(0), 2.0 * OMEGA);
+
+  // In spoon topography, the deep center analytically exceeds MAXIMUM_DEPTH,
+  // so the depth limiting makes the maximum exactly MAXIMUM_DEPTH.
+  EXPECT_GT(grid.bathyT().min(0), EDGE_DEPTH);
+  EXPECT_DOUBLE_EQ(grid.bathyT().max(0), MAXIMUM_DEPTH);
 }
+
+// A flat topography is MAXIMUM_DEPTH at every valid cell, and beyond the
+// closed boundaries the halo bathymetry is land at MOM6's conventional depth:
+TEST(Grid, FlatTopographyAndClosedBoundaryHalos) {
+  const MOM::Domain domain({.ni_global = NI, .nj_global = NJ,
+                            .ni_halo = HALO, .nj_halo = HALO,
+                            .reentrant_x = false});
+  const MOM::Grid grid = make_spherical_grid(
+      domain, {.south_lat = SOUTH_LAT, .len_lat = LEN_LAT, .west_lon = WEST_LON,
+               .len_lon = LEN_LON, .rad_earth = RAD_EARTH},
+      "flat");
+
+  EXPECT_DOUBLE_EQ(grid.bathyT().min(0), MAXIMUM_DEPTH);
+  EXPECT_DOUBLE_EQ(grid.bathyT().max(0), MAXIMUM_DEPTH);
+
+  const auto west = value_at(grid.bathyT(), -1, NJ / 2);
+  if (west) {
+    EXPECT_DOUBLE_EQ(*west, 0.5 * MINIMUM_DEPTH);
+  }
+}
+
 
 // On a zonally reentrant domain the halo longitudes keep MOM6's monotonic
 // extrapolation rather than wrapping: the halo cell centers east of the wrap
@@ -129,11 +181,20 @@ TEST(Grid, ReentrantXGeoLonKeepsMonotonicExtrapolation) {
   const double len_lon = 360.0;
   const MOM::Grid grid = make_spherical_grid(
       domain, {.south_lat = -60.0, .len_lat = 30.0, .west_lon = 0.0,
-               .len_lon = len_lon, .rad_earth = RAD_EARTH});
+               .len_lon = len_lon, .rad_earth = RAD_EARTH},
+      "flat");
 
   const double dlon = len_lon / ni;
   EXPECT_DOUBLE_EQ(grid.geoLonT().norminf(0, 1, domain.nghost()),
                    len_lon + (HALO - 0.5) * dlon);
+
+  // The wrap halos of the bathymetry are exchanged, not extrapolated: beyond
+  // the western edge they carry the (wet) values of the eastern cells, where
+  // a closed boundary would hold the 0.5*MINIMUM_DEPTH land value.
+  const auto west = value_at(grid.bathyT(), -1, nj / 2);
+  if (west) {
+    EXPECT_DOUBLE_EQ(*west, MAXIMUM_DEPTH);
+  }
 }
 
 // Unfilled extents cannot be consumed.
@@ -145,7 +206,7 @@ TEST(Grid, UnfilledExtentsAreFatal) {
 }
 
 // The Grid constructor checks that every field is created: the metric fields
-// are computed here, but the rotation field is left uncreated.
+// are computed here, but the topography and rotation fields are not created.
 TEST(Grid, ConstructorRejectsMissingFields) {
   const MOM::Domain domain({.ni_global = NI, .nj_global = NJ,
                             .ni_halo = HALO, .nj_halo = HALO,

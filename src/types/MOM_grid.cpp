@@ -25,6 +25,7 @@ Grid::Grid(GridFields &&fields)
   check_created(fields_.dxT, "dxT");
   check_created(fields_.dyT, "dyT");
   check_created(fields_.areaT, "areaT");
+  check_created(fields_.bathyT, "bathyT");
 
   check_created(fields_.geoLatCu, "geoLatCu");
   check_created(fields_.geoLonCu, "geoLonCu");

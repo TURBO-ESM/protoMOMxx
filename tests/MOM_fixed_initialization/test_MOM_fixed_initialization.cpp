@@ -51,10 +51,12 @@ TEST(MOMFixedInitTest, ReadGridExtentsFromParamFile) {
 }
 
 // make_grid computes the grid fields from the parameter file end to end: the
-// corner coordinates land on the configured domain boundaries.
+// corner coordinates land on the configured domain boundaries, and the flat
+// topography sits at MAXIMUM_DEPTH.
 TEST(MOMFixedInitTest, MakeGridFromParamFile) {
   const MOM::Grid grid = grid_from_param_file("MOM_input_test");
 
+  EXPECT_DOUBLE_EQ(grid.bathyT().max(0), 2000.0);         // TOPO_CONFIG = "flat" at MAXIMUM_DEPTH
   EXPECT_DOUBLE_EQ(grid.geoLatBu().min(0), 30.0);         // SOUTHLAT
   EXPECT_DOUBLE_EQ(grid.geoLatBu().max(0), 30.0 + 20.0);  // + LENLAT
   EXPECT_DOUBLE_EQ(grid.geoLonBu().max(0), 22.0);         // WESTLON + LENLON
@@ -63,6 +65,11 @@ TEST(MOMFixedInitTest, MakeGridFromParamFile) {
 // Invalid extents are rejected through logger::fatal:
 TEST(MOMFixedInitTest, InvalidExtentIsFatal) {
   EXPECT_THROW(grid_from_param_file("MOM_input_bad_extent"), MOM::logger::FatalError);
+}
+
+// A MOM6 TOPO_CONFIG option that protoMOMxx defers is rejected
+TEST(MOMFixedInitTest, DeferredTopoConfigIsFatal) {
+  EXPECT_THROW(grid_from_param_file("MOM_input_bad_topo"), MOM::logger::FatalError);
 }
 
 /// @brief Test-binary entry point: initialize GTest, bring up the
