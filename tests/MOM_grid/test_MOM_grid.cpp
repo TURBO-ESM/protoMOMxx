@@ -37,9 +37,10 @@ constexpr int HALO = 2;
 double deg2rad(const double deg) { return deg * std::numbers::pi / 180.0; }
 
 // Compute-then-construct, as make_grid does past the parameter reading.
-MOM::Grid make_spherical_grid(const MOM::Domain &domain, const MOM::GridSpec &spec) {
-  MOM::GridFields fields = MOM::spherical_grid_fields(domain, spec);
-  fields.CoriolisBu = MOM::planetary_rotation(domain, spec, fields.geoLatBu);
+MOM::Grid make_spherical_grid(const MOM::Domain &domain, const MOM::GridExtents &extents) {
+  MOM::GridFields fields = MOM::spherical_grid_fields(domain, extents);
+  fields.CoriolisBu =
+      MOM::set_rotation_planetary(domain, fields.geoLatBu, {.omega = OMEGA});
   return MOM::Grid(std::move(fields));
 }
 
@@ -50,16 +51,8 @@ TEST(Grid, DoubleGyreGridSanity) {
                             .ni_halo = HALO, .nj_halo = HALO,
                             .reentrant_x = false});
   const MOM::Grid grid = make_spherical_grid(
-      domain, {.south_lat = SOUTH_LAT, .len_lat = LEN_LAT,
-               .west_lon = WEST_LON, .len_lon = LEN_LON,
-               .rad_earth = RAD_EARTH, .omega = OMEGA});
-
-  // The spec scalars are retained.
-  EXPECT_DOUBLE_EQ(grid.south_lat(), SOUTH_LAT);
-  EXPECT_DOUBLE_EQ(grid.len_lat(), LEN_LAT);
-  EXPECT_DOUBLE_EQ(grid.west_lon(), WEST_LON);
-  EXPECT_DOUBLE_EQ(grid.len_lon(), LEN_LON);
-  EXPECT_DOUBLE_EQ(grid.rad_earth(), RAD_EARTH);
+      domain, {.south_lat = SOUTH_LAT, .len_lat = LEN_LAT, .west_lon = WEST_LON,
+               .len_lon = LEN_LON, .rad_earth = RAD_EARTH});
 
   // Each field sits at its C-grid point type, observable as AMReX nodality.
   EXPECT_TRUE(grid.dxT().ixType().cellCentered());
@@ -135,41 +128,31 @@ TEST(Grid, ReentrantXGeoLonKeepsMonotonicExtrapolation) {
 
   const double len_lon = 360.0;
   const MOM::Grid grid = make_spherical_grid(
-      domain, {.south_lat = -60.0, .len_lat = 30.0,
-               .west_lon = 0.0, .len_lon = len_lon,
-               .rad_earth = RAD_EARTH, .omega = OMEGA});
+      domain, {.south_lat = -60.0, .len_lat = 30.0, .west_lon = 0.0,
+               .len_lon = len_lon, .rad_earth = RAD_EARTH});
 
   const double dlon = len_lon / ni;
   EXPECT_DOUBLE_EQ(grid.geoLonT().norminf(0, 1, domain.nghost()),
                    len_lon + (HALO - 0.5) * dlon);
 }
 
-// The Grid constructor checks that every field is created.
+// Unfilled extents cannot be consumed.
+TEST(Grid, UnfilledExtentsAreFatal) {
+  const MOM::Domain domain({.ni_global = NI, .nj_global = NJ,
+                            .ni_halo = HALO, .nj_halo = HALO,
+                            .reentrant_x = false});
+  EXPECT_THROW(MOM::spherical_grid_fields(domain, {}), MOM::logger::FatalError);
+}
+
+// The Grid constructor checks that every field is created: the metric fields
+// are computed here, but the rotation field is left uncreated.
 TEST(Grid, ConstructorRejectsMissingFields) {
   const MOM::Domain domain({.ni_global = NI, .nj_global = NJ,
                             .ni_halo = HALO, .nj_halo = HALO,
                             .reentrant_x = false});
-  const MOM::GridSpec spec = {.south_lat = SOUTH_LAT, .len_lat = LEN_LAT,
-                              .west_lon = WEST_LON, .len_lon = LEN_LON,
-                              .rad_earth = RAD_EARTH, .omega = OMEGA};
-
-  MOM::GridFields fields = MOM::spherical_grid_fields(domain, spec);
-  EXPECT_THROW(MOM::Grid(std::move(fields)), MOM::logger::FatalError);
-}
-
-// The constructor also checks the positive-definite extent scalars, which
-// are copied from the spec one at a time (a missed copy leaves 0.0).
-TEST(Grid, ConstructorRejectsUnsetScalars) {
-  const MOM::Domain domain({.ni_global = NI, .nj_global = NJ,
-                            .ni_halo = HALO, .nj_halo = HALO,
-                            .reentrant_x = false});
-  const MOM::GridSpec spec = {.south_lat = SOUTH_LAT, .len_lat = LEN_LAT,
-                              .west_lon = WEST_LON, .len_lon = LEN_LON,
-                              .rad_earth = RAD_EARTH, .omega = OMEGA};
-
-  MOM::GridFields fields = MOM::spherical_grid_fields(domain, spec);
-  fields.CoriolisBu = MOM::planetary_rotation(domain, spec, fields.geoLatBu);
-  fields.rad_earth = 0.0;
+  MOM::GridFields fields = MOM::spherical_grid_fields(
+      domain, {.south_lat = SOUTH_LAT, .len_lat = LEN_LAT, .west_lon = WEST_LON,
+               .len_lon = LEN_LON, .rad_earth = RAD_EARTH});
   EXPECT_THROW(MOM::Grid(std::move(fields)), MOM::logger::FatalError);
 }
 

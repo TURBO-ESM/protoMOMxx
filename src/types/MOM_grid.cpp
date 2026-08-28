@@ -15,21 +15,10 @@ void check_created(const amrex::MultiFab &field, const std::string_view name) {
   }
 }
 
-// Check that a positive-definite extent scalar is set.
-void check_positive(const amrex::Real value, const std::string_view name) {
-  if (!(value > 0.0)) {
-    logger::fatal("Grid: ", name, " must be positive (got ", value, ").");
-  }
-}
-
 } // namespace
 
 Grid::Grid(GridFields &&fields)
   : fields_(std::move(fields)) {
-
-  check_positive(fields_.len_lat, "len_lat");
-  check_positive(fields_.len_lon, "len_lon");
-  check_positive(fields_.rad_earth, "rad_earth");
 
   check_created(fields_.geoLatT, "geoLatT");
   check_created(fields_.geoLonT, "geoLonT");

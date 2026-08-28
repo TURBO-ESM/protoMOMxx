@@ -38,26 +38,6 @@ public:
   /// @pre The infrastructure layer (MOM::Infra) is initialized.
   explicit Grid(GridFields &&fields);
 
-  /// @brief The southern latitude of the domain [degrees_N].
-  /// @return The southern latitude.
-  amrex::Real south_lat() const { return fields_.south_lat; }
-
-  /// @brief The latitudinal length of the domain [degrees_N].
-  /// @return The latitudinal length.
-  amrex::Real len_lat() const { return fields_.len_lat; }
-
-  /// @brief The western longitude of the domain [degrees_E].
-  /// @return The western longitude.
-  amrex::Real west_lon() const { return fields_.west_lon; }
-
-  /// @brief The longitudinal length of the domain [degrees_E].
-  /// @return The longitudinal length.
-  amrex::Real len_lon() const { return fields_.len_lon; }
-
-  /// @brief The radius of the Earth [L ~> m].
-  /// @return The Earth radius.
-  amrex::Real rad_earth() const { return fields_.rad_earth; }
-
   /// @brief The geographic latitude at h (tracer) points [degrees_N].
   /// @return The h-point latitude field.
   const amrex::MultiFab &geoLatT() const { return fields_.geoLatT; }

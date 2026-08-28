@@ -1,21 +1,35 @@
 #include <cmath>
 #include <numbers>
+#include <string>
+#include <string_view>
 
 #include "MOM_grid_initialize.h"
 
+#include "MOM_logger.h"
+
 namespace MOM {
 
-GridFields spherical_grid_fields(const Domain &domain, const GridSpec &spec) {
+namespace {
+
+// Check that the extents describe a usable grid.
+void check_extents(const GridExtents &extents, const std::string_view caller) {
+  if (!(extents.len_lat > 0.0) || !(extents.len_lon > 0.0)) {
+    logger::fatal(caller, ": LENLAT and LENLON must be positive.");
+  }
+  if (!(extents.rad_earth > 0.0)) {
+    logger::fatal(caller, ": RAD_EARTH must be positive.");
+  }
+}
+
+} // namespace
+
+GridFields spherical_grid_fields(const Domain &domain, const GridExtents &extents) {
+
+  check_extents(extents, "spherical_grid_fields");
 
   // The metric fields are 2-D (single-level) fields on the domain's
   // horizontal decomposition, created through the domain's field factories.
   GridFields fields;
-
-  fields.south_lat = spec.south_lat;
-  fields.len_lat = spec.len_lat;
-  fields.west_lon = spec.west_lon;
-  fields.len_lon = spec.len_lon;
-  fields.rad_earth = spec.rad_earth;
 
   fields.geoLatT = domain.make_h_field({.nk = 1});
   fields.geoLonT = domain.make_h_field({.nk = 1});
@@ -42,20 +56,20 @@ GridFields spherical_grid_fields(const Domain &domain, const GridSpec &spec) {
   const amrex::Real PI = std::numbers::pi_v<amrex::Real>;
   const amrex::Real PI_180 = PI / 180.0;
 
+  const amrex::Real south_lat = extents.south_lat;
+  const amrex::Real west_lon = extents.west_lon;
+  const amrex::Real rad_earth = extents.rad_earth;
+
   // The change in longitude/latitude between successive grid points [degrees].
-  const amrex::Real dLon = spec.len_lon / domain.ni_global();
-  const amrex::Real dLat = spec.len_lat / domain.nj_global();
+  const amrex::Real dLon = extents.len_lon / domain.ni_global();
+  const amrex::Real dLat = extents.len_lat / domain.nj_global();
   // dLon rescaled from degrees to radians [radians]. MOM6 computes the zonal
   // spacings from this expression (rather than from dLon*PI_180 directly) to
   // reproduce the set_grid_metrics_mercator solution on a simple spherical
   // grid; kept identical here for future parity.
-  const amrex::Real dL_di = (spec.len_lon * PI) / (180.0 * domain.ni_global());
+  const amrex::Real dL_di = (extents.len_lon * PI) / (180.0 * domain.ni_global());
   // The meridional spacing is uniform on a spherical grid [L ~> m].
-  const amrex::Real dy = spec.rad_earth * dLat * PI_180;
-
-  const amrex::Real south_lat = spec.south_lat;
-  const amrex::Real west_lon = spec.west_lon;
-  const amrex::Real rad_earth = spec.rad_earth;
+  const amrex::Real dy = rad_earth * dLat * PI_180;
 
   // All values are computed analytically from the global index (AMReX indices
   // are global), over the grown boxes: halo values (including those beyond
@@ -132,6 +146,77 @@ GridFields spherical_grid_fields(const Domain &domain, const GridSpec &spec) {
   }
 
   return fields;
+}
+
+GridExtents read_grid_extents(RuntimeParams &params) {
+
+  GridExtents extents;
+
+  params.get("SOUTHLAT", extents.south_lat,
+             {.desc = "The southern latitude of the domain.",
+              .units = "degrees_N",
+              .fail_if_missing = true});
+
+  params.get("LENLAT", extents.len_lat,
+             {.desc = "The latitudinal length of the domain.",
+              .units = "degrees_N",
+              .fail_if_missing = true});
+
+  params.get("WESTLON", extents.west_lon,
+             {.default_value = 0.0,
+              .desc = "The western longitude of the domain.",
+              .units = "degrees_E"});
+
+  params.get("LENLON", extents.len_lon,
+             {.desc = "The longitudinal length of the domain.",
+              .units = "degrees_E",
+              .fail_if_missing = true});
+
+  params.get("RAD_EARTH", extents.rad_earth,
+             {.default_value = 6.378e6,
+              .desc = "The radius of the Earth.",
+              .units = "m"});
+
+  // Validated at the read site, as make_domain does. The consumers repeat the
+  // check for callers that assemble the extents from plain values.
+  check_extents(extents, "read_grid_extents");
+
+  return extents;
+}
+
+GridFields set_grid_metrics(const Domain &domain, RuntimeParams &params) {
+
+  std::string config;
+  params.get("GRID_CONFIG", config,
+             {.desc = "A character string that determines the method for defining the horizontal "
+                      "grid. Current options are:\n"
+                      "\t mosaic - read the grid from a mosaic (supergrid)\n"
+                      "\t\t file set by GRID_FILE.\n"
+                      "\t cartesian - use a (flat) Cartesian grid.\n"
+                      "\t spherical - use a simple spherical grid.\n"
+                      "\t mercator - use a Mercator spherical grid.",
+              .fail_if_missing = true});
+
+  if (config == "spherical") {
+    // The extents of the simple spherical grid, per set_grid_metrics_spherical.
+    return spherical_grid_fields(domain, read_grid_extents(params));
+  }
+
+  if (config == "mosaic" || config == "cartesian" || config == "mercator") {
+    // defer: the mosaic (file-based), cartesian, and mercator grid
+    //        configurations.
+    logger::fatal("set_grid_metrics: GRID_CONFIG \"", config,
+                  "\" is not implemented yet.");
+  } else if (config == "file") {
+    // Retired in MOM6 itself; carry its message.
+    logger::fatal("set_grid_metrics: GRID_CONFIG \"file\" is no longer a supported "
+                  "option. Use a mosaic file (\"mosaic\") or one of the analytic "
+                  "forms instead.");
+  } else {
+    logger::fatal("set_grid_metrics: Unrecognized grid configuration \"", config, "\".");
+  }
+
+  return {};  // Unreachable: logger::fatal throws.
 }
 
 } // namespace MOM
