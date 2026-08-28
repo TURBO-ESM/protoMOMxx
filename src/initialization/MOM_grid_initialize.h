@@ -2,7 +2,8 @@
 /// @file MOM_grid_initialize.h
 /// @brief The horizontal grid metrics: the GRID_CONFIG dispatch, the parameter
 ///        reads of the selected configuration, and the computation of its
-///        metric fields. The analogue of MOM6's MOM_grid_initialize.F90
+///        metric fields. Also the land/sea masks, set from the bottom depth.
+///        The analogue of MOM6's MOM_grid_initialize.F90
 
 #include "MOM_domain_infra.h"
 #include "MOM_file_parser.h"
@@ -43,5 +44,26 @@ GridFields set_grid_metrics(const Domain &domain, RuntimeParams &params);
 /// @return The computed grid fields.
 /// @throws logger::FatalError on non-positive extents.
 GridFields spherical_grid_fields(const Domain &domain, const GridExtents &extents);
+
+/// @brief Read the masking depths and set the land/sea masks and the
+/// mask-dependent u/v-cell areas. The analogue of MOM6's initialize_masks.
+/// @param domain The computational domain the fields are created on.
+/// @param fields The grid fields. Requires bathyT (halos exchanged) and the
+///        u/v grid spacings; creates the masks and areaCu/areaCv.
+/// @param params Runtime parameters.
+void initialize_masks(const Domain &domain, GridFields &fields,
+                      RuntimeParams &params);
+
+/// @brief Set the land/sea masks (mask2dT/Cu/Cv/Bu) from the bottom depth,
+/// with points no deeper than the masking depth masked as land, and the
+/// u/v-cell areas (areaCu/areaCv), which are zero across land faces.
+/// @param domain The computational domain the fields are created on.
+/// @param fields The grid fields. Requires bathyT (halos exchanged) and the
+///        u/v grid spacings; creates the masks and areaCu/areaCv.
+/// @param min_depth The minimum ocean depth [Z ~> m].
+/// @param mask_depth The masking depth [Z ~> m], or -9999.0 to mask at
+///        min_depth instead.
+void set_masks(const Domain &domain, GridFields &fields,
+               amrex::Real min_depth, amrex::Real mask_depth);
 
 } // namespace MOM

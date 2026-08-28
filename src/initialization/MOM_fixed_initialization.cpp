@@ -81,15 +81,13 @@ Grid make_grid(const Domain &domain, RuntimeParams &params) {
 
   domain.pass_var(fields.bathyT);
 
-  // todo: the land/sea masks (mask2dT/Cu/Cv/Bu)
+  initialize_masks(domain, fields, params);
 
   fields.CoriolisBu = initialize_rotation(domain, fields.geoLatBu, params);
 
   // defer: the reciprocals (IdxT, IdyCu, IareaT, ...) of MOM6's
-  //        set_derived_dyn_horgrid, until their first user (the dynamics
-  //        kernels), and the u/v-cell areas (areaCu/areaCv), which are
-  //        mask-dependent (areaCu = dxCu * dy_Cu with dy_Cu = mask2dCu * dyCu
-  //        in MOM6's initialize_masks), until the masks are introduced.
+  //        set_derived_dyn_horgrid and initialize_masks, until their first
+  //        user (the dynamics kernels).
 
   return Grid(std::move(fields));
 }

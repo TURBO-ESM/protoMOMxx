@@ -219,4 +219,118 @@ GridFields set_grid_metrics(const Domain &domain, RuntimeParams &params) {
   return {};  // Unreachable: logger::fatal throws.
 }
 
+void set_masks(const Domain &domain, GridFields &fields,
+               const amrex::Real min_depth, const amrex::Real mask_depth) {
+
+  // The masking depth: MASKING_DEPTH when set, MINIMUM_DEPTH otherwise.
+  amrex::Real Dmask = mask_depth;
+  if (mask_depth == -9999.0) Dmask = min_depth;
+
+  fields.mask2dT = domain.make_h_field({.nk = 1});
+  fields.mask2dCu = domain.make_u_field({.nk = 1});
+  fields.mask2dCv = domain.make_v_field({.nk = 1});
+  fields.mask2dBu = domain.make_q_field({.nk = 1});
+
+  fields.mask2dCu.setVal(0.0);
+  fields.mask2dCv.setVal(0.0);
+  fields.mask2dBu.setVal(0.0);
+
+  // The h-point mask, over the grown boxes
+  for (amrex::MFIter mfi(fields.mask2dT); mfi.isValid(); ++mfi) {
+    const amrex::Box bx = mfi.growntilebox();
+    const amrex::Array4<amrex::Real> maskT = fields.mask2dT.array(mfi);
+    const amrex::Array4<const amrex::Real> D = fields.bathyT.const_array(mfi);
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+      maskT(i, j, k) = (D(i, j, k) <= Dmask) ? 0.0 : 1.0;
+    });
+  }
+
+  // The face masks: a face is open when both neighboring cells are ocean.
+  for (amrex::MFIter mfi(fields.mask2dCu); mfi.isValid(); ++mfi) {
+    const amrex::Box bx = mfi.validbox();
+    const amrex::Array4<amrex::Real> maskCu = fields.mask2dCu.array(mfi);
+    const amrex::Array4<const amrex::Real> maskT = fields.mask2dT.const_array(mfi);
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+      maskCu(i, j, k) = maskT(i - 1, j, k) * maskT(i, j, k);
+    });
+  }
+
+  for (amrex::MFIter mfi(fields.mask2dCv); mfi.isValid(); ++mfi) {
+    const amrex::Box bx = mfi.validbox();
+    const amrex::Array4<amrex::Real> maskCv = fields.mask2dCv.array(mfi);
+    const amrex::Array4<const amrex::Real> maskT = fields.mask2dT.const_array(mfi);
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+      maskCv(i, j, k) = maskT(i, j - 1, k) * maskT(i, j, k);
+    });
+  }
+
+  domain.pass_var(fields.mask2dCu);
+  domain.pass_var(fields.mask2dCv);
+
+  // The vertex mask, from the masks of the four faces that meet at the vertex.
+  for (amrex::MFIter mfi(fields.mask2dBu); mfi.isValid(); ++mfi) {
+    const amrex::Box bx = mfi.validbox();
+    const amrex::Array4<amrex::Real> maskBu = fields.mask2dBu.array(mfi);
+    const amrex::Array4<const amrex::Real> maskCu = fields.mask2dCu.const_array(mfi);
+    const amrex::Array4<const amrex::Real> maskCv = fields.mask2dCv.const_array(mfi);
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+      maskBu(i, j, k) = (maskCu(i, j - 1, k) * maskCu(i, j, k)) *
+                        (maskCv(i - 1, j, k) * maskCv(i, j, k));
+    });
+  }
+
+  domain.pass_var(fields.mask2dBu);
+
+  fields.areaCu = domain.make_u_field({.nk = 1});
+  fields.areaCv = domain.make_v_field({.nk = 1});
+
+  // The u/v-cell areas, from the masked (open) face lengths.
+  for (amrex::MFIter mfi(fields.areaCu); mfi.isValid(); ++mfi) {
+    const amrex::Box bx = mfi.growntilebox();
+    const amrex::Array4<amrex::Real> areaCu = fields.areaCu.array(mfi);
+    const amrex::Array4<const amrex::Real> maskCu = fields.mask2dCu.const_array(mfi);
+    const amrex::Array4<const amrex::Real> dxCu = fields.dxCu.const_array(mfi);
+    const amrex::Array4<const amrex::Real> dyCu = fields.dyCu.const_array(mfi);
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+      const amrex::Real dy_Cu = maskCu(i, j, k) * dyCu(i, j, k);
+      areaCu(i, j, k) = dxCu(i, j, k) * dy_Cu;
+    });
+  }
+
+  for (amrex::MFIter mfi(fields.areaCv); mfi.isValid(); ++mfi) {
+    const amrex::Box bx = mfi.growntilebox();
+    const amrex::Array4<amrex::Real> areaCv = fields.areaCv.array(mfi);
+    const amrex::Array4<const amrex::Real> maskCv = fields.mask2dCv.const_array(mfi);
+    const amrex::Array4<const amrex::Real> dxCv = fields.dxCv.const_array(mfi);
+    const amrex::Array4<const amrex::Real> dyCv = fields.dyCv.const_array(mfi);
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+      const amrex::Real dx_Cv = maskCv(i, j, k) * dxCv(i, j, k);
+      areaCv(i, j, k) = dyCv(i, j, k) * dx_Cv;
+    });
+  }
+}
+
+void initialize_masks(const Domain &domain, GridFields &fields,
+                      RuntimeParams &params) {
+
+  // The masking depths, re-read where consumed as in MOM6. The doc writer
+  // skips these re-logs because the descriptions match read_topo_spec's
+  // exactly.
+  amrex::Real min_depth = 0.0;
+  params.get("MINIMUM_DEPTH", min_depth,
+             {.default_value = 0.0,
+              .desc = "The minimum depth of the ocean.",
+              .units = "m"});
+
+  amrex::Real mask_depth = -9999.0;
+  params.get("MASKING_DEPTH", mask_depth,
+             {.default_value = -9999.0,
+              .desc = "The depth below which to mask points as land points, for which "
+                      "all fluxes are zeroed out. MASKING_DEPTH is ignored if it has "
+                      "the special default value.",
+              .units = "m"});
+
+  set_masks(domain, fields, min_depth, mask_depth);
+}
+
 } // namespace MOM

@@ -15,8 +15,8 @@ namespace MOM {
 // MKS units on the right-hand side of "~>".
 
 /// @brief The grid fields: the metrics at the four C-grid point types, the
-/// bottom topography, and the Coriolis parameter. The analogue of MOM6's
-/// dyn_horgrid_type.
+/// bottom topography, the land/sea masks, and the Coriolis parameter. The
+/// analogue of MOM6's dyn_horgrid_type.
 ///
 /// This is the construction-phase counterpart of Grid: a plain
 /// struct with no behavior of its own, so the setup functions in
@@ -32,22 +32,32 @@ struct GridFields {
   amrex::MultiFab areaT;     ///< The area of an h-cell [L2 ~> m2].
   amrex::MultiFab bathyT;    ///< The ocean bottom depth at h points, positive below
                              ///< the surface [Z ~> m].
+  amrex::MultiFab mask2dT;   ///< 0 for land points and 1 for ocean points at
+                             ///< h points [nondim].
 
   amrex::MultiFab geoLatCu;  ///< The geographic latitude at u points [degrees_N].
   amrex::MultiFab geoLonCu;  ///< The geographic longitude at u points [degrees_E].
   amrex::MultiFab dxCu;      ///< Delta x at u points [L ~> m].
   amrex::MultiFab dyCu;      ///< Delta y at u points [L ~> m].
+  amrex::MultiFab areaCu;    ///< The areas of the u-grid cells [L2 ~> m2].
+  amrex::MultiFab mask2dCu;  ///< 0 for boundary points and 1 for ocean points at
+                             ///< u points [nondim].
 
   amrex::MultiFab geoLatCv;  ///< The geographic latitude at v points [degrees_N].
   amrex::MultiFab geoLonCv;  ///< The geographic longitude at v points [degrees_E].
   amrex::MultiFab dxCv;      ///< Delta x at v points [L ~> m].
   amrex::MultiFab dyCv;      ///< Delta y at v points [L ~> m].
+  amrex::MultiFab areaCv;    ///< The areas of the v-grid cells [L2 ~> m2].
+  amrex::MultiFab mask2dCv;  ///< 0 for boundary points and 1 for ocean points at
+                             ///< v points [nondim].
 
   amrex::MultiFab geoLatBu;  ///< The geographic latitude at q points [degrees_N].
   amrex::MultiFab geoLonBu;  ///< The geographic longitude at q points [degrees_E].
   amrex::MultiFab dxBu;      ///< Delta x at q points [L ~> m].
   amrex::MultiFab dyBu;      ///< Delta y at q points [L ~> m].
   amrex::MultiFab areaBu;    ///< The area of a q-cell [L2 ~> m2].
+  amrex::MultiFab mask2dBu;  ///< 0 for boundary points and 1 for ocean points at
+                             ///< q points [nondim].
 
   amrex::MultiFab CoriolisBu;  ///< The Coriolis parameter at q points [T-1 ~> s-1].
 };

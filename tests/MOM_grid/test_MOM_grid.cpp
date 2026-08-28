@@ -43,14 +43,17 @@ double deg2rad(const double deg) { return deg * std::numbers::pi / 180.0; }
 
 // Compute-then-construct, as make_grid does past the parameter reading.
 MOM::Grid make_spherical_grid(const MOM::Domain &domain, const MOM::GridExtents &extents,
-                              const std::string &topo_config) {
+                              const std::string &topo_config,
+                              const double mask_depth = -9999.0) {
   MOM::GridFields fields = MOM::spherical_grid_fields(domain, extents);
-  const MOM::TopoSpec spec = {.min_depth = MINIMUM_DEPTH, .max_depth = MAXIMUM_DEPTH};
+  const MOM::TopoSpec spec = {.min_depth = MINIMUM_DEPTH, .max_depth = MAXIMUM_DEPTH,
+                              .mask_depth = mask_depth};
   fields.bathyT = MOM::initialize_topography_named(domain, topo_config, extents,
                                                    spec, fields.geoLatT,
                                                    fields.geoLonT);
   MOM::limit_topography(fields.bathyT, spec);
   domain.pass_var(fields.bathyT);
+  MOM::set_masks(domain, fields, spec.min_depth, spec.mask_depth);
   fields.CoriolisBu =
       MOM::set_rotation_planetary(domain, fields.geoLatBu, {.omega = OMEGA});
   return MOM::Grid(std::move(fields));
@@ -143,6 +146,9 @@ TEST(Grid, DoubleGyreGridSanity) {
   // so the depth limiting makes the maximum exactly MAXIMUM_DEPTH.
   EXPECT_GT(grid.bathyT().min(0), EDGE_DEPTH);
   EXPECT_DOUBLE_EQ(grid.bathyT().max(0), MAXIMUM_DEPTH);
+
+  // Everything deeper than MINIMUM_DEPTH is ocean, so all valid cells are wet.
+  EXPECT_DOUBLE_EQ(grid.mask2dT().min(0), 1.0);
 }
 
 // A flat topography is MAXIMUM_DEPTH at every valid cell, and beyond the
@@ -163,8 +169,71 @@ TEST(Grid, FlatTopographyAndClosedBoundaryHalos) {
   if (west) {
     EXPECT_DOUBLE_EQ(*west, 0.5 * MINIMUM_DEPTH);
   }
+
+  // The land halos close the masks at the walls: wall faces and vertices are
+  // masked out and their u-cell areas are zero; the interior is all ocean.
+  const auto halo_cell = value_at(grid.mask2dT(), -1, NJ / 2);
+  if (halo_cell) {
+    EXPECT_DOUBLE_EQ(*halo_cell, 0.0);
+  }
+  const auto wall_face = value_at(grid.mask2dCu(), 0, NJ / 2);
+  if (wall_face) {
+    EXPECT_DOUBLE_EQ(*wall_face, 0.0);
+  }
+  const auto wall_vertex = value_at(grid.mask2dBu(), 0, NJ / 2);
+  if (wall_vertex) {
+    EXPECT_DOUBLE_EQ(*wall_vertex, 0.0);
+  }
+  const auto wall_area = value_at(grid.areaCu(), 0, NJ / 2);
+  if (wall_area) {
+    EXPECT_DOUBLE_EQ(*wall_area, 0.0);
+  }
+  EXPECT_DOUBLE_EQ(grid.mask2dT().min(0), 1.0);
+  EXPECT_DOUBLE_EQ(grid.areaCu().max(0), grid.dxCu().max(0) * grid.dyCu().max(0));
 }
 
+
+// An explicit MASKING_DEPTH turns cells at least that shallow into land: the
+// spoon shallows northward, so the north-center cell is land and the deep
+// south-center cell is ocean. The face and vertex masks follow the h mask
+// through the southwest stencils, checked everywhere.
+TEST(Grid, MaskingDepthLandAndMaskStencils) {
+  const MOM::Domain domain({.ni_global = NI, .nj_global = NJ,
+                            .ni_halo = HALO, .nj_halo = HALO,
+                            .reentrant_x = false});
+  const double mask_depth = 500.0;  // [m]
+  const MOM::Grid grid = make_spherical_grid(
+      domain, {.south_lat = SOUTH_LAT, .len_lat = LEN_LAT, .west_lon = WEST_LON,
+               .len_lon = LEN_LON, .rad_earth = RAD_EARTH},
+      "spoon", mask_depth);
+
+  const auto north = value_at(grid.mask2dT(), NI / 2, NJ - 1);
+  if (north) {
+    EXPECT_DOUBLE_EQ(*north, 0.0);
+  }
+  const auto south = value_at(grid.mask2dT(), NI / 2, 0);
+  if (south) {
+    EXPECT_DOUBLE_EQ(*south, 1.0);
+  }
+
+  for (amrex::MFIter mfi(grid.mask2dT()); mfi.isValid(); ++mfi) {
+    const auto maskT = grid.mask2dT().const_array(mfi);
+    const auto maskCu = grid.mask2dCu().const_array(mfi);
+    const auto maskCv = grid.mask2dCv().const_array(mfi);
+    const auto maskBu = grid.mask2dBu().const_array(mfi);
+    // The valid q nodes of the box, which cover its valid u/v nodes too.
+    const amrex::Box bx = amrex::convert(mfi.validbox(), amrex::IntVect(1, 1, 0));
+    for (int j = bx.smallEnd(1); j <= bx.bigEnd(1); ++j) {
+      for (int i = bx.smallEnd(0); i <= bx.bigEnd(0); ++i) {
+        EXPECT_DOUBLE_EQ(maskCu(i, j, 0), maskT(i - 1, j, 0) * maskT(i, j, 0));
+        EXPECT_DOUBLE_EQ(maskCv(i, j, 0), maskT(i, j - 1, 0) * maskT(i, j, 0));
+        EXPECT_DOUBLE_EQ(maskBu(i, j, 0),
+                         (maskCu(i, j - 1, 0) * maskCu(i, j, 0)) *
+                         (maskCv(i - 1, j, 0) * maskCv(i, j, 0)));
+      }
+    }
+  }
+}
 
 // On a zonally reentrant domain the halo longitudes keep MOM6's monotonic
 // extrapolation rather than wrapping: the halo cell centers east of the wrap
@@ -193,6 +262,13 @@ TEST(Grid, ReentrantXGeoLonKeepsMonotonicExtrapolation) {
   const auto west = value_at(grid.bathyT(), -1, nj / 2);
   if (west) {
     EXPECT_DOUBLE_EQ(*west, MAXIMUM_DEPTH);
+  }
+
+  // The wrap keeps the western edge faces open: their western neighbor is
+  // the wet easternmost cell, where a closed boundary would mask them out.
+  const auto west_face = value_at(grid.mask2dCu(), 0, nj / 2);
+  if (west_face) {
+    EXPECT_DOUBLE_EQ(*west_face, 1.0);
   }
 }
 

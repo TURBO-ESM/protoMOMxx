@@ -57,6 +57,7 @@ TEST(MOMFixedInitTest, MakeGridFromParamFile) {
   const MOM::Grid grid = grid_from_param_file("MOM_input_test");
 
   EXPECT_DOUBLE_EQ(grid.bathyT().max(0), 2000.0);         // TOPO_CONFIG = "flat" at MAXIMUM_DEPTH
+  EXPECT_DOUBLE_EQ(grid.mask2dT().min(0), 1.0);           // flat bottom, all ocean
   EXPECT_DOUBLE_EQ(grid.geoLatBu().min(0), 30.0);         // SOUTHLAT
   EXPECT_DOUBLE_EQ(grid.geoLatBu().max(0), 30.0 + 20.0);  // + LENLAT
   EXPECT_DOUBLE_EQ(grid.geoLonBu().max(0), 22.0);         // WESTLON + LENLON
