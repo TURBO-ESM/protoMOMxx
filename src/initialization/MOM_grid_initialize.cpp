@@ -231,19 +231,24 @@ void set_masks(const Domain &domain, GridFields &fields,
   fields.mask2dCv = domain.make_v_field({.nk = 1});
   fields.mask2dBu = domain.make_q_field({.nk = 1});
 
+  // These zeros remain as the land values in the halos beyond the closed
+  // boundaries, which the exchanges below don't touch.
+  fields.mask2dT.setVal(0.0);
   fields.mask2dCu.setVal(0.0);
   fields.mask2dCv.setVal(0.0);
   fields.mask2dBu.setVal(0.0);
 
-  // The h-point mask, over the grown boxes
+  // The h-point mask
   for (amrex::MFIter mfi(fields.mask2dT); mfi.isValid(); ++mfi) {
-    const amrex::Box bx = mfi.growntilebox();
+    const amrex::Box bx = mfi.validbox();
     const amrex::Array4<amrex::Real> maskT = fields.mask2dT.array(mfi);
     const amrex::Array4<const amrex::Real> D = fields.bathyT.const_array(mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
       maskT(i, j, k) = (D(i, j, k) <= Dmask) ? 0.0 : 1.0;
     });
   }
+
+  domain.pass_var(fields.mask2dT);
 
   // The face masks: a face is open when both neighboring cells are ocean.
   for (amrex::MFIter mfi(fields.mask2dCu); mfi.isValid(); ++mfi) {

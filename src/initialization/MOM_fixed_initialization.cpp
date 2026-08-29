@@ -43,15 +43,14 @@ amrex::MultiFab initialize_topography(const Domain &domain,
                       "\t USER - call a user modified routine.",
               .fail_if_missing = true});
 
+  amrex::MultiFab bathyT;
+
   if (config == "flat" || config == "spoon") {
     const GridExtents extents = read_grid_extents(params);
     const TopoSpec spec = read_topo_spec(params, config);
 
-    amrex::MultiFab bathyT = initialize_topography_named(domain, config,
-                                                         extents, spec,
-                                                         geoLatT, geoLonT);
+    bathyT = initialize_topography_named(domain, config, extents, spec, geoLatT, geoLonT);
     limit_topography(bathyT, spec);
-    return bathyT;
   } else if (config == "file" || config == "bowl" || config == "halfpipe" ||
       config == "bbuilder" || config == "benchmark" ||
       config == "Neverworld" || config == "Neverland" || config == "DOME" ||
@@ -67,7 +66,9 @@ amrex::MultiFab initialize_topography(const Domain &domain,
                   config, "\".");
   }
 
-  return {};  // Unreachable: logger::fatal throws.
+  domain.pass_var(bathyT);
+
+  return bathyT;
 }
 
 Grid make_grid(const Domain &domain, RuntimeParams &params) {
@@ -78,8 +79,6 @@ Grid make_grid(const Domain &domain, RuntimeParams &params) {
 
   fields.bathyT = initialize_topography(domain, fields.geoLatT,
                                         fields.geoLonT, params);
-
-  domain.pass_var(fields.bathyT);
 
   initialize_masks(domain, fields, params);
 

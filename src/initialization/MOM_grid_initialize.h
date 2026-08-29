@@ -48,8 +48,8 @@ GridFields spherical_grid_fields(const Domain &domain, const GridExtents &extent
 /// @brief Read the masking depths and set the land/sea masks and the
 /// mask-dependent u/v-cell areas. The analogue of MOM6's initialize_masks.
 /// @param domain The computational domain the fields are created on.
-/// @param fields The grid fields. Requires bathyT (halos exchanged) and the
-///        u/v grid spacings; creates the masks and areaCu/areaCv.
+/// @param fields The grid fields. Requires bathyT and the u/v grid
+///        spacings; creates the masks and areaCu/areaCv.
 /// @param params Runtime parameters.
 void initialize_masks(const Domain &domain, GridFields &fields,
                       RuntimeParams &params);
@@ -58,8 +58,8 @@ void initialize_masks(const Domain &domain, GridFields &fields,
 /// with points no deeper than the masking depth masked as land, and the
 /// u/v-cell areas (areaCu/areaCv), which are zero across land faces.
 /// @param domain The computational domain the fields are created on.
-/// @param fields The grid fields. Requires bathyT (halos exchanged) and the
-///        u/v grid spacings; creates the masks and areaCu/areaCv.
+/// @param fields The grid fields. Requires bathyT and the u/v grid
+///        spacings; creates the masks and areaCu/areaCv.
 /// @param min_depth The minimum ocean depth [Z ~> m].
 /// @param mask_depth The masking depth [Z ~> m], or -9999.0 to mask at
 ///        min_depth instead.
