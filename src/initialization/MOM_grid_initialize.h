@@ -7,19 +7,10 @@
 
 #include "MOM_domain_infra.h"
 #include "MOM_file_parser.h"
+#include "MOM_grid_extents.h"
 #include "MOM_grid_fields.h"
 
 namespace MOM {
-
-/// @brief The geographic extents of an analytic horizontal grid.
-/// These are initialization data rather than grid state.
-struct GridExtents {
-  amrex::Real south_lat = 0.0;      ///< The southern latitude of the domain [degrees_N].
-  amrex::Real len_lat = 0.0;        ///< The latitudinal length of the domain [degrees_N].
-  amrex::Real west_lon = 0.0;       ///< The western longitude of the domain [degrees_E].
-  amrex::Real len_lon = 0.0;        ///< The longitudinal length of the domain [degrees_E].
-  amrex::Real rad_earth = 6.378e6;  ///< The radius of the Earth [L ~> m].
-};
 
 /// @brief Read the geographic extents of an analytic grid.
 /// @param params Runtime parameters.

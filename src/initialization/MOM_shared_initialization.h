@@ -11,7 +11,7 @@
 
 #include "MOM_domain_infra.h"
 #include "MOM_file_parser.h"
-#include "MOM_grid_initialize.h"
+#include "MOM_grid_extents.h"
 
 namespace MOM {
 
