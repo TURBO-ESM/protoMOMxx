@@ -266,8 +266,10 @@ void set_masks(const Domain &domain, GridFields &fields,
     });
   }
 
-  domain.pass_var(fields.mask2dCu);
-  domain.pass_var(fields.mask2dCv);
+  domain.pass_vars(
+    fields.mask2dCu,
+    fields.mask2dCv
+  );
 
   // The vertex mask, from the masks of the four faces that meet at the vertex.
   for (amrex::MFIter mfi(fields.mask2dBu); mfi.isValid(); ++mfi) {
