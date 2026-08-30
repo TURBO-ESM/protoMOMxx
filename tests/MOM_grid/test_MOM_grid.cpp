@@ -14,6 +14,7 @@
 #include <gtest/gtest.h>
 
 #include <AMReX_MultiFab.H>
+#include <AMReX_ParallelDescriptor.H>
 
 #include "MOM_domain_infra.h"
 #include "MOM_grid.h"
@@ -59,16 +60,23 @@ MOM::Grid make_spherical_grid(const MOM::Domain &domain, const MOM::GridExtents 
   return MOM::Grid(std::move(fields));
 }
 
-// The value of a single-level field at point (i, j), searched over the local
-// boxes grown by their ghost cells.
-std::optional<double> value_at(const amrex::MultiFab &mf, const int i, const int j) {
-  std::optional<double> value;
+// Check the value of a single-level field at point (i, j), over every local
+// box grown by its ghost cells that holds the point. Ranks holding none of it
+// stay quiet, but the check fails if no rank holds it at all. Boxes that overlap
+// in their ghost regions are all compared, so they have to agree.
+// todo: consider making this helper function more widely available
+//       via a test utils module.
+void expect_value_at(const amrex::MultiFab &mf, const int i, const int j,
+                     const double expected) {
+  bool found = false;
   for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi) {
     if (mfi.growntilebox().contains(amrex::IntVect(i, j, 0))) {
-      value = mf.const_array(mfi)(i, j, 0);
+      found = true;
+      EXPECT_DOUBLE_EQ(mf.const_array(mfi)(i, j, 0), expected);
     }
   }
-  return value;
+  amrex::ParallelDescriptor::ReduceBoolOr(found);
+  EXPECT_TRUE(found);
 }
 
 } // namespace
@@ -165,29 +173,14 @@ TEST(Grid, FlatTopographyAndClosedBoundaryHalos) {
   EXPECT_DOUBLE_EQ(grid.bathyT().min(0), MAXIMUM_DEPTH);
   EXPECT_DOUBLE_EQ(grid.bathyT().max(0), MAXIMUM_DEPTH);
 
-  const auto west = value_at(grid.bathyT(), -1, NJ / 2);
-  if (west) {
-    EXPECT_DOUBLE_EQ(*west, 0.5 * MINIMUM_DEPTH);
-  }
+  expect_value_at(grid.bathyT(), -1, NJ / 2, 0.5 * MINIMUM_DEPTH);
 
   // The land halos close the masks at the walls: wall faces and vertices are
   // masked out and their u-cell areas are zero; the interior is all ocean.
-  const auto halo_cell = value_at(grid.mask2dT(), -1, NJ / 2);
-  if (halo_cell) {
-    EXPECT_DOUBLE_EQ(*halo_cell, 0.0);
-  }
-  const auto wall_face = value_at(grid.mask2dCu(), 0, NJ / 2);
-  if (wall_face) {
-    EXPECT_DOUBLE_EQ(*wall_face, 0.0);
-  }
-  const auto wall_vertex = value_at(grid.mask2dBu(), 0, NJ / 2);
-  if (wall_vertex) {
-    EXPECT_DOUBLE_EQ(*wall_vertex, 0.0);
-  }
-  const auto wall_area = value_at(grid.areaCu(), 0, NJ / 2);
-  if (wall_area) {
-    EXPECT_DOUBLE_EQ(*wall_area, 0.0);
-  }
+  expect_value_at(grid.mask2dT(), -1, NJ / 2, 0.0);
+  expect_value_at(grid.mask2dCu(), 0, NJ / 2, 0.0);
+  expect_value_at(grid.mask2dBu(), 0, NJ / 2, 0.0);
+  expect_value_at(grid.areaCu(), 0, NJ / 2, 0.0);
   EXPECT_DOUBLE_EQ(grid.mask2dT().min(0), 1.0);
   EXPECT_DOUBLE_EQ(grid.areaCu().max(0), grid.dxCu().max(0) * grid.dyCu().max(0));
 }
@@ -207,14 +200,8 @@ TEST(Grid, MaskingDepthLandAndMaskStencils) {
                .len_lon = LEN_LON, .rad_earth = RAD_EARTH},
       "spoon", mask_depth);
 
-  const auto north = value_at(grid.mask2dT(), NI / 2, NJ - 1);
-  if (north) {
-    EXPECT_DOUBLE_EQ(*north, 0.0);
-  }
-  const auto south = value_at(grid.mask2dT(), NI / 2, 0);
-  if (south) {
-    EXPECT_DOUBLE_EQ(*south, 1.0);
-  }
+  expect_value_at(grid.mask2dT(), NI / 2, NJ - 1, 0.0);
+  expect_value_at(grid.mask2dT(), NI / 2, 0, 1.0);
 
   for (amrex::MFIter mfi(grid.mask2dT()); mfi.isValid(); ++mfi) {
     const auto maskT = grid.mask2dT().const_array(mfi);
@@ -259,17 +246,11 @@ TEST(Grid, ReentrantXGeoLonKeepsMonotonicExtrapolation) {
   // The wrap halos of the bathymetry are exchanged, not extrapolated: beyond
   // the western edge they carry the (wet) values of the eastern cells, where
   // a closed boundary would hold the 0.5*MINIMUM_DEPTH land value.
-  const auto west = value_at(grid.bathyT(), -1, nj / 2);
-  if (west) {
-    EXPECT_DOUBLE_EQ(*west, MAXIMUM_DEPTH);
-  }
+  expect_value_at(grid.bathyT(), -1, nj / 2, MAXIMUM_DEPTH);
 
   // The wrap keeps the western edge faces open: their western neighbor is
   // the wet easternmost cell, where a closed boundary would mask them out.
-  const auto west_face = value_at(grid.mask2dCu(), 0, nj / 2);
-  if (west_face) {
-    EXPECT_DOUBLE_EQ(*west_face, 1.0);
-  }
+  expect_value_at(grid.mask2dCu(), 0, nj / 2, 1.0);
 }
 
 // Unfilled extents cannot be consumed.
