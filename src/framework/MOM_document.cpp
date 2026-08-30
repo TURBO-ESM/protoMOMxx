@@ -12,6 +12,7 @@
 #include <charconv>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <limits>
 #include <type_traits>
 #include <stdexcept>
@@ -172,9 +173,7 @@ std::string DocFileWriter::real_string(double val) {
       if (ec != std::errc{})
         continue;
       std::string s(buf.data(), end);
-      double reparsed = 0.0;
-      auto [rptr, rec] = std::from_chars(s.data(), s.data() + s.size(), reparsed);
-      if (rec == std::errc{} && reparsed == val) {
+      if (std::strtod(s.c_str(), nullptr) == val) {
         trim_fixed_zeros(s);
         return s;
       }
@@ -190,9 +189,7 @@ std::string DocFileWriter::real_string(double val) {
     if (ec != std::errc{})
       continue;
     std::string s(buf.data(), end);
-    double reparsed = 0.0;
-    auto [rptr, rec] = std::from_chars(s.data(), s.data() + s.size(), reparsed);
-    if (rec == std::errc{} && reparsed == val) {
+    if (std::strtod(s.c_str(), nullptr) == val) {
       trim_sci_zeros(s);
       return s;
     }
