@@ -44,7 +44,7 @@ double deg2rad(const double deg) { return deg * std::numbers::pi / 180.0; }
 // Compute-then-construct, as make_grid does past the parameter reading.
 MOM::Grid make_spherical_grid(const MOM::Domain &domain, const MOM::GridExtents &extents,
                               const std::string &topo_config,
-                              const double mask_depth = -9999.0) {
+                              const std::optional<double> mask_depth = std::nullopt) {
   MOM::GridFields fields = MOM::spherical_grid_fields(domain, extents);
   const MOM::TopoSpec spec = {.min_depth = MINIMUM_DEPTH, .max_depth = MAXIMUM_DEPTH,
                               .mask_depth = mask_depth};
@@ -53,7 +53,7 @@ MOM::Grid make_spherical_grid(const MOM::Domain &domain, const MOM::GridExtents 
                                                    fields.geoLonT);
   MOM::limit_topography(fields.bathyT, spec);
   domain.pass_var(fields.bathyT);
-  MOM::set_masks(domain, fields, spec.min_depth, spec.mask_depth);
+  MOM::set_masks(domain, fields, spec.mask_depth.value_or(spec.min_depth));
   fields.CoriolisBu =
       MOM::set_rotation_planetary(domain, fields.geoLatBu, {.omega = OMEGA});
   return MOM::Grid(std::move(fields));

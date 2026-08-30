@@ -4,6 +4,7 @@
 ///        rotation and the named analytic topographies with their depth
 ///        limiting. The analogue of MOM6's MOM_shared_initialization.F90.
 
+#include <optional>
 #include <string_view>
 
 #include <AMReX_MultiFab.H>
@@ -47,8 +48,8 @@ struct TopoSpec {
   amrex::Real min_depth = 0.0;      ///< The minimum depth of the ocean [Z ~> m].
   amrex::Real max_depth = 0.0;      ///< The maximum depth of the ocean [Z ~> m]. No
                                     ///< meaningful default; must be set.
-  amrex::Real mask_depth = -9999.0; ///< The depth shallower than which a point is masked
-                                    ///< as land; ignored at its special default value [Z ~> m].
+  std::optional<amrex::Real> mask_depth;  ///< The depth shallower than which a point is
+                                    ///< masked as land; MINIMUM_DEPTH when empty [Z ~> m].
   amrex::Real edge_depth = 100.0;   ///< The depth at the edge of one of the named
                                     ///< topographies [Z ~> m].
   amrex::Real topog_slope_scale = 400000.0;  ///< The exponential decay scale used in
@@ -60,6 +61,16 @@ struct TopoSpec {
 /// @param config The named topographic configuration ("flat" or "spoon").
 /// @return The topography setup read from the parameters.
 TopoSpec read_topo_spec(RuntimeParams &params, const std::string_view config);
+
+/// @brief Read MINIMUM_DEPTH from runtime parameter file(s).
+/// @param params Runtime parameters.
+/// @return The minimum depth of the ocean [Z ~> m].
+amrex::Real read_minimum_depth(RuntimeParams &params);
+
+/// @brief Read MASKING_DEPTH from runtime parameter file(s).
+/// @param params Runtime parameters.
+/// @return The masking depth, or empty when set to -9999.0 (default).
+std::optional<amrex::Real> read_masking_depth(RuntimeParams &params);
 
 /// @brief Create the bottom depth field at h points and compute the named
 /// analytic topography from the h-point coordinates.

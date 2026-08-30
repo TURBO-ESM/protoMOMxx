@@ -6,6 +6,7 @@
 #include "MOM_grid_initialize.h"
 
 #include "MOM_logger.h"
+#include "MOM_shared_initialization.h"
 
 namespace MOM {
 
@@ -220,11 +221,7 @@ GridFields set_grid_metrics(const Domain &domain, RuntimeParams &params) {
 }
 
 void set_masks(const Domain &domain, GridFields &fields,
-               const amrex::Real min_depth, const amrex::Real mask_depth) {
-
-  // The masking depth: MASKING_DEPTH when set, MINIMUM_DEPTH otherwise.
-  amrex::Real Dmask = mask_depth;
-  if (mask_depth == -9999.0) Dmask = min_depth;
+               const amrex::Real mask_depth) {
 
   fields.mask2dT = domain.make_h_field({.nk = 1});
   fields.mask2dCu = domain.make_u_field({.nk = 1});
@@ -244,7 +241,7 @@ void set_masks(const Domain &domain, GridFields &fields,
     const amrex::Array4<amrex::Real> maskT = fields.mask2dT.array(mfi);
     const amrex::Array4<const amrex::Real> D = fields.bathyT.const_array(mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-      maskT(i, j, k) = (D(i, j, k) <= Dmask) ? 0.0 : 1.0;
+      maskT(i, j, k) = (D(i, j, k) <= mask_depth) ? 0.0 : 1.0;
     });
   }
 
@@ -318,24 +315,12 @@ void set_masks(const Domain &domain, GridFields &fields,
 void initialize_masks(const Domain &domain, GridFields &fields,
                       RuntimeParams &params) {
 
-  // The masking depths, re-read where consumed as in MOM6. The doc writer
-  // skips these re-logs because the descriptions match read_topo_spec's
-  // exactly.
-  amrex::Real min_depth = 0.0;
-  params.get("MINIMUM_DEPTH", min_depth,
-             {.default_value = 0.0,
-              .desc = "The minimum depth of the ocean.",
-              .units = "m"});
+  // The depths, re-read where consumed as in MOM6.
+  const amrex::Real min_depth = read_minimum_depth(params);
 
-  amrex::Real mask_depth = -9999.0;
-  params.get("MASKING_DEPTH", mask_depth,
-             {.default_value = -9999.0,
-              .desc = "The depth below which to mask points as land points, for which "
-                      "all fluxes are zeroed out. MASKING_DEPTH is ignored if it has "
-                      "the special default value.",
-              .units = "m"});
-
-  set_masks(domain, fields, min_depth, mask_depth);
+  // Points are land at MASKING_DEPTH when it is set, at MINIMUM_DEPTH
+  // otherwise.
+  set_masks(domain, fields, read_masking_depth(params).value_or(min_depth));
 }
 
 } // namespace MOM

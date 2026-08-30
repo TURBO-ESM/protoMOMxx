@@ -67,10 +67,7 @@ TopoSpec read_topo_spec(RuntimeParams &params, const std::string_view config) {
 
   TopoSpec spec;
 
-  params.get("MINIMUM_DEPTH", spec.min_depth,
-             {.default_value = 0.0,
-              .desc = "The minimum depth of the ocean.",
-              .units = "m"});
+  spec.min_depth = read_minimum_depth(params);
 
   if (config != "flat") {
     params.get("EDGE_DEPTH", spec.edge_depth,
@@ -94,14 +91,36 @@ TopoSpec read_topo_spec(RuntimeParams &params, const std::string_view config) {
               .units = "m",
               .fail_if_missing = true});
 
-  params.get("MASKING_DEPTH", spec.mask_depth,
-             {.default_value = -9999.0,
+  spec.mask_depth = read_masking_depth(params);
+
+  return spec;
+}
+
+amrex::Real read_minimum_depth(RuntimeParams &params) {
+
+  amrex::Real min_depth = 0.0;
+  params.get("MINIMUM_DEPTH", min_depth,
+             {.default_value = 0.0,
+              .desc = "The minimum depth of the ocean.",
+              .units = "m"});
+
+  return min_depth;
+}
+
+std::optional<amrex::Real> read_masking_depth(RuntimeParams &params) {
+
+  constexpr amrex::Real MASK_DEPTH_UNSET = -9999.0;
+
+  amrex::Real mask_depth = MASK_DEPTH_UNSET;
+  params.get("MASKING_DEPTH", mask_depth,
+             {.default_value = MASK_DEPTH_UNSET,
               .desc = "The depth below which to mask points as land points, for which "
                       "all fluxes are zeroed out. MASKING_DEPTH is ignored if it has "
                       "the special default value.",
               .units = "m"});
 
-  return spec;
+  if (mask_depth == MASK_DEPTH_UNSET) return std::nullopt;
+  return mask_depth;
 }
 
 amrex::MultiFab initialize_topography_named(const Domain &domain,
@@ -183,9 +202,8 @@ void limit_topography(amrex::MultiFab &bathyT, const TopoSpec &spec) {
 
   const amrex::Real min_depth = spec.min_depth;
   const amrex::Real max_depth = spec.max_depth;
-  const amrex::Real mask_depth = spec.mask_depth;
 
-  if (mask_depth == -9999.0) { // legacy way
+  if (!spec.mask_depth) { // legacy way
 
     if (min_depth < 0.0) {
       logger::fatal("limit_topography: MINIMUM_DEPTH<0 does not work as "
@@ -204,7 +222,7 @@ void limit_topography(amrex::MultiFab &bathyT, const TopoSpec &spec) {
 
   } else { // preferred way
 
-    const amrex::Real land_depth = amrex::min(min_depth, mask_depth);
+    const amrex::Real land_depth = amrex::min(min_depth, *spec.mask_depth);
     for (amrex::MFIter mfi(bathyT); mfi.isValid(); ++mfi) {
       const amrex::Box bx = mfi.growntilebox();
       const amrex::Array4<amrex::Real> D = bathyT.array(mfi);

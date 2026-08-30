@@ -60,10 +60,8 @@ void initialize_masks(const Domain &domain, GridFields &fields,
 /// @param domain The computational domain the fields are created on.
 /// @param fields The grid fields. Requires bathyT and the u/v grid
 ///        spacings; creates the masks and areaCu/areaCv.
-/// @param min_depth The minimum ocean depth [Z ~> m].
-/// @param mask_depth The masking depth [Z ~> m], or -9999.0 to mask at
-///        min_depth instead.
+/// @param mask_depth The depth at or below which a point is land [Z ~> m].
 void set_masks(const Domain &domain, GridFields &fields,
-               amrex::Real min_depth, amrex::Real mask_depth);
+               amrex::Real mask_depth);
 
 } // namespace MOM
