@@ -3,6 +3,8 @@
 #include <string>
 #include <string_view>
 
+#include <AMReX_GpuDevice.H>
+
 #include "MOM_grid_initialize.h"
 
 #include "MOM_logger.h"
@@ -230,10 +232,13 @@ void set_masks(const Domain &domain, GridFields &fields,
 
   // These zeros remain as the land values in the halos beyond the closed
   // boundaries, which the exchanges below don't touch.
-  fields.mask2dT.setVal(0.0);
-  fields.mask2dCu.setVal(0.0);
-  fields.mask2dCv.setVal(0.0);
-  fields.mask2dBu.setVal(0.0);
+  {
+    const amrex::Gpu::SyncAtExitOnly region;
+    fields.mask2dT.setVal(0.0);
+    fields.mask2dCu.setVal(0.0);
+    fields.mask2dCv.setVal(0.0);
+    fields.mask2dBu.setVal(0.0);
+  }
 
   // The h-point mask
   for (amrex::MFIter mfi(fields.mask2dT); mfi.isValid(); ++mfi) {
