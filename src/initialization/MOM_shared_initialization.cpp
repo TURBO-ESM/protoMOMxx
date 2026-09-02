@@ -190,8 +190,10 @@ amrex::MultiFab initialize_topography_named(const Domain &domain,
     const amrex::Box bx = mfi.validbox();
     const amrex::Array4<amrex::Real> D = bathyT.array(mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
-      if (D(i, j, 0) > max_depth) D(i, j, 0) = max_depth;
-      if (D(i, j, 0) < min_depth) D(i, j, 0) = 0.5 * min_depth;
+      amrex::Real val = D(i, j, 0);
+      val = (val > max_depth) ? max_depth : val;
+      val = (val < min_depth) ? (0.5 * min_depth) : val;
+      D(i, j, 0) = val;
     });
   }
 
