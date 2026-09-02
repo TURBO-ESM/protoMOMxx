@@ -55,8 +55,8 @@ amrex::MultiFab set_rotation_planetary(const Domain &domain,
     const amrex::Box bx = mfi.growntilebox();
     const amrex::Array4<amrex::Real> f = CoriolisBu.array(mfi);
     const amrex::Array4<const amrex::Real> lat = geoLatBu.const_array(mfi);
-    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-      f(i, j, k) = (2.0 * omega) * std::sin((PI * lat(i, j, k)) / 180.0);
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+      f(i, j, 0) = (2.0 * omega) * std::sin((PI * lat(i, j, 0)) / 180.0);
     });
   }
 
@@ -171,10 +171,10 @@ amrex::MultiFab initialize_topography_named(const Domain &domain,
       const amrex::Array4<amrex::Real> D = bathyT.array(mfi);
       const amrex::Array4<const amrex::Real> lat = geoLatT.const_array(mfi);
       const amrex::Array4<const amrex::Real> lon = geoLonT.const_array(mfi);
-      amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-        D(i, j, k) = Dedge + D0 *
-            (std::sin(PI * (lon(i, j, k) - west_lon) / len_lon) *
-             (1.0 - std::exp((lat(i, j, k) - (south_lat + len_lat)) * rad_earth * PI /
+      amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+        D(i, j, 0) = Dedge + D0 *
+            (std::sin(PI * (lon(i, j, 0) - west_lon) / len_lon) *
+             (1.0 - std::exp((lat(i, j, 0) - (south_lat + len_lat)) * rad_earth * PI /
                              (180.0 * expdecay))));
       });
     }
@@ -189,9 +189,9 @@ amrex::MultiFab initialize_topography_named(const Domain &domain,
   for (amrex::MFIter mfi(bathyT); mfi.isValid(); ++mfi) {
     const amrex::Box bx = mfi.validbox();
     const amrex::Array4<amrex::Real> D = bathyT.array(mfi);
-    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-      if (D(i, j, k) > max_depth) D(i, j, k) = max_depth;
-      if (D(i, j, k) < min_depth) D(i, j, k) = 0.5 * min_depth;
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+      if (D(i, j, 0) > max_depth) D(i, j, 0) = max_depth;
+      if (D(i, j, 0) < min_depth) D(i, j, 0) = 0.5 * min_depth;
     });
   }
 
@@ -215,8 +215,8 @@ void limit_topography(amrex::MultiFab &bathyT, const TopoSpec &spec) {
     for (amrex::MFIter mfi(bathyT); mfi.isValid(); ++mfi) {
       const amrex::Box bx = mfi.growntilebox();
       const amrex::Array4<amrex::Real> D = bathyT.array(mfi);
-      amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-        D(i, j, k) = amrex::min(amrex::max(D(i, j, k), 0.5 * min_depth), max_depth);
+      amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+        D(i, j, 0) = amrex::min(amrex::max(D(i, j, 0), 0.5 * min_depth), max_depth);
       });
     }
 
@@ -226,11 +226,11 @@ void limit_topography(amrex::MultiFab &bathyT, const TopoSpec &spec) {
     for (amrex::MFIter mfi(bathyT); mfi.isValid(); ++mfi) {
       const amrex::Box bx = mfi.growntilebox();
       const amrex::Array4<amrex::Real> D = bathyT.array(mfi);
-      amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-        if (D(i, j, k) > land_depth) {
-          D(i, j, k) = amrex::min(amrex::max(D(i, j, k), min_depth), max_depth);
+      amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+        if (D(i, j, 0) > land_depth) {
+          D(i, j, 0) = amrex::min(amrex::max(D(i, j, 0), min_depth), max_depth);
         } else {
-          D(i, j, k) = land_depth;
+          D(i, j, 0) = land_depth;
         }
       });
     }

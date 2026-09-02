@@ -88,13 +88,13 @@ GridFields spherical_grid_fields(const Domain &domain, const GridExtents &extent
     const amrex::Array4<amrex::Real> dxT = fields.dxT.array(mfi);
     const amrex::Array4<amrex::Real> dyT = fields.dyT.array(mfi);
     const amrex::Array4<amrex::Real> areaT = fields.areaT.array(mfi);
-    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-      geoLonT(i, j, k) = west_lon + dLon * (i + 0.5);
-      geoLatT(i, j, k) = amrex::min(amrex::max(south_lat + dLat * (j + 0.5),
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+      geoLonT(i, j, 0) = west_lon + dLon * (i + 0.5);
+      geoLatT(i, j, 0) = amrex::min(amrex::max(south_lat + dLat * (j + 0.5),
                                                amrex::Real(-90.0)), amrex::Real(90.0));
-      dxT(i, j, k) = rad_earth * std::cos(geoLatT(i, j, k) * PI_180) * dL_di;
-      dyT(i, j, k) = dy;
-      areaT(i, j, k) = dxT(i, j, k) * dyT(i, j, k);
+      dxT(i, j, 0) = rad_earth * std::cos(geoLatT(i, j, 0) * PI_180) * dL_di;
+      dyT(i, j, 0) = dy;
+      areaT(i, j, 0) = dxT(i, j, 0) * dyT(i, j, 0);
     });
   }
 
@@ -105,12 +105,12 @@ GridFields spherical_grid_fields(const Domain &domain, const GridExtents &extent
     const amrex::Array4<amrex::Real> geoLonCu = fields.geoLonCu.array(mfi);
     const amrex::Array4<amrex::Real> dxCu = fields.dxCu.array(mfi);
     const amrex::Array4<amrex::Real> dyCu = fields.dyCu.array(mfi);
-    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-      geoLonCu(i, j, k) = west_lon + dLon * i;
-      geoLatCu(i, j, k) = amrex::min(amrex::max(south_lat + dLat * (j + 0.5),
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+      geoLonCu(i, j, 0) = west_lon + dLon * i;
+      geoLatCu(i, j, 0) = amrex::min(amrex::max(south_lat + dLat * (j + 0.5),
                                                 amrex::Real(-90.0)), amrex::Real(90.0));
-      dxCu(i, j, k) = rad_earth * std::cos(geoLatCu(i, j, k) * PI_180) * dL_di;
-      dyCu(i, j, k) = dy;
+      dxCu(i, j, 0) = rad_earth * std::cos(geoLatCu(i, j, 0) * PI_180) * dL_di;
+      dyCu(i, j, 0) = dy;
     });
   }
 
@@ -121,12 +121,12 @@ GridFields spherical_grid_fields(const Domain &domain, const GridExtents &extent
     const amrex::Array4<amrex::Real> geoLonCv = fields.geoLonCv.array(mfi);
     const amrex::Array4<amrex::Real> dxCv = fields.dxCv.array(mfi);
     const amrex::Array4<amrex::Real> dyCv = fields.dyCv.array(mfi);
-    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-      geoLonCv(i, j, k) = west_lon + dLon * (i + 0.5);
-      geoLatCv(i, j, k) = amrex::min(amrex::max(south_lat + dLat * j,
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+      geoLonCv(i, j, 0) = west_lon + dLon * (i + 0.5);
+      geoLatCv(i, j, 0) = amrex::min(amrex::max(south_lat + dLat * j,
                                                 amrex::Real(-90.0)), amrex::Real(90.0));
-      dxCv(i, j, k) = rad_earth * std::cos(geoLatCv(i, j, k) * PI_180) * dL_di;
-      dyCv(i, j, k) = dy;
+      dxCv(i, j, 0) = rad_earth * std::cos(geoLatCv(i, j, 0) * PI_180) * dL_di;
+      dyCv(i, j, 0) = dy;
     });
   }
 
@@ -138,13 +138,13 @@ GridFields spherical_grid_fields(const Domain &domain, const GridExtents &extent
     const amrex::Array4<amrex::Real> dxBu = fields.dxBu.array(mfi);
     const amrex::Array4<amrex::Real> dyBu = fields.dyBu.array(mfi);
     const amrex::Array4<amrex::Real> areaBu = fields.areaBu.array(mfi);
-    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-      geoLonBu(i, j, k) = west_lon + dLon * i;
-      geoLatBu(i, j, k) = amrex::min(amrex::max(south_lat + dLat * j,
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+      geoLonBu(i, j, 0) = west_lon + dLon * i;
+      geoLatBu(i, j, 0) = amrex::min(amrex::max(south_lat + dLat * j,
                                                 amrex::Real(-90.0)), amrex::Real(90.0));
-      dxBu(i, j, k) = rad_earth * std::cos(geoLatBu(i, j, k) * PI_180) * dL_di;
-      dyBu(i, j, k) = dy;
-      areaBu(i, j, k) = dxBu(i, j, k) * dyBu(i, j, k);
+      dxBu(i, j, 0) = rad_earth * std::cos(geoLatBu(i, j, 0) * PI_180) * dL_di;
+      dyBu(i, j, 0) = dy;
+      areaBu(i, j, 0) = dxBu(i, j, 0) * dyBu(i, j, 0);
     });
   }
 
@@ -245,8 +245,8 @@ void set_masks(const Domain &domain, GridFields &fields,
     const amrex::Box bx = mfi.validbox();
     const amrex::Array4<amrex::Real> maskT = fields.mask2dT.array(mfi);
     const amrex::Array4<const amrex::Real> D = fields.bathyT.const_array(mfi);
-    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-      maskT(i, j, k) = (D(i, j, k) <= mask_depth) ? 0.0 : 1.0;
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+      maskT(i, j, 0) = (D(i, j, 0) <= mask_depth) ? 0.0 : 1.0;
     });
   }
 
@@ -257,8 +257,8 @@ void set_masks(const Domain &domain, GridFields &fields,
     const amrex::Box bx = mfi.validbox();
     const amrex::Array4<amrex::Real> maskCu = fields.mask2dCu.array(mfi);
     const amrex::Array4<const amrex::Real> maskT = fields.mask2dT.const_array(mfi);
-    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-      maskCu(i, j, k) = maskT(i - 1, j, k) * maskT(i, j, k);
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+      maskCu(i, j, 0) = maskT(i - 1, j, 0) * maskT(i, j, 0);
     });
   }
 
@@ -266,8 +266,8 @@ void set_masks(const Domain &domain, GridFields &fields,
     const amrex::Box bx = mfi.validbox();
     const amrex::Array4<amrex::Real> maskCv = fields.mask2dCv.array(mfi);
     const amrex::Array4<const amrex::Real> maskT = fields.mask2dT.const_array(mfi);
-    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-      maskCv(i, j, k) = maskT(i, j - 1, k) * maskT(i, j, k);
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+      maskCv(i, j, 0) = maskT(i, j - 1, 0) * maskT(i, j, 0);
     });
   }
 
@@ -282,9 +282,9 @@ void set_masks(const Domain &domain, GridFields &fields,
     const amrex::Array4<amrex::Real> maskBu = fields.mask2dBu.array(mfi);
     const amrex::Array4<const amrex::Real> maskCu = fields.mask2dCu.const_array(mfi);
     const amrex::Array4<const amrex::Real> maskCv = fields.mask2dCv.const_array(mfi);
-    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-      maskBu(i, j, k) = (maskCu(i, j - 1, k) * maskCu(i, j, k)) *
-                        (maskCv(i - 1, j, k) * maskCv(i, j, k));
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+      maskBu(i, j, 0) = (maskCu(i, j - 1, 0) * maskCu(i, j, 0)) *
+                        (maskCv(i - 1, j, 0) * maskCv(i, j, 0));
     });
   }
 
@@ -300,9 +300,9 @@ void set_masks(const Domain &domain, GridFields &fields,
     const amrex::Array4<const amrex::Real> maskCu = fields.mask2dCu.const_array(mfi);
     const amrex::Array4<const amrex::Real> dxCu = fields.dxCu.const_array(mfi);
     const amrex::Array4<const amrex::Real> dyCu = fields.dyCu.const_array(mfi);
-    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-      const amrex::Real dy_Cu = maskCu(i, j, k) * dyCu(i, j, k);
-      areaCu(i, j, k) = dxCu(i, j, k) * dy_Cu;
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+      const amrex::Real dy_Cu = maskCu(i, j, 0) * dyCu(i, j, 0);
+      areaCu(i, j, 0) = dxCu(i, j, 0) * dy_Cu;
     });
   }
 
@@ -312,9 +312,9 @@ void set_masks(const Domain &domain, GridFields &fields,
     const amrex::Array4<const amrex::Real> maskCv = fields.mask2dCv.const_array(mfi);
     const amrex::Array4<const amrex::Real> dxCv = fields.dxCv.const_array(mfi);
     const amrex::Array4<const amrex::Real> dyCv = fields.dyCv.const_array(mfi);
-    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
-      const amrex::Real dx_Cv = maskCv(i, j, k) * dxCv(i, j, k);
-      areaCv(i, j, k) = dyCv(i, j, k) * dx_Cv;
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+      const amrex::Real dx_Cv = maskCv(i, j, 0) * dxCv(i, j, 0);
+      areaCv(i, j, 0) = dyCv(i, j, 0) * dx_Cv;
     });
   }
 }
