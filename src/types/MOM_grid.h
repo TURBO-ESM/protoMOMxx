@@ -2,7 +2,8 @@
 /// @file MOM_grid.h
 /// @brief The horizontal ocean grid of a model instance: the geographic
 ///        locations, grid spacings, and cell areas at the h/q/u/v points of
-///        the Arakawa C-grid, and the Coriolis parameter. The analogue of
+///        the Arakawa C-grid, the bottom topography, the land/sea masks,
+///        and the Coriolis parameter. The analogue of
 ///        MOM6's MOM_grid (ocean_grid_type). The field values are computed
 ///        in src/initialization and handed to the constructor as a
 ///        GridFields struct (MOM_grid_fields.h).
@@ -15,8 +16,8 @@ namespace MOM {
 
 /// @class Grid
 /// @brief The horizontal grid: metric fields at the four C-grid point types
-/// (h: cell centers, q: cell corners, u: west faces, v: south faces) and the
-/// Coriolis parameter at q points.
+/// (h: cell centers, q: cell corners, u: west faces, v: south faces), the
+/// bottom topography and land/sea masks, and the Coriolis parameter.
 ///
 /// GridFields is the construction-phase counterpart of this class. The
 /// field values are computed in src/initialization (where the GRID_CONFIG
@@ -38,26 +39,6 @@ public:
   /// @pre The infrastructure layer (MOM::Infra) is initialized.
   explicit Grid(GridFields &&fields);
 
-  /// @brief The southern latitude of the domain [degrees_N].
-  /// @return The southern latitude.
-  amrex::Real south_lat() const { return fields_.south_lat; }
-
-  /// @brief The latitudinal length of the domain [degrees_N].
-  /// @return The latitudinal length.
-  amrex::Real len_lat() const { return fields_.len_lat; }
-
-  /// @brief The western longitude of the domain [degrees_E].
-  /// @return The western longitude.
-  amrex::Real west_lon() const { return fields_.west_lon; }
-
-  /// @brief The longitudinal length of the domain [degrees_E].
-  /// @return The longitudinal length.
-  amrex::Real len_lon() const { return fields_.len_lon; }
-
-  /// @brief The radius of the Earth [L ~> m].
-  /// @return The Earth radius.
-  amrex::Real rad_earth() const { return fields_.rad_earth; }
-
   /// @brief The geographic latitude at h (tracer) points [degrees_N].
   /// @return The h-point latitude field.
   const amrex::MultiFab &geoLatT() const { return fields_.geoLatT; }
@@ -78,6 +59,15 @@ public:
   /// @return The h-cell area field.
   const amrex::MultiFab &areaT() const { return fields_.areaT; }
 
+  /// @brief The ocean bottom depth at h points, positive below the surface
+  /// [Z ~> m].
+  /// @return The h-point bottom depth field.
+  const amrex::MultiFab &bathyT() const { return fields_.bathyT; }
+
+  /// @brief The land/sea mask at h points: 0 for land, 1 for ocean [nondim].
+  /// @return The h-point mask field.
+  const amrex::MultiFab &mask2dT() const { return fields_.mask2dT; }
+
   /// @brief The geographic latitude at u points [degrees_N].
   /// @return The u-point latitude field.
   const amrex::MultiFab &geoLatCu() const { return fields_.geoLatCu; }
@@ -94,6 +84,14 @@ public:
   /// @return The u-point meridional grid spacing.
   const amrex::MultiFab &dyCu() const { return fields_.dyCu; }
 
+  /// @brief The area of a u-cell, zero across land faces [L2 ~> m2].
+  /// @return The u-cell area field.
+  const amrex::MultiFab &areaCu() const { return fields_.areaCu; }
+
+  /// @brief The land/sea mask at u points: 0 for boundary, 1 for ocean [nondim].
+  /// @return The u-point mask field.
+  const amrex::MultiFab &mask2dCu() const { return fields_.mask2dCu; }
+
   /// @brief The geographic latitude at v points [degrees_N].
   /// @return The v-point latitude field.
   const amrex::MultiFab &geoLatCv() const { return fields_.geoLatCv; }
@@ -109,6 +107,14 @@ public:
   /// @brief Delta y at v points [L ~> m].
   /// @return The v-point meridional grid spacing.
   const amrex::MultiFab &dyCv() const { return fields_.dyCv; }
+
+  /// @brief The area of a v-cell, zero across land faces [L2 ~> m2].
+  /// @return The v-cell area field.
+  const amrex::MultiFab &areaCv() const { return fields_.areaCv; }
+
+  /// @brief The land/sea mask at v points: 0 for boundary, 1 for ocean [nondim].
+  /// @return The v-point mask field.
+  const amrex::MultiFab &mask2dCv() const { return fields_.mask2dCv; }
 
   /// @brief The geographic latitude at q (corner) points [degrees_N].
   /// @return The q-point latitude field.
@@ -129,6 +135,10 @@ public:
   /// @brief The area of a q-cell [L2 ~> m2].
   /// @return The q-cell area field.
   const amrex::MultiFab &areaBu() const { return fields_.areaBu; }
+
+  /// @brief The land/sea mask at q points: 0 for boundary, 1 for ocean [nondim].
+  /// @return The q-point mask field.
+  const amrex::MultiFab &mask2dBu() const { return fields_.mask2dBu; }
 
   /// @brief The Coriolis parameter at q points [T-1 ~> s-1].
   /// @return The q-point Coriolis parameter field.

@@ -107,7 +107,7 @@ void Model::initialize_state(RuntimeParams &params) {
 
   fill_psi_demo(psi);
 
-  psi.FillBoundary(domain_.periodicity());
+  domain_.pass_var(psi);
 }
 
 void Model::initialize_dynamics(RuntimeParams &params) {

@@ -1,0 +1,8 @@
+! A live MOM6 TOPO_CONFIG option that protoMOMxx defers (fatal).
+NIGLOBAL = 44
+NJGLOBAL = 40
+GRID_CONFIG = "spherical"
+SOUTHLAT = 30.0
+LENLAT = 20.0
+LENLON = 22.0
+TOPO_CONFIG = "bowl"
