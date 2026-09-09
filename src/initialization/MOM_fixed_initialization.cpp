@@ -8,122 +8,85 @@
 
 namespace MOM {
 
-namespace {
+amrex::MultiFab initialize_topography(const Domain &domain,
+                                      const amrex::MultiFab &geoLatT,
+                                      const amrex::MultiFab &geoLonT,
+                                      RuntimeParams &params) {
 
-// Read the extents of a simple spherical grid into the spec. The analogue of
-// the parameter reads of MOM6's set_grid_metrics_spherical; the metric
-// computation itself lives in MOM_grid_initialize.
-void read_spherical_grid_params(RuntimeParams &params, GridSpec &spec) {
-
-  params.get("SOUTHLAT", spec.south_lat,
-             {.desc = "The southern latitude of the domain.",
-              .units = "degrees_N",
+  std::string config;
+  params.get("TOPO_CONFIG", config,
+             {.desc = "This specifies how bathymetry is specified:\n"
+                      "\t file - read bathymetric information from the file\n"
+                      "\t\t specified by (TOPO_FILE).\n"
+                      "\t flat - flat bottom set to MAXIMUM_DEPTH.\n"
+                      "\t bowl - an analytically specified bowl-shaped basin\n"
+                      "\t\t ranging between MAXIMUM_DEPTH and MINIMUM_DEPTH.\n"
+                      "\t spoon - a similar shape to 'bowl', but with an vertical\n"
+                      "\t\t wall at the southern face.\n"
+                      "\t halfpipe - a zonally uniform channel with a half-sine\n"
+                      "\t\t profile in the meridional direction.\n"
+                      "\t bbuilder - build topography from list of functions.\n"
+                      "\t benchmark - use the benchmark test case topography.\n"
+                      "\t Neverworld - use the Neverworld test case topography.\n"
+                      "\t DOME - use a slope and channel configuration for the\n"
+                      "\t\t DOME sill-overflow test case.\n"
+                      "\t ISOMIP - use a slope and channel configuration for the\n"
+                      "\t\t ISOMIP test case.\n"
+                      "\t DOME2D - use a shelf and slope configuration for the\n"
+                      "\t\t DOME2D gravity current/overflow test case.\n"
+                      "\t Kelvin - flat but with rotated land mask.\n"
+                      "\t seamount - Gaussian bump for spontaneous motion test case.\n"
+                      "\t dumbbell - Sloshing channel with reservoirs on both ends.\n"
+                      "\t shelfwave - exponential slope for shelfwave test case.\n"
+                      "\t Phillips - ACC-like idealized topography used in the Phillips config.\n"
+                      "\t dense - Denmark Strait-like dense water formation and overflow.\n"
+                      "\t USER - call a user modified routine.",
               .fail_if_missing = true});
 
-  params.get("LENLAT", spec.len_lat,
-             {.desc = "The latitudinal length of the domain.",
-              .units = "degrees_N",
-              .fail_if_missing = true});
+  amrex::MultiFab bathyT;
 
-  params.get("WESTLON", spec.west_lon,
-             {.default_value = 0.0,
-              .desc = "The western longitude of the domain.",
-              .units = "degrees_E"});
+  if (config == "flat" || config == "spoon") {
+    const GridExtents extents = read_grid_extents(params);
+    const TopoSpec spec = read_topo_spec(params, config);
 
-  params.get("LENLON", spec.len_lon,
-             {.desc = "The longitudinal length of the domain.",
-              .units = "degrees_E",
-              .fail_if_missing = true});
-
-  params.get("RAD_EARTH", spec.rad_earth,
-             {.default_value = 6.378e6,
-              .desc = "The radius of the Earth.",
-              .units = "m"});
-
-  if (!(spec.len_lat > 0.0) || !(spec.len_lon > 0.0)) {
-    logger::fatal("make_grid: LENLAT and LENLON must be positive.");
-  }
-  if (!(spec.rad_earth > 0.0)) {
-    logger::fatal("make_grid: RAD_EARTH must be positive.");
-  }
-}
-
-// Read the planetary rotation configuration into the spec. The analogue of
-// the parameter reads of MOM6's MOM_initialize_rotation
-// (MOM_shared_initialization.F90).
-void read_rotation_params(RuntimeParams &params, GridSpec &spec) {
-
-  std::string rotation = "2omegasinlat";
-  params.get("ROTATION", rotation,
-             {.default_value = std::string("2omegasinlat"),
-              .desc = "This specifies how the Coriolis parameter is specified:\n"
-                      "\t 2omegasinlat - Use twice the planetary rotation rate\n"
-                      "\t\t times the sine of latitude.\n"
-                      "\t betaplane - Use a beta-plane or f-plane.\n"
-                      "\t USER - call a user modified routine."});
-
-  if (rotation == "2omegasinlat") {
-    params.get("OMEGA", spec.omega,
-               {.default_value = 7.2921e-5,
-                .desc = "The rotation rate of the earth.",
-                .units = "s-1"});
-  } else if (rotation == "beta" || rotation == "betaplane") {
-    // defer: the beta-plane/f-plane rotation (set_rotation_beta_plane).
-    logger::fatal("make_grid: ROTATION \"", rotation,
+    bathyT = initialize_topography_named(domain, config, extents, spec, geoLatT, geoLonT);
+    limit_topography(bathyT, spec);
+  } else if (config == "file" || config == "bowl" || config == "halfpipe" ||
+      config == "bbuilder" || config == "benchmark" ||
+      config == "Neverworld" || config == "Neverland" || config == "DOME" ||
+      config == "ISOMIP" || config == "DOME2D" || config == "Kelvin" ||
+      config == "sloshing" || config == "seamount" || config == "dumbbell" ||
+      config == "shelfwave" || config == "Phillips" || config == "dense" ||
+      config == "USER") {
+    // defer: all other topo options
+    logger::fatal("initialize_topography: TOPO_CONFIG \"", config,
                   "\" is not implemented yet.");
   } else {
-    logger::fatal("make_grid: Unrecognized rotation setup \"", rotation, "\".");
+    logger::fatal("initialize_topography: Unrecognized topography setup \"",
+                  config, "\".");
   }
-}
 
-} // namespace
+  domain.pass_var(bathyT);
+
+  return bathyT;
+}
 
 Grid make_grid(const Domain &domain, RuntimeParams &params) {
 
   params.doc_module("MOM_grid_init", "");
 
-  std::string config;
-  params.get("GRID_CONFIG", config,
-             {.desc = "A character string that determines the method for defining the horizontal "
-                      "grid. Current options are:\n"
-                      "\t mosaic - read the grid from a mosaic (supergrid)\n"
-                      "\t\t file set by GRID_FILE.\n"
-                      "\t cartesian - use a (flat) Cartesian grid.\n"
-                      "\t spherical - use a simple spherical grid.\n"
-                      "\t mercator - use a Mercator spherical grid.",
-              .fail_if_missing = true});
+  GridFields fields = set_grid_metrics(domain, params);
 
-  GridSpec spec;
-  GridFields fields;
-  if (config == "spherical") {
-    read_spherical_grid_params(params, spec);
-    fields = spherical_grid_fields(domain, spec);
-  } else if (config == "mosaic" || config == "cartesian" || config == "mercator") {
-    // defer: the mosaic (file-based), cartesian, and mercator grid
-    //        configurations.
-    logger::fatal("make_grid: GRID_CONFIG \"", config,
-                  "\" is not implemented yet.");
-  } else if (config == "file") {
-    // Retired in MOM6 itself; carry its message.
-    logger::fatal("make_grid: GRID_CONFIG \"file\" is no longer a supported "
-                  "option. Use a mosaic file (\"mosaic\") or one of the analytic "
-                  "forms instead.");
-  } else {
-    logger::fatal("make_grid: Unrecognized grid configuration \"", config, "\".");
-  }
+  fields.bathyT = initialize_topography(domain, fields.geoLatT,
+                                        fields.geoLonT, params);
 
-  // todo: topography (TOPO_CONFIG, MINIMUM_DEPTH, MAXIMUM_DEPTH) and the
-  //       land/sea masks are read and set here, between the metrics and the
-  //       rotation, matching MOM6's MOM_initialize_fixed order.
+  initialize_masks(domain, fields, params);
 
-  read_rotation_params(params, spec);
-  fields.CoriolisBu = planetary_rotation(domain, spec, fields.geoLatBu);
+  fields.CoriolisBu = initialize_rotation(domain, fields.geoLatBu, params);
 
   // defer: the reciprocals (IdxT, IdyCu, IareaT, ...) of MOM6's
-  //        set_derived_dyn_horgrid, until their first user (the dynamics
-  //        kernels), and the u/v-cell areas (areaCu/areaCv), which are
-  //        mask-dependent (areaCu = dxCu * dy_Cu with dy_Cu = mask2dCu * dyCu
-  //        in MOM6's initialize_masks), until the masks are introduced.
+  //        set_derived_dyn_horgrid and initialize_masks, until their first
+  //        user (the dynamics kernels).
 
   return Grid(std::move(fields));
 }

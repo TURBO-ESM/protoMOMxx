@@ -178,6 +178,23 @@ public:
   /// @return The global extent in each periodic direction, 0 otherwise.
   amrex::Periodicity periodicity() const { return domain_.periodicity(); }
 
+  /// @brief Apply halo exchange to a scalar field, based on domain periodicity.
+  /// @param field The field whose halos are to be filled.
+  void pass_var(amrex::MultiFab &field) const {
+    field.FillBoundary(domain_.periodicity());
+  }
+
+  /// @brief Apply halo exchange to several scalar fields at once, so that
+  /// their exchanges overlap rather than run one after another.
+  /// @param fields The fields whose halos are to be filled. They are exchanged
+  ///        in no particular order, so none of them may depend on another.
+  template <typename... MultiFabs>
+  void pass_vars(MultiFabs &...fields) const {
+    const amrex::Periodicity period = domain_.periodicity();
+    (fields.FillBoundary_nowait(period), ...);
+    (fields.FillBoundary_finish(), ...);
+  }
+
 private:
   /// @brief The underlying TIM domain: the decomposition mechanics.
   TIM::Domain domain_;
