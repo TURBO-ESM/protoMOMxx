@@ -189,7 +189,7 @@ public:
   /// @param fields The fields whose halos are to be filled. They are exchanged
   ///        in no particular order, so none of them may depend on another.
   template <typename... MultiFabs>
-  void pass_vars(MultiFabs &...fields) const {
+  void pass_vars(MultiFabs&&... fields) const {
     domain_.pass_vars(std::forward<MultiFabs>(fields)...);
   }
 
