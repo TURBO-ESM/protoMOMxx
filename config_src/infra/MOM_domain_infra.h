@@ -190,7 +190,7 @@ public:
   ///        in no particular order, so none of them may depend on another.
   template <typename... MultiFabs>
   void pass_vars(MultiFabs &...fields) const {
-    domain_.pass_vars(fields);
+    domain_.pass_vars(std::forward<MultiFabs>(fields)...);
   }
 
 private:
