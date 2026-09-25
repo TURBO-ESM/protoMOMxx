@@ -181,7 +181,7 @@ public:
   /// @brief Apply halo exchange to a scalar field, based on domain periodicity.
   /// @param field The field whose halos are to be filled.
   void pass_var(amrex::MultiFab &field) const {
-    field.FillBoundary(domain_.periodicity());
+    domain_.pass_var(field);
   }
 
   /// @brief Apply halo exchange to several scalar fields at once, so that
@@ -189,10 +189,8 @@ public:
   /// @param fields The fields whose halos are to be filled. They are exchanged
   ///        in no particular order, so none of them may depend on another.
   template <typename... MultiFabs>
-  void pass_vars(MultiFabs &...fields) const {
-    const amrex::Periodicity period = domain_.periodicity();
-    (fields.FillBoundary_nowait(period), ...);
-    (fields.FillBoundary_finish(), ...);
+  void pass_vars(MultiFabs&&... fields) const {
+    domain_.pass_vars(std::forward<MultiFabs>(fields)...);
   }
 
 private:
