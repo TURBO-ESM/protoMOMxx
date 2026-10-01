@@ -7,8 +7,8 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 
-#include "MOM_logger.h"
-#include "MOM_vertical_grid.h"
+#include "MOM_logger.hpp"
+#include "MOM_vertical_grid.hpp"
 
 namespace {
 

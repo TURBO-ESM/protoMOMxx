@@ -1,5 +1,5 @@
 #pragma once
-/// @file MOM_domain_infra.h
+/// @file MOM_domain_infra.hpp
 /// @brief The MOM::Domain object is a thin wrapper over TIM::Domain (via composition).
 ///        The analogue of MOM6's MOM_domain_infra, which wraps FMS mpp domains.
 

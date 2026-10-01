@@ -3,10 +3,10 @@
  * @brief Implementation of the Directories class, which contains paths and parameter file names.
  */
 
-#include "MOM_directories.h"
-#include "MOM_logger.h"
-#include "MOM_io.h"
-#include "MOM_nml_parser.h"
+#include "MOM_directories.hpp"
+#include "MOM_logger.hpp"
+#include "MOM_io.hpp"
+#include "MOM_nml_parser.hpp"
 #include <stdexcept>
 
 namespace MOM{

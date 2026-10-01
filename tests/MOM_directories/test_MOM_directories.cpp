@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "MOM_directories.h"
+#include "MOM_directories.hpp"
 
 using namespace MOM;
 

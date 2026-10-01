@@ -1,4 +1,4 @@
-#include "MOM_logger.h"
+#include "MOM_logger.hpp"
 
 void MOM::logger::log_impl(LogLevel level, std::string_view message) {
   if (level == LogLevel::FATAL || level == LogLevel::WARNING) {

@@ -1,5 +1,5 @@
 #pragma once
-/// @file MOM_grid_extents.h
+/// @file MOM_grid_extents.hpp
 /// @brief The geographic extents of an analytic horizontal grid, shared by the
 ///        grid metric setup that computes the coordinates from them and the
 ///        named topography setup that shapes the bottom within them.

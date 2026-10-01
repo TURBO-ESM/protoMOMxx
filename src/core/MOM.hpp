@@ -1,14 +1,14 @@
 #pragma once
-/// @file MOM.h
+/// @file MOM.hpp
 /// @brief Main header for the Modular Ocean Model (MOM) core.
 
 #include <AMReX.H>
 #include <AMReX_MultiFab.H>
 
-#include "MOM_domain_infra.h"
-#include "MOM_file_parser.h"
-#include "MOM_grid.h"
-#include "MOM_vertical_grid.h"
+#include "MOM_domain_infra.hpp"
+#include "MOM_file_parser.hpp"
+#include "MOM_grid.hpp"
+#include "MOM_vertical_grid.hpp"
 
 namespace MOM {
 

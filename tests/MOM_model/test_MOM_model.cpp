@@ -8,8 +8,8 @@
 #include <gtest/gtest.h>
 #include <string>
 
-#include "MOM.h"
-#include "MOM_infra.h"
+#include "MOM.hpp"
+#include "MOM_infra.hpp"
 
 // Helper function to get the absolute path to the test data directory
 std::filesystem::path get_test_data_dir() {

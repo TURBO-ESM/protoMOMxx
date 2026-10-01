@@ -1,5 +1,5 @@
 #pragma once
-/// @file MOM_vertical_grid.h
+/// @file MOM_vertical_grid.hpp
 /// @brief The vertical ocean grid and the coordinate it carries: the number
 ///        of layers, the reduced gravities across interfaces, and the target
 ///        (coordinate) densities of layers. The analogue of MOM6's
@@ -10,7 +10,7 @@
 
 #include <AMReX_REAL.H>
 
-#include "MOM_file_parser.h"
+#include "MOM_file_parser.hpp"
 
 namespace MOM {
 

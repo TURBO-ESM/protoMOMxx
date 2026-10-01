@@ -7,10 +7,10 @@
 #include <exception>
 #include <iostream>
 
-#include "MOM.h"
-#include "MOM_directories.h"
-#include "MOM_infra.h"
-#include "MOM_logger.h"
+#include "MOM.hpp"
+#include "MOM_directories.hpp"
+#include "MOM_infra.hpp"
+#include "MOM_logger.hpp"
 
 /// @brief Main entry point for the protoMOMxx driver program.
 /// @param argc Number of arguments including binary name.

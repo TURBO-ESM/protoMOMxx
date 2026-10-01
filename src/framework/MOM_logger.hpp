@@ -1,5 +1,5 @@
 /**
- * @file MOM_logger.h
+ * @file MOM_logger.hpp
  * @brief Logging utility for protoMOMxx.
  *
  * Provides logging and error handling. Intended to mirror the behavior

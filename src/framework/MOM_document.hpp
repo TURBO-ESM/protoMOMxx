@@ -1,5 +1,5 @@
 /**
- * @file MOM_document.h
+ * @file MOM_document.hpp
  * @brief Documentation generator for MOM runtime parameters.
  *
  * @details

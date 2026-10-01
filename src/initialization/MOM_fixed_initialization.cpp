@@ -1,10 +1,10 @@
 #include <string>
 #include <utility>
 
-#include "MOM_fixed_initialization.h"
-#include "MOM_grid_initialize.h"
-#include "MOM_logger.h"
-#include "MOM_shared_initialization.h"
+#include "MOM_fixed_initialization.hpp"
+#include "MOM_grid_initialize.hpp"
+#include "MOM_logger.hpp"
+#include "MOM_shared_initialization.hpp"
 
 namespace MOM {
 
