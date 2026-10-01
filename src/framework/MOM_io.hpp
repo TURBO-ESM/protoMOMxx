@@ -1,5 +1,5 @@
 #pragma once
-/// @file MOM_io.h
+/// @file MOM_io.hpp
 /// @brief Common I/O utilities for MOM input processing.
 
 #include <filesystem>

@@ -1,10 +1,10 @@
 #pragma once
-/// @file MOM_domains.h
+/// @file MOM_domains.hpp
 /// @brief Runtime-parameter-driven construction of the model Domain.
 ///        The analogue of MOM6's MOM_domains module.
 
-#include "MOM_domain_infra.h"
-#include "MOM_file_parser.h"
+#include "MOM_domain_infra.hpp"
+#include "MOM_file_parser.hpp"
 
 namespace MOM {
 

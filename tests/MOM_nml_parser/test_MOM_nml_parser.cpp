@@ -7,7 +7,7 @@
 #include <variant>
 #include <vector>
 
-#include "MOM_nml_parser.h"
+#include "MOM_nml_parser.hpp"
 
 using namespace MOM;
 

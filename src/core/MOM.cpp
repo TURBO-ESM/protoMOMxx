@@ -1,9 +1,9 @@
 #include <numbers>
 
-#include "MOM.h"
-#include "MOM_domains.h"
-#include "MOM_fixed_initialization.h"
-#include "MOM_logger.h"
+#include "MOM.hpp"
+#include "MOM_domains.hpp"
+#include "MOM_fixed_initialization.hpp"
+#include "MOM_logger.hpp"
 
 namespace MOM {
 

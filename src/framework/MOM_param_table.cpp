@@ -1,5 +1,5 @@
-#include "MOM_param_table.h"
-#include "MOM_string_utils.h"
+#include "MOM_param_table.hpp"
+#include "MOM_string_utils.hpp"
 #include <stdexcept>
 
 namespace MOM {

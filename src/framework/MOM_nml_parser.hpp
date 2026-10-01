@@ -1,5 +1,5 @@
 /**
- * @file MOM_nml_parser.h
+ * @file MOM_nml_parser.hpp
  * @brief Lightweight parser for Fortran namelist files.
  *
  * @details
@@ -39,8 +39,8 @@
 
 #pragma once
 
-#include "MOM_param_table.h"
-#include "MOM_parser_utils.h"
+#include "MOM_param_table.hpp"
+#include "MOM_parser_utils.hpp"
 #include <string>
 #include <vector>
 

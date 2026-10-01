@@ -1,16 +1,16 @@
 #pragma once
-/// @file MOM_grid.h
+/// @file MOM_grid.hpp
 /// @brief The horizontal ocean grid of a model instance: the geographic
 ///        locations, grid spacings, and cell areas at the h/q/u/v points of
 ///        the Arakawa C-grid, the bottom topography, the land/sea masks,
 ///        and the Coriolis parameter. The analogue of
 ///        MOM6's MOM_grid (ocean_grid_type). The field values are computed
 ///        in src/initialization and handed to the constructor as a
-///        GridFields struct (MOM_grid_fields.h).
+///        GridFields struct (MOM_grid_fields.hpp).
 
 #include <AMReX_MultiFab.H>
 
-#include "MOM_grid_fields.h"
+#include "MOM_grid_fields.hpp"
 
 namespace MOM {
 

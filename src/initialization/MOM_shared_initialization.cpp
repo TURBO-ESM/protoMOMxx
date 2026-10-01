@@ -2,9 +2,9 @@
 #include <numbers>
 #include <string>
 
-#include "MOM_shared_initialization.h"
+#include "MOM_shared_initialization.hpp"
 
-#include "MOM_logger.h"
+#include "MOM_logger.hpp"
 
 namespace MOM {
 
