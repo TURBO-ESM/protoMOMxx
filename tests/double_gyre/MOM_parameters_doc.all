@@ -109,6 +109,8 @@ RHO_0 = 1035.0                  !   [kg m-3] default = 1035.0
                                 ! some parameters from vertical units of m to kg m-2.
 BOUSSINESQ = True               ! default = True
                                 ! If true, make the Boussinesq approximation.
+ANGSTROM = 1.0e-10              !   [m] default = 1.0e-10
+                                ! The minimum layer thickness, usually one-Angstrom.
 NK = 2                          !   [nondim]
                                 ! The number of model layers.
 

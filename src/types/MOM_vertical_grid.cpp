@@ -90,12 +90,21 @@ VerticalGrid::VerticalGrid(RuntimeParams &params) {
     logger::fatal("VerticalGrid: the non-Boussinesq mode is not implemented.");
   }
 
-  // defer: the remaining verticalGridInit content. SEMI_BOUSSINESQ and
-  //        RHO_KV_CONVERT (both only meaningful when BOUSSINESQ is false,
-  //        which aborts above), ANGSTROM and the subroundoff thicknesses,
-  //        and H_RESCALE_POWER with the thickness-unit conversion factor
-  //        family (H_to_m, Z_to_H, ...), all of which will be implemented
-  //        with the thickness/units layer, and the mixed-layer layer counts
+  // defer: SEMI_BOUSSINESQ and RHO_KV_CONVERT, both only meaningful when
+  //        BOUSSINESQ is false, which aborts above.
+
+  params.get("ANGSTROM", Angstrom_Z_,
+             {.default_value = 1.0e-10,
+              .desc = "The minimum layer thickness, usually one-Angstrom.",
+              .units = "m"});
+  if (!(Angstrom_Z_ >= 0.0)) {
+    logger::fatal("VerticalGrid: ANGSTROM must be non-negative.");
+  }
+
+  // defer: the rest of verticalGridInit. H_RESCALE_POWER with the
+  //        thickness-unit conversion factor family (H_to_m, Z_to_H, ...)
+  //        and the subroundoff thicknesses, which will be implemented with
+  //        the thickness/units layer, and the mixed-layer layer counts
   //        (nkml, nk_rho_varies), which will be implemented with the bulk
   //        mixed layer.
 
@@ -105,6 +114,17 @@ VerticalGrid::VerticalGrid(RuntimeParams &params) {
               .fail_if_missing = true});
   if (nk_ < 1) {
     logger::fatal("VerticalGrid: NK must be positive.");
+  }
+
+  // MOM6 sets GV%Angstrom_H = (US%Z_to_m * GV%m_to_H) * GV%Angstrom_Z. The
+  // conversion factor is 1 in the Boussinesq mode at the default H_TO_M and
+  // H_RESCALE_POWER, which are not read yet.
+  if (Boussinesq_) {
+    Angstrom_H_ = Angstrom_Z_;
+  } else {
+    // defer: the conversion with m_to_H set from RHO_KV_CONVERT and H_TO_KG_M2,
+    //        with the thickness/units layer.
+    logger::fatal("VerticalGrid: Angstrom_H in the non-Boussinesq mode is not implemented.");
   }
 
   // defer: the diagnosed MAXIMUM_DEPTH (MOM6's diagnoseMaximumDepth)
