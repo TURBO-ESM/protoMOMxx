@@ -30,6 +30,10 @@ TEST(MOMModelTest, ConstructsFromInjectedParams) {
   EXPECT_EQ(model.domain().nj_global(), 40);
   EXPECT_DOUBLE_EQ(model.grid().geoLatBu().min(0), 30.0);
   EXPECT_EQ(model.vertical_grid().nk(), 2);
+
+  // Uniform layers over a flat 2000 m bottom: both layers are 1000 m thick.
+  EXPECT_DOUBLE_EQ(model.state().h.min(0), 1000.0);
+  EXPECT_DOUBLE_EQ(model.state().h.max(0), 1000.0);
 }
 
 // Two Model instances can coexist in one process (multi-instance mode).

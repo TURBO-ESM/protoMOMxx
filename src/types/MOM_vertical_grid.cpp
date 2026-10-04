@@ -177,8 +177,7 @@ VerticalGrid::VerticalGrid(RuntimeParams &params) {
   g_prime_[nk_] = 10.0 * g_Earth_;
 
   // defer: the DEBUG checksum output of Rlay and g_prime (MOM6's chksum
-  //        calls in MOM_initialize_coord); the checksum oracle arrives with
-  //        TIM::checksum at the State PR.
+  //        calls in MOM_initialize_coord).
   // defer: setVerticalGridAxes (the sLayer/sInterface diagnostic coordinate
   //        axes and their names/units) until diagnostics are ready.
   // defer: the unit-string helpers (get_thickness_units, get_flux_units,

@@ -25,7 +25,8 @@ namespace MOM {
 /// accessors returning modifiable references would hide nothing. By the same
 /// rule, Grid (read-only after construction) and VerticalGrid (validated at
 /// construction) are classes. Write access to the state is a matter for its
-/// owner instead. make_state (src/initialization) creates and fills the fields.
+/// owner instead: Model keeps it private and exposes it read-only. make_state
+/// (src/initialization) creates and fills the fields.
 struct State {
   amrex::MultiFab u;  ///< The zonal velocity at u points [L T-1 ~> m s-1].
   amrex::MultiFab v;  ///< The meridional velocity at v points [L T-1 ~> m s-1].
