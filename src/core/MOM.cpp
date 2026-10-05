@@ -13,7 +13,7 @@ Model::Model(RuntimeParams &params)
     vgrid_(params),
     state_(make_state(domain_, grid_, vgrid_, params)) {
 
-  // The remaining initialization phase, in the order of MOM6's initialize_MOM:
+  // The remaining initialization phase to implement
   initialize_dynamics(params);
 
   logger::note("MOM core initialization complete.");

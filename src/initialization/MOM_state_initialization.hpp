@@ -15,8 +15,7 @@ namespace MOM {
 
 /// @brief Create the prognostic fields and set the initial layer thicknesses
 /// and velocities of a new run. The analogue of MOM6's MOM_initialize_state,
-/// together with the allocation of u, v and h that precedes it in MOM6's
-/// initialize_MOM.
+/// together with the allocation of u, v and h.
 /// @param domain The computational domain the fields are created on.
 /// @param grid The horizontal grid, which supplies the bottom depth.
 /// @param vgrid The vertical grid, which supplies the layer count, the

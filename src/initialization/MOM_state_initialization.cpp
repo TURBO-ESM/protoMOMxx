@@ -92,8 +92,8 @@ State make_state(const Domain &domain, const Grid &grid,
 
   // defer: the restart path, where MOM6 reads the parameters below without
   //        logging them and restores u, v and h from the restart file
-  //        (FATAL_INCONSISTENT_RESTART_TIME, restore_state, ROTATE_INDEX).
-  //        Until then, this sets up a new run.
+  //        (restore_state, ROTATE_INDEX), and FATAL_INCONSISTENT_RESTART_TIME,
+  //        which MOM6 also logs on a new run. Until then, this sets up a new run.
 
   bool from_Z_file = false;
   params.get("INIT_LAYERS_FROM_Z_FILE", from_Z_file,
