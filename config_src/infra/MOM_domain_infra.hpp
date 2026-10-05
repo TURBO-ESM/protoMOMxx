@@ -5,6 +5,7 @@
 
 #include <optional>
 
+#include <AMReX.H>
 #include <AMReX_BoxArray.H>
 #include <AMReX_DistributionMapping.H>
 #include <AMReX_IntVect.H>
@@ -193,6 +194,24 @@ public:
     const amrex::Periodicity period = domain_.periodicity();
     (fields.FillBoundary_nowait(period), ...);
     (fields.FillBoundary_finish(), ...);
+  }
+
+  /// @brief Apply halo exchange to a vector field on the C-grid: its
+  /// x-component at u points and its y-component at v points.
+  /// @param u The x-component of the vector, at u points.
+  /// @param v The y-component of the vector, at v points.
+  void pass_vector(amrex::MultiFab &u, amrex::MultiFab &v) const {
+    // todo: For now, we are basically calling pass_vars, i.e., exchanging u
+    //       and v as two independent scalars. This is incorrect for tripolar
+    //       grids because, across the northern fold, a halo point is filled
+    //       from the other side of the grid, where the grid directions are
+    //       reversed, so both components must change sign and their staggered
+    //       indices shift. So this needs to be updated once we start
+    //       supporting tripolar grids.
+    if (tripolar_n()) {
+      amrex::Abort("MOM::Domain::pass_vector: tripolar grids are not supported.");
+    }
+    pass_vars(u, v);
   }
 
 private:

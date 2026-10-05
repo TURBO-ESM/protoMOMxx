@@ -221,9 +221,7 @@ State make_state(const Domain &domain, const Grid &grid,
                   u_config, "\".");
   }
 
-  // MOM6's pass_vector, which differs from two scalar exchanges only at a
-  // tripolar fold.
-  domain.pass_vars(state.u, state.v);
+  domain.pass_vector(state.u, state.v);
 
   // defer: the DEBUG checksums of u, v and h (MOM6's uvchksum and hchksum),
   //        with the checksum oracle.
