@@ -242,17 +242,18 @@ from the CPU ones, or once protoMOMxx's numerics deliberately depart from
 MOM6's). For every configuration where it is still possible, it is the rule,
 with these disciplines:
 
-- **Source contract:** ported MOM6 expressions are copied operation for
-  operation: same operations, same association and evaluation order, same
-  intermediate quantities (e.g., MOM6's `dL_di` form of the zonal spacing, not
-  an algebraically equivalent rewrite), and same constants (`std::numbers::pi`
-  is bit-equal to MOM6's `4*atan(1)` under gnu, intel, and nvhpc, so we use
-  it). Deliberate deviations are noted in a comment beside the expression.
-- **No algebraic rewrites for small gains:** reassociating or folding constants
-  in a ported expression should not cost b4bness for a small speedup. Rewrites
-  that keep the sequence of floating-point operations (control flow, loop
-  structure, data layout) are fine, especially when they make the code clearer
-  or simpler.
+- **Source contract:** by default, ported MOM6 expressions are copied
+  operation for operation: same operations, association, evaluation order,
+  intermediate quantities (e.g., MOM6's `dL_di` form of the zonal spacing), and
+  constants (`std::numbers::pi` is bit-equal to MOM6's `4*atan(1)` under gnu,
+  intel, and nvhpc, so we use it). A rewrite that changes any of these is
+  acceptable once its bit equality is verified, e.g., by a machine-checked
+  equivalence proof, or by extensive tests against MOM6 on several compilers
+  and platforms.
+- **Restructuring is free:** rewrites that keep the sequence of floating-point
+  operations (control flow, loop structure, data layout) need no extra
+  verification, and are welcome when they make the code clearer or simpler. A
+  rewrite that breaks bit equality is not worth a small or unnoticeable speedup.
 - **Build contract:** the same source order is not enough. When protoMOMxx is
   compared with MOM6 for b4bness, both are built with value-safe floating-point
   flags: no FMA contraction and no value-unsafe optimizations. (Turning
