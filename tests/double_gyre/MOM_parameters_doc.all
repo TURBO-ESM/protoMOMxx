@@ -109,6 +109,8 @@ RHO_0 = 1035.0                  !   [kg m-3] default = 1035.0
                                 ! some parameters from vertical units of m to kg m-2.
 BOUSSINESQ = True               ! default = True
                                 ! If true, make the Boussinesq approximation.
+ANGSTROM = 1.0e-10              !   [m] default = 1.0e-10
+                                ! The minimum layer thickness, usually one-Angstrom.
 NK = 2                          !   [nondim]
                                 ! The number of model layers.
 
@@ -137,3 +139,62 @@ GINT = 0.0098                   !   [m s-2]
                                 ! The reduced gravity across internal interfaces.
 LIGHTEST_DENSITY = 1035.0       !   [kg m-3] default = 1035.0
                                 ! The reference potential density used for layer 1.
+
+! === module MOM_state_initialization ===
+INIT_LAYERS_FROM_Z_FILE = False ! default = False
+                                ! If true, initialize the layer thicknesses, temperatures, and salinities from a
+                                ! Z-space file on a latitude-longitude grid.
+THICKNESS_CONFIG = "uniform"    ! default = "uniform"
+                                ! A string that determines how the initial layer thicknesses are specified for a
+                                ! new run:
+                                !    file - read interface heights from the file specified
+                                !      by (THICKNESS_FILE).
+                                !    thickness_file - read thicknesses from the file specified
+                                !      by (THICKNESS_FILE).
+                                !    mass_file - read thicknesses in units of mass per unit area from the file
+                                !      specified by (THICKNESS_FILE).
+                                !    coord - determined by ALE coordinate.
+                                !    uniform - uniform thickness layers evenly distributed
+                                !      between the surface and MAXIMUM_DEPTH.
+                                !    list - read a list of positive interface depths.
+                                !    param - use thicknesses from parameter THICKNESS_INIT_VALUES.
+                                !    DOME - use a slope and channel configuration for the
+                                !      DOME sill-overflow test case.
+                                !    ISOMIP - use a configuration for the
+                                !      ISOMIP test case.
+                                !    benchmark - use the benchmark test case thicknesses.
+                                !    Neverworld - use the Neverworld test case thicknesses.
+                                !    search - search a density profile for the interface
+                                !      densities. This is not yet implemented.
+                                !    circle_obcs - the circle_obcs test case is used.
+                                !    DOME2D - 2D version of DOME initialization.
+                                !    adjustment2d - 2D lock exchange thickness ICs.
+                                !    sloshing - sloshing gravity thickness ICs.
+                                !    seamount - no motion test with seamount ICs.
+                                !    dumbbell - sloshing channel ICs.
+                                !    soliton - Equatorial Rossby soliton.
+                                !    rossby_front - a mixed layer front in thermal wind balance.
+                                !    USER - call a user modified routine.
+DEPRESS_INITIAL_SURFACE = False ! default = False
+                                ! If true,  depress the initial surface to avoid huge tsunamis when a large
+                                ! surface pressure is applied.
+TRIM_IC_FOR_P_SURF = False      ! default = False
+                                ! If true, cuts way the top of the column for initial conditions at the depth
+                                ! where the hydrostatic pressure matches the imposed surface pressure which is
+                                ! read from file.
+VELOCITY_CONFIG = "zero"        ! default = "zero"
+                                ! A string that determines how the initial velocities are specified for a new
+                                ! run:
+                                !    file - read velocities from the file specified
+                                !      by (VELOCITY_FILE).
+                                !    zero - the fluid is initially at rest.
+                                !    uniform - the flow is uniform (determined by
+                                !      parameters INITIAL_U_CONST and INITIAL_V_CONST).
+                                !    rossby_front - a mixed layer front in thermal wind balance.
+                                !    soliton - Equatorial Rossby soliton.
+                                !    USER - call a user modified routine.
+ODA_INCUPD = False              ! default = False
+                                ! If true, oda incremental updates will be applied everywhere in the domain.
+SPONGE = False                  ! default = False
+                                ! If true, sponges may be applied anywhere in the domain. The exact location and
+                                ! properties of those sponges are specified via SPONGE_CONFIG.
