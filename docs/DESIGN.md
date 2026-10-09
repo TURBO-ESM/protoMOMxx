@@ -165,7 +165,7 @@ not C++ specialists.
 
 **Mitigations (binding, not advisory):**
 
-- **Agreed C++ subset:** C++20, limited to what gcc, icpx, nvc++, and
+- **Agreed C++ subset:** C++20, limited to what gcc, icx, nvc++, and
   nvcc all accept. Within that, science code uses a small dialect close to
   MOM6's: free functions, plain structs and value-semantic classes, standard
   containers, and lambdas for `ParallelFor`. It avoids inheritance hierarchies,
