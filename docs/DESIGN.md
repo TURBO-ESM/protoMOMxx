@@ -165,7 +165,7 @@ not C++ specialists.
 
 **Mitigations (binding, not advisory):**
 
-- **Agreed C++ subset:** C++20, limited to what gcc, icpx, nvc++, and
+- **Agreed C++ subset:** C++20, limited to what gcc, icx, nvc++, and
   nvcc all accept. Within that, science code uses a small dialect close to
   MOM6's: free functions, plain structs and value-semantic classes, standard
   containers, and lambdas for `ParallelFor`. It avoids inheritance hierarchies,
@@ -256,8 +256,8 @@ Where b4b is possible, we maintain it with these rules:
   operations (control flow, loop structure, data layout) need no extra
   verification, and are welcome when they make the code clearer or simpler. A
   rewrite that breaks bit equality is not worth a small or unnoticeable speedup.
-- **Build contract:** for a b4b comparison, matching source is not always
-  enough; the builds must match too. Both sides, and every library they link
+- **Build contract:** matching source is not always enough; the builds must
+  match too. For a b4b comparison, both sides, and every library they link
   (e.g., TIM and AMReX), are built without FMA contraction (simpler than
   matching where each compiler fuses) or other value-unsafe optimizations.
   Also, math-library functions (`sin`, `cos`, `atan`, ...) may differ between
