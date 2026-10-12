@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cctype>
 #include <string>
 #include <vector>
 
@@ -25,6 +26,16 @@ inline std::string lowercase(std::string_view sv) {
   std::string out(sv);
   for (char &c : out)
     c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+  return out;
+}
+
+/// @brief Convert a string_view to uppercase.
+/// @param sv The input string_view to convert.
+/// @return A new string with all characters converted to uppercase.
+inline std::string uppercase(std::string_view sv) {
+  std::string out(sv);
+  for (char &c : out)
+    c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
   return out;
 }
 
