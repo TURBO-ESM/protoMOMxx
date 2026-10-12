@@ -7,12 +7,10 @@ VERBOSITY = 2                   ! default = 2
                                 !   0 = Only FATAL messages
                                 !   2 = Only FATAL, WARNING, NOTE [default]
                                 !   9 = All
-SPLIT = True                    ! default = True
+SPLIT = False                   ! default = True
                                 ! Use the split time stepping if true.
-SPLIT_RK4 = False               ! default = False
-                                ! If true, use a version of the split explicit time stepping scheme that
-                                ! exchanges velocities with step_MOM that have the average barotropic phase over
-                                ! a baroclinic timestep rather than the instantaneous barotropic phase.
+USE_RK2 = True                  ! default = False
+                                ! If true, use RK2 instead of RK3 in the unsplit time stepping.
 
 ! === module MOM_domains ===
 REENTRANT_X = False             ! default = True

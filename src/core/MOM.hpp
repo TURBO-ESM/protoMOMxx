@@ -24,7 +24,7 @@ public:
   /// scalar members of MOM6's MOM_control_struct).
   struct Config {
     bool split = true;            ///< Use split time stepping.
-    bool split_rk4 = false;       ///< Use the RK4 variant of the split scheme.
+    bool use_alt_split = false;   ///< Use the split_RK2b variant of the split scheme.
     bool use_RK2 = false;         ///< Use RK2 (not RK3) in unsplit stepping.
     bool fpmix = false;           ///< Use the FPMIX algorithm.
     bool debug = false;           ///< Write verbose debugging data.

@@ -2,6 +2,10 @@
 
 ! === module MOM ===
                                 ! Main MOM ocean model module
+SPLIT = False                   ! default = True
+                                ! Use the split time stepping if true.
+USE_RK2 = True                  ! default = False
+                                ! If true, use RK2 instead of RK3 in the unsplit time stepping.
 
 ! === module MOM_domains ===
 REENTRANT_X = False             ! default = True
