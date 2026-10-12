@@ -120,6 +120,9 @@ RunControl read_run_control(RuntimeParams &params, Time time) {
   // steps for MOM_write_cputime and sizes the diabatic steps of the separate
   // calls (SINGLE_STEPPING_CALL = False). Neither is implemented yet.
 
+  if (dt_forcing <= 0.0) {
+    logger::fatal("MOM_driver: DT_FORCING = ", dt_forcing, " s, but it must be positive.");
+  }
   run.time_step_ocean = real_to_time(dt_forcing);
   const bool elapsed_time_master =
       std::abs(dt_forcing - time_to_real(run.time_step_ocean)) > 1.0e-12 * dt_forcing;

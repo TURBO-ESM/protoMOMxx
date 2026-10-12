@@ -39,6 +39,16 @@ inline std::string uppercase(std::string_view sv) {
   return out;
 }
 
+/// @brief Terminate a directory name with a "/", or change it to "./" if it's blank.
+/// @param dir The directory name.
+/// @return The directory name, ending in "/".
+inline std::string slasher(std::string_view dir) {
+  const std::string_view d = trim(dir);
+  if (d.empty()) return "./";
+  if (d.back() == '/') return std::string(d);
+  return std::string(d) + "/";
+}
+
 /// @brief Check if a string_view is a valid identifier
 ///
 /// A valid identifier starts with a letter or underscore, followed by letters, digits, or underscores.

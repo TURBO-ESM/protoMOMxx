@@ -38,9 +38,10 @@ RunStart read_ocean_solo_nml(const std::string &nml_file, const std::string &res
 /// @param params Runtime parameters.
 /// @param time The model time at the start of the run.
 /// @return The run-control parameters.
-/// @throws logger::FatalError if DT_FORCING is not a whole number of seconds,
-///         if SINGLE_STEPPING_CALL is false, or if @p time is at or after the
-///         end time.
+/// @throws logger::FatalError if DT_FORCING is not positive or not a whole
+///         number of seconds, if SINGLE_STEPPING_CALL is false, or if @p time
+///         is at or after the end time.
+/// @throws std::out_of_range if DT or DAYMAX is missing.
 RunControl read_run_control(RuntimeParams &params, Time time);
 
 } // namespace MOM
