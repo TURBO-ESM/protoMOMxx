@@ -2,6 +2,8 @@
 /// @file MOM.hpp
 /// @brief Main header for the Modular Ocean Model (MOM) core.
 
+#include <AMReX_REAL.H>
+
 #include "MOM_domain_infra.hpp"
 #include "MOM_file_parser.hpp"
 #include "MOM_grid.hpp"
@@ -28,6 +30,7 @@ public:
     bool use_RK2 = false;         ///< Use RK2 (not RK3) in unsplit stepping.
     bool fpmix = false;           ///< Use the FPMIX algorithm.
     bool debug = false;           ///< Write verbose debugging data.
+    amrex::Real dt = 0.0;         ///< The baroclinic dynamics time step [T ~> s].
   };
 
   /// @brief Initialize the model (the analogue of MOM6's initialize_MOM).

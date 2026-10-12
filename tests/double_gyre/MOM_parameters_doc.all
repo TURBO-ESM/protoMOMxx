@@ -11,6 +11,10 @@ SPLIT = False                   ! default = True
                                 ! Use the split time stepping if true.
 USE_RK2 = True                  ! default = False
                                 ! If true, use RK2 instead of RK3 in the unsplit time stepping.
+DT = 300.0                      !   [s]
+                                ! The (baroclinic) dynamics time step.  The time-step that is actually used will
+                                ! be an integer fraction of the forcing time-step (DT_FORCING in ocean-only mode
+                                ! or the coupling timestep in coupled mode.)
 
 ! === module MOM_domains ===
 REENTRANT_X = False             ! default = True

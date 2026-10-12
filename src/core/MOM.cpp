@@ -70,6 +70,14 @@ Model::Config Model::read_config_switches(RuntimeParams &params) {
               .units = "nondim",
               .debugging_param = true});
 
+  params.get("DT", config.dt,
+             {.desc = "The (baroclinic) dynamics time step.  The time-step that "
+                      "is actually used will be an integer fraction of the "
+                      "forcing time-step (DT_FORCING in ocean-only mode or the "
+                      "coupling timestep in coupled mode.)",
+              .units = "s",
+              .fail_if_missing = true});
+
   return config;
 }
 
