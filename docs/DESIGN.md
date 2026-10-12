@@ -171,9 +171,9 @@ not C++ specialists.
   containers, and lambdas for `ParallelFor`. It avoids inheritance hierarchies,
   virtual dispatch, raw `new`/`delete`, and macros beyond AMReX's GPU
   annotations.
-- **Views are short-lived:** an `Array4` (or any view into a field) is created
-  inside the loop that uses it, and is never stored as a member or kept after
-  that loop.
+- **Views don't outlive their data:** an `Array4` (or any view into a field)
+  must not outlive the storage it points to. Views are created where they are
+  used or passed down as arguments.
 - **No hidden copies of large data:** fields and grids are moved or passed by
   reference (`MultiFab` is already non-copyable), and single-argument
   constructors are `explicit`.
@@ -236,34 +236,34 @@ same configuration side by side (same `MOM_input`, comparable
 in the long term.
 
 **Bit-for-bit parity with legacy MOM6, wherever possible.** The target is
-bitwise, not approximate, wherever the numerics allow. B4b may stop being
-possible for some configurations (e.g., on GPUs, whose math libraries differ
-from the CPU ones, or once protoMOMxx's numerics deliberately depart from
-MOM6's). For every configuration where it is still possible, it is the rule,
-with these disciplines:
+bitwise, not approximate. Some configurations may not allow it (e.g., on GPUs,
+for math functions that come from the device math library rather than MOM6's
+own source, or once protoMOMxx's numerics deliberately depart from MOM6's).
+Where b4b is possible, we maintain it with these rules:
 
-- **Source contract:** by default, ported MOM6 expressions are copied
-  operation for operation: same operations, association, evaluation order,
-  intermediate quantities (e.g., MOM6's `dL_di` form of the zonal spacing), and
-  constants (`std::numbers::pi` is bit-equal to MOM6's `4*atan(1)` under gnu,
-  intel, and nvhpc, so we use it). A rewrite that changes any of these is
-  acceptable once its bit equality is verified, e.g., by a machine-checked
-  equivalence proof, or by extensive tests against MOM6 on several compilers
-  and platforms.
+- **Source contract:** for a b4b comparison, the ported code should do the same
+  arithmetic as MOM6. By default, ported expressions are copied operation for
+  operation: same operations, association, evaluation order, intermediate
+  quantities (e.g., MOM6's `dL_di` form of the zonal spacing), and constants
+  (e.g., `std::numbers::pi`, which is bit-equal to MOM6's `4*atan(1)` under
+  gnu, intel, and nvhpc). Also, where MOM6 implements a math function in its
+  own source so that it matches across compilers (e.g., `cuberoot`), we should
+  use or port it rather than a math-library version, including any MOM6 adds
+  later. A rewrite that changes any of this is fine once its bit equality is
+  verified, e.g., by a machine-checked equivalence proof or by extensive tests
+  against MOM6 on several compilers and platforms.
 - **Restructuring is free:** rewrites that keep the sequence of floating-point
   operations (control flow, loop structure, data layout) need no extra
   verification, and are welcome when they make the code clearer or simpler. A
   rewrite that breaks bit equality is not worth a small or unnoticeable speedup.
-- **Build contract:** the same source order is not enough. When protoMOMxx is
-  compared with MOM6 for b4bness, both are built with value-safe floating-point
-  flags: no FMA contraction and no value-unsafe optimizations. (Turning
-  contraction off on both sides is simpler than matching it, since compilers
-  fuse per expression.) The same flags apply to every library in the
-  comparison, e.g., TIM and AMReX. Transcendental functions (`sin`, `cos`,
-  `atan`, ...) are only reproducible bit for bit when both sides use the same
-  math library, since IEEE-754 does not specify them, so a comparison also
-  fixes the toolchain pair. Note: this does NOT constrain the flags protoMOMxx
-  uses in production; it applies to parity comparisons only.
+- **Build contract:** for a b4b comparison, matching source is not always
+  enough; the builds must match too. Both sides, and every library they link
+  (e.g., TIM and AMReX), are built without FMA contraction (simpler than
+  matching where each compiler fuses) or other value-unsafe optimizations.
+  Also, math-library functions (`sin`, `cos`, `atan`, ...) may differ between
+  libraries in the last bit, so both sides should use the same toolchain
+  wherever possible, except for the functions MOM6 implements itself (source
+  contract).
 
 Order-dependent reductions are outside the pointwise contract and go through
 the reproducing-sum service. Where exact parity is impossible, the parity
@@ -354,11 +354,11 @@ for the numerics.
 `config_src/infra` (the protoMOMxx-side wrappers over TIM) as the only
 exception, and only for a really good reason. Until then, the team agreed to
 use AMReX types directly (e.g., `amrex::Real`) to move fast, keep a thin
-boundary where that is cheap, and reassess the structure once ~1,000 lines of
-non-trivial AMReX code exist. Harness code counts in that reassessment as much
-as kernels, since it is often the first thing a new contributor writes (e.g.,
-an idealized topography). Abstractions should evolve with the code rather than
-be retrofitted later.
+boundary where that is cheap, and reassess the structure once the double-gyre
+configuration runs end to end with unsplit time stepping (`SPLIT = False`).
+Harness code counts in that reassessment as much as kernels, since it is often
+the first thing a new contributor writes (e.g., an idealized topography).
+Abstractions should evolve with the code rather than be retrofitted later.
 
 **What `amrex::` signals:** a reader who sees `amrex::` in the code should be
 able to assume it has to do with infrastructure: distributed fields, box
