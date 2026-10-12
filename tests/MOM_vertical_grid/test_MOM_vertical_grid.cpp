@@ -31,6 +31,8 @@ TEST(MOMVerticalGridTest, ConstructsFromInjectedParams) {
   EXPECT_DOUBLE_EQ(vgrid.max_depth(), 2000.0);
   EXPECT_DOUBLE_EQ(vgrid.g_Earth(), 9.8);   // default
   EXPECT_DOUBLE_EQ(vgrid.Rho0(), 1035.0);   // default
+  EXPECT_DOUBLE_EQ(vgrid.Angstrom_Z(), 1.0e-10);  // default
+  EXPECT_EQ(vgrid.Angstrom_H(), vgrid.Angstrom_Z());  // Boussinesq, default H_TO_M
 
   ASSERT_EQ(vgrid.g_prime().size(), 3u);
   EXPECT_DOUBLE_EQ(vgrid.g_prime()[0], 0.98);    // GFS
