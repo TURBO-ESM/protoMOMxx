@@ -1,9 +1,9 @@
 #include <string>
 #include <vector>
 
-#include "MOM_domains.h"
-#include "MOM_logger.h"
-#include "MOM_unsupported_params.h"
+#include "MOM_domains.hpp"
+#include "MOM_logger.hpp"
+#include "MOM_unsupported_params.hpp"
 
 namespace MOM {
 

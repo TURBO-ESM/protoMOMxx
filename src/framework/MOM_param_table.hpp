@@ -1,5 +1,5 @@
 /**
- * @file MOM_param_table.h
+ * @file MOM_param_table.hpp
  * @brief A shared parameter storage table used by both RuntimeParams and NamelistParams.
  *
  * @details
@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "MOM_parser_utils.h"
+#include "MOM_parser_utils.hpp"
 #include <string>
 #include <unordered_map>
 #include <vector>

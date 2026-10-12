@@ -5,10 +5,10 @@
 
 #include <AMReX_GpuDevice.H>
 
-#include "MOM_grid_initialize.h"
+#include "MOM_grid_initialize.hpp"
 
-#include "MOM_logger.h"
-#include "MOM_shared_initialization.h"
+#include "MOM_logger.hpp"
+#include "MOM_shared_initialization.hpp"
 
 namespace MOM {
 

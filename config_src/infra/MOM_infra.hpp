@@ -1,5 +1,5 @@
 #pragma once
-/// @file MOM_infra.h
+/// @file MOM_infra.hpp
 /// @brief Startup/shutdown of the infrastructure layer (MPI and AMReX), as a
 ///        thin wrapper over TIM::Runtime.
 

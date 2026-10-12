@@ -16,12 +16,12 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_ParallelDescriptor.H>
 
-#include "MOM_domain_infra.h"
-#include "MOM_grid.h"
-#include "MOM_grid_initialize.h"
-#include "MOM_infra.h"
-#include "MOM_logger.h"
-#include "MOM_shared_initialization.h"
+#include "MOM_domain_infra.hpp"
+#include "MOM_grid.hpp"
+#include "MOM_grid_initialize.hpp"
+#include "MOM_infra.hpp"
+#include "MOM_logger.hpp"
+#include "MOM_shared_initialization.hpp"
 
 namespace {
 

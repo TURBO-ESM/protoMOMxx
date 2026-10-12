@@ -1,5 +1,5 @@
 /**
- * @file MOM_directories.h
+ * @file MOM_directories.hpp
  * @brief Container for paths and parameter file names.
  *
  * @details

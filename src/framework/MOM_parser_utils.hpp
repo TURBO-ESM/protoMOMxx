@@ -1,5 +1,5 @@
 /**
- * @file MOM_parser_utils.h
+ * @file MOM_parser_utils.hpp
  * @brief Common parsing utilities for MOM runtime parameter and namelist parsers.
  *
  * This header contains shared parsing functions used by both MOM_file_parser and MOM_nml_parser

@@ -7,8 +7,8 @@
 #include <string>
 #include <vector>
 
-#include "MOM_document.h"
-#include "MOM_logger.h"
+#include "MOM_document.hpp"
+#include "MOM_logger.hpp"
 
 using namespace MOM;
 

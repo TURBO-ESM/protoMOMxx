@@ -7,9 +7,9 @@
 
 #include <AMReX_MultiFab.H>
 
-#include "MOM_domains.h"
-#include "MOM_infra.h"
-#include "MOM_logger.h"
+#include "MOM_domains.hpp"
+#include "MOM_infra.hpp"
+#include "MOM_logger.hpp"
 
 // Helper function to get the absolute path to the test data directory
 std::filesystem::path get_test_data_dir() {

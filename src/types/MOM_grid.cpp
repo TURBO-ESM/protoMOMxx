@@ -1,8 +1,8 @@
 #include <string_view>
 
-#include "MOM_grid.h"
+#include "MOM_grid.hpp"
 
-#include "MOM_logger.h"
+#include "MOM_logger.hpp"
 
 namespace MOM {
 

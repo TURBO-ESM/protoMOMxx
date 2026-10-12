@@ -1,6 +1,6 @@
-#include "MOM_file_parser.h"
-#include "MOM_logger.h"
-#include "MOM_string_utils.h"
+#include "MOM_file_parser.hpp"
+#include "MOM_logger.hpp"
+#include "MOM_string_utils.hpp"
 #include <filesystem>
 #include <fstream>
 #include <stdexcept>

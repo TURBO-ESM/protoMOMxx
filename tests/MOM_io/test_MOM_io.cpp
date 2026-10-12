@@ -1,9 +1,9 @@
-// Unit tests for MOM_io.h (ensembler utility)
+// Unit tests for MOM_io.hpp (ensembler utility)
 
 #include <gtest/gtest.h>
 #include <string>
 
-#include "MOM_io.h"
+#include "MOM_io.hpp"
 
 using namespace MOM;
 

@@ -1,5 +1,5 @@
 #pragma once
-/// @file MOM_shared_initialization.h
+/// @file MOM_shared_initialization.hpp
 /// @brief Initialization code shared between configurations: the planetary
 ///        rotation and the named analytic topographies with their depth
 ///        limiting. The analogue of MOM6's MOM_shared_initialization.F90.
@@ -9,9 +9,9 @@
 
 #include <AMReX_MultiFab.H>
 
-#include "MOM_domain_infra.h"
-#include "MOM_file_parser.h"
-#include "MOM_grid_extents.h"
+#include "MOM_domain_infra.hpp"
+#include "MOM_file_parser.hpp"
+#include "MOM_grid_extents.hpp"
 
 namespace MOM {
 

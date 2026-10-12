@@ -1,6 +1,6 @@
-#include "MOM_nml_parser.h"
-#include "MOM_parser_utils.h"
-#include "MOM_string_utils.h"
+#include "MOM_nml_parser.hpp"
+#include "MOM_parser_utils.hpp"
+#include "MOM_string_utils.hpp"
 #include <filesystem>
 #include <fstream>
 #include <stdexcept>

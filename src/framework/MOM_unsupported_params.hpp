@@ -1,5 +1,5 @@
 #pragma once
-/// @file MOM_unsupported_params.h
+/// @file MOM_unsupported_params.hpp
 /// @brief Handling of MOM6 parameters that protoMOMxx does not support.
 ///
 /// The parameters handled here are read only to warn users that protoMOMxx
@@ -8,8 +8,8 @@
 
 #include <string>
 
-#include "MOM_file_parser.h"
-#include "MOM_logger.h"
+#include "MOM_file_parser.hpp"
+#include "MOM_logger.hpp"
 
 namespace MOM {
 

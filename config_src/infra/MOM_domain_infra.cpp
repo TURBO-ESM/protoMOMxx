@@ -1,4 +1,4 @@
-#include "MOM_domain_infra.h"
+#include "MOM_domain_infra.hpp"
 
 namespace MOM {
 

@@ -16,7 +16,7 @@
 #include <AMReX_BoxArray.H>
 #include <AMReX_MultiFab.H>
 
-#include "MOM_infra.h"
+#include "MOM_infra.hpp"
 #include "tim_coms_infra.hpp"
 
 namespace {

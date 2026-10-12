@@ -5,7 +5,7 @@
  * Reimplements the Fortran MOM_document module in C++.
  */
 
-#include "MOM_document.h"
+#include "MOM_document.hpp"
 
 #include <algorithm>
 #include <array>
@@ -17,7 +17,7 @@
 #include <type_traits>
 #include <stdexcept>
 
-#include "MOM_logger.h"
+#include "MOM_logger.hpp"
 
 namespace MOM {
 

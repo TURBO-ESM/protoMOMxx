@@ -1,5 +1,5 @@
 #pragma once
-/// @file MOM_grid_fields.h
+/// @file MOM_grid_fields.hpp
 /// @brief The construction-phase counterpart of the horizontal grid: the
 ///        struct of grid fields that src/initialization computes and the
 ///        Grid constructor takes over. The analogue of MOM6's

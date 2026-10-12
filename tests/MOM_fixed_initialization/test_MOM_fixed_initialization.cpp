@@ -9,12 +9,12 @@
 #include <filesystem>
 #include <gtest/gtest.h>
 
-#include "MOM_domains.h"
-#include "MOM_fixed_initialization.h"
-#include "MOM_grid.h"
-#include "MOM_grid_initialize.h"
-#include "MOM_infra.h"
-#include "MOM_logger.h"
+#include "MOM_domains.hpp"
+#include "MOM_fixed_initialization.hpp"
+#include "MOM_grid.hpp"
+#include "MOM_grid_initialize.hpp"
+#include "MOM_infra.hpp"
+#include "MOM_logger.hpp"
 
 namespace {
 

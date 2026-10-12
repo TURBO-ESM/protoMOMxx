@@ -7,8 +7,8 @@
 
 #include <gtest/gtest.h>
 
-#include "MOM_domain_infra.h"
-#include "MOM_infra.h"
+#include "MOM_domain_infra.hpp"
+#include "MOM_infra.hpp"
 
 // Exercise the whole wrapper surface
 TEST(Domain, MapsVocabularyAndDelegates) {

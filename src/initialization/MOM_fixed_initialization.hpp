@@ -1,13 +1,13 @@
 #pragma once
-/// @file MOM_fixed_initialization.h
+/// @file MOM_fixed_initialization.hpp
 /// @brief Construction of the fixed (time-invariant) aspects of the model:
 ///        the horizontal grid metrics, the bottom topography, and the
 ///        planetary rotation, and later the land/sea masks. The analogue of MOM6's
 ///        MOM_initialize_fixed (MOM_fixed_initialization.F90).
 
-#include "MOM_domain_infra.h"
-#include "MOM_file_parser.h"
-#include "MOM_grid.h"
+#include "MOM_domain_infra.hpp"
+#include "MOM_file_parser.hpp"
+#include "MOM_grid.hpp"
 
 namespace MOM {
 

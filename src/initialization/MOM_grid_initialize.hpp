@@ -1,14 +1,14 @@
 #pragma once
-/// @file MOM_grid_initialize.h
+/// @file MOM_grid_initialize.hpp
 /// @brief The horizontal grid metrics: the GRID_CONFIG dispatch, the parameter
 ///        reads of the selected configuration, and the computation of its
 ///        metric fields. Also the land/sea masks, set from the bottom depth.
 ///        The analogue of MOM6's MOM_grid_initialize.F90
 
-#include "MOM_domain_infra.h"
-#include "MOM_file_parser.h"
-#include "MOM_grid_extents.h"
-#include "MOM_grid_fields.h"
+#include "MOM_domain_infra.hpp"
+#include "MOM_file_parser.hpp"
+#include "MOM_grid_extents.hpp"
+#include "MOM_grid_fields.hpp"
 
 namespace MOM {
 
