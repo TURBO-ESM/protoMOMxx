@@ -67,6 +67,8 @@ public:
   /// @param key The parameter key
   /// @param value An output reference to store the retrieved parameter value.
   /// @param namelist The namelist name (empty string for global scope)
+  /// @note If the namelist or the key does not exist, @p value is left
+  ///       unchanged, as in Fortran.
   /// @throws std::runtime_error if the parameter is not of type T
   template <typename T>
   void get(const std::string &key, T &value, const std::string &namelist = "") const;

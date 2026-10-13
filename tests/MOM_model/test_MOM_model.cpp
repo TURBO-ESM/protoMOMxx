@@ -26,6 +26,7 @@ TEST(MOMModelTest, ConstructsFromInjectedParams) {
 
   EXPECT_FALSE(model.config().split);
   EXPECT_TRUE(model.config().use_RK2);
+  EXPECT_DOUBLE_EQ(model.config().dt, 300.0);
   EXPECT_EQ(model.domain().ni_global(), 44);
   EXPECT_EQ(model.domain().nj_global(), 40);
   EXPECT_DOUBLE_EQ(model.grid().geoLatBu().min(0), 30.0);
