@@ -84,7 +84,7 @@ TEST(InfraTIMCoexistence, MultiFabReductionAndChecksum) {
       static_cast<int64_t>(fill_bits * static_cast<uint64_t>(global_size));
 
   EXPECT_EQ(expected_checksum,
-            TIM::checksum(local.data(), local.size(), /*mask_val=*/nullptr));
+            TIM::checksum(mf));
 }
 
 } // namespace
