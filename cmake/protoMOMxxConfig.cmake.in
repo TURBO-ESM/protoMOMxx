@@ -1,0 +1,39 @@
+@PACKAGE_INIT@
+
+# protoMOMxxConfig.cmake
+#
+# Valid Find COMPONENTS:
+#  * MOM_BRIDGE - the MOM Fortran<->C++ bridge
+#
+# Imported targets provided:
+#  * protoMOMxx::mom_bridge  - extern "C" turbotmp_*_bridge entry points
+#  * protoMOMxx::mom_kernels - the AMReX kernels, reached through mom_bridge's
+#                              link interface; consumers need not link it
+
+include(CMakeFindDependencyMacro)
+
+# Resolve transitive deps BEFORE including the exported targets: their link
+# interface names TIM::tim and AMReX::amrex_3d. The hints are the packages
+# protoMOMxx was built against; a consumer that already found them is
+# unaffected.
+find_dependency(TIM HINTS "@TIM_DIR@")
+find_dependency(AMReX HINTS "@AMReX_DIR@")
+
+include("${CMAKE_CURRENT_LIST_DIR}/protoMOMxx-targets.cmake")
+
+set(_possible_protomomxx_components "MOM_BRIDGE")
+foreach(_comp ${protoMOMxx_FIND_COMPONENTS})
+  if(NOT _comp IN_LIST _possible_protomomxx_components)
+    message(SEND_ERROR
+      "protoMOMxx: COMPONENT ${_comp} is not a valid component. "
+      "Valid components: ${_possible_protomomxx_components}")
+  endif()
+endforeach()
+unset(_possible_protomomxx_components)
+
+set(protoMOMxx_MOM_BRIDGE_FOUND 0)
+if(TARGET protoMOMxx::mom_bridge)
+  set(protoMOMxx_MOM_BRIDGE_FOUND 1)
+endif()
+
+check_required_components(protoMOMxx)
