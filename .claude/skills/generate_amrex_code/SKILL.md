@@ -1,6 +1,6 @@
 ---
 name: generate_amrex_code
-version: "0.3.1"
+version: "0.3.2"
 description: Produce the C++/AMReX side of a bridge for a MOM6 Fortran subroutine. Adds a three-tier implementation inside a TURBO-ESM/protoMOMxx checkout (under src/mom_kernels/) — an extern "C" marshalling bridge, an AMReX kernel in namespace MOM, and (when the kernel is stencil-free per cell) a pointwise device primitive — and reuses the existing turbotmp::A4Box helper for host↔device transfer and Fortran↔C layout transpose. Grounds the AMReX port in the original Fortran source, located either via an optional MOM6 checkout path or by user paste. Assumes the Fortran-side bind(C) interface and capture-mode regression input already exist; this skill does not modify any Fortran source. Mirrors the pattern established in TURBO-ESM/TIM PR #8 (that code now lives in protoMOMxx).
 user-invocable: true
 argument-hint: <function-name> [<mom6-directory>] [--work_dir <path>] [--enable_src_validate] [--enable_git_commit] [--disable_git_commit]
@@ -290,20 +290,20 @@ holds the template or rationale.
 
 ### 8. Bridge implementation in `src/mom_kernels/turbotmp_<module>_bridge.cpp`
    Implement the new prototype following the **7-step marshalling
-   pattern** in lessons.md §3 (build `Box` with index −1, `make_array4`
-   each array sized by `shape[]` **and positioned by `lb[]`** — never
-   omit `lb`, even when every array in this call happens to share the
-   same one; see lessons.md §6 and §7 #12 — copy host→device for inputs
+   pattern** in lessons.md §3 (build `Box` with `turbotmp::to_box`,
+   `make_array4(X_HOST)` each array, which sizes it by `shape[]` **and
+   positions it by `lb[]`**; see lessons.md §6 and §7 #12 — copy host→device for inputs
    **and** inouts, call the `MOM::` kernel, `Gpu::synchronize`, copy
    device→host for outputs/inouts only, free everything). No math, no
    value-dependent branches.
 
 ### 9. Extend `src/mom_kernels/turbotmp/turbotmp_helper.{hpp,cpp}` only if needed
    Reuse existing helpers (lessons.md §2, §2.1). `A4Box`/`make_array4`
-   handles `RealArray_C`; `IntA4Box`/`make_int_array4` handles both
-   `LogicalArray_C` and `IntArray_C` (identical C-side layout — see
-   §2.1). Only add a new helper if the new bridge needs a layout/type
-   neither of those covers.
+   handles `RealArray_C`; `IntA4Box`/`make_int_array4` handles
+   `LogicalArray_C`. There is no `IntArray_C` overload yet: a new bridge
+   with an `IntArray_C` argument adds `make_int_array4(const IntArray_C*)`
+   (see lessons.md §2.1). That, or a layout/type neither helper covers,
+   is the only reason to add a new helper.
 
 ### 10. Wire into the build
    In `<work-dir>/src/mom_kernels/CMakeLists.txt`, add a new kernel

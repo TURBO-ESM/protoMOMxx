@@ -8,6 +8,8 @@
 #include <AMReX_Array4.H>
 #include <AMReX_MultiFab.H>
 
+#include "turbotmp_bridge_c_types.h"
+
 /// Helpers shared by the extern "C" bridges; not part of the installed surface.
 namespace turbotmp {
 
@@ -29,25 +31,20 @@ struct A4Box
    /**
     * @brief Allocate an A4Box for a Fortran real array.
     *
-    * lbx/lby/lbz are the array's Fortran index-space lower bounds (i.e., the
-    * values returned by lbound() on the Fortran side). For a faked-out 2D
-    * dimension, pass 1 (matching how nz=1 is passed for 2D arrays).
+    * Sizes and positions the array from the descriptor's shape[] and lb[]
+    * (the values returned by shape() and lbound() on the Fortran side). A 2D
+    * descriptor (dim == 2) gets nz = 1 and lbz = 1. ncomp is always 1.
+    * Aborts unless dim is 2 or 3.
     * The returned A4Box's box -- and therefore a4.arr's valid index range --
     * is positioned at the array's true absolute location (lb-1 .. lb-1+n-1),
     * not just [0, n-1]. Staggered-grid arrays (u/v-point fields) legitimately
     * have lb != 1, and shared iteration boxes require each array4 to be
     * positioned at its own real offset so indexing hits the correct element.
     *
-    * @param nx    Extent in x.
-    * @param ny    Extent in y.
-    * @param nz    Extent in z.
-    * @param ncomp Number of components.
-    * @param lbx   Fortran lower bound in x.
-    * @param lby   Fortran lower bound in y.
-    * @param lbz   Fortran lower bound in z.
+    * @param a Descriptor of the Fortran array.
     * @return The allocated A4Box; release it with free_array4().
     */
-   A4Box make_array4(int nx, int ny, int nz, int ncomp, int lbx, int lby, int lbz);
+   A4Box make_array4(const RealArray_C* a);
    /**
     * @brief Free the device buffers of an A4Box.
     * @param a4 Box to free; its pointers are reset to nullptr.
@@ -66,8 +63,10 @@ struct A4Box
     */
    void copy_array4_to_FortranHost(const A4Box& a4, double* f);
 
-/// IntA4Box mirrors A4Box for integer-typed data. Serves both LogicalArray_C
-/// (integer-encoded 0/1) and IntArray_C -- both are plain `int*` on the C side.
+/// IntA4Box mirrors A4Box for integer-typed data. make_int_array4 builds one
+/// from a LogicalArray_C (an integer-encoded 0/1 shadow of a Fortran logical
+/// array). There is no IntArray_C overload yet; add one when a bridge first
+/// takes an IntArray_C.
 struct IntA4Box
 {
     amrex::Box bx;           ///< Index box the array occupies (0-based, positioned at lb-1).
@@ -83,18 +82,13 @@ struct IntA4Box
 };
 
    /**
-    * @brief Allocate an IntA4Box. See make_array4() for the lbx/lby/lbz
-    *        convention, which is identical.
-    * @param nx    Extent in x.
-    * @param ny    Extent in y.
-    * @param nz    Extent in z.
-    * @param ncomp Number of components.
-    * @param lbx   Fortran lower bound in x.
-    * @param lby   Fortran lower bound in y.
-    * @param lbz   Fortran lower bound in z.
+    * @brief Allocate an IntA4Box for a Fortran logical array. See
+    *        make_array4() for the sizing and positioning convention, which
+    *        is identical.
+    * @param a Descriptor of the integer-encoded logical array.
     * @return The allocated IntA4Box; release it with free_int_array4().
     */
-   IntA4Box make_int_array4(int nx, int ny, int nz, int ncomp, int lbx, int lby, int lbz);
+   IntA4Box make_int_array4(const LogicalArray_C* a);
    /**
     * @brief Free the device buffers of an IntA4Box.
     * @param a4 Box to free; its pointers are reset to nullptr.
@@ -112,4 +106,11 @@ struct IntA4Box
     * @param f  Host array in Fortran order.
     */
    void copy_int_array4_to_FortranHost(const IntA4Box& a4, int* f);
+
+   /**
+    * @brief Convert a Fortran (1-based) Box_C to an AMReX (0-based) Box.
+    * @param b Box with Fortran start and end indices.
+    * @return The same index range, shifted by -1 in every direction.
+    */
+   amrex::Box to_box(const Box_C* b);
 }
