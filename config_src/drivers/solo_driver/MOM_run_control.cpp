@@ -136,6 +136,9 @@ RunControl read_run_control(RuntimeParams &params, Time time) {
              {.default_value = 86400.0,
               .desc = "The time unit for DAYMAX, ENERGYSAVEDAYS, and RESTINT.",
               .units = "s"});
+  if (time_unit <= 0.0) {
+    logger::fatal("MOM_driver: TIMEUNIT = ", time_unit, " s, but it must be positive.");
+  }
   const std::string time_unit_name = time_units(time_unit);
 
   // The run length from ocean_solo_nml is not implemented (read_ocean_solo_nml

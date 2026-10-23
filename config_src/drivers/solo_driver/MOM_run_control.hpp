@@ -32,15 +32,17 @@ struct RunControl {
 /// @param restart_input_dir The restart input directory.
 /// @return The calendar and the start time.
 /// @throws logger::FatalError for an invalid or not yet supported setting.
+/// @note A date_init that does not exist in the calendar ends the run through
+///       TIM's abort.
 RunStart read_ocean_solo_nml(const std::string &nml_file, const std::string &restart_input_dir);
 
 /// @brief Read the run-control parameters of the solo driver.
 /// @param params Runtime parameters.
 /// @param time The model time at the start of the run.
 /// @return The run-control parameters.
-/// @throws logger::FatalError if DT_FORCING is not positive or not a whole
-///         number of seconds, if SINGLE_STEPPING_CALL is false, or if @p time
-///         is at or after the end time.
+/// @throws logger::FatalError if DT_FORCING or TIMEUNIT is not positive, if
+///         DT_FORCING is not a whole number of seconds, if SINGLE_STEPPING_CALL
+///         is false, or if @p time is at or after the end time.
 /// @throws std::out_of_range if DT or DAYMAX is missing.
 RunControl read_run_control(RuntimeParams &params, Time time);
 
