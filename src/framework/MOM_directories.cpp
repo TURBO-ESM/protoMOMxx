@@ -7,6 +7,7 @@
 #include "MOM_logger.hpp"
 #include "MOM_io.hpp"
 #include "MOM_nml_parser.hpp"
+#include "MOM_string_utils.hpp"
 #include <stdexcept>
 
 namespace MOM{
@@ -28,14 +29,10 @@ Directories::Directories(int ensemble_num) {
     return value;
   };
 
-  output_directory_   = io::ensembler(get_MOM_input_nml_param("OUTPUT_DIRECTORY"), ensemble_num);
-  if (output_directory_.empty()) output_directory_ = "./"; // Default to current directory if not specified
-
-  restart_input_dir_  = io::ensembler(get_MOM_input_nml_param("RESTART_INPUT_DIR"), ensemble_num);
-  if (restart_input_dir_.empty()) restart_input_dir_ = "./"; // Default to current directory if not specified
-
-  restart_output_dir_ = io::ensembler(get_MOM_input_nml_param("RESTART_OUTPUT_DIR"), ensemble_num);
-  if (restart_output_dir_.empty()) restart_output_dir_ = "./"; // Default to current directory if not specified
+  // slasher ends each directory with a "/", and makes a blank one "./".
+  output_directory_   = string_utils::slasher(io::ensembler(get_MOM_input_nml_param("OUTPUT_DIRECTORY"), ensemble_num));
+  restart_input_dir_  = string_utils::slasher(io::ensembler(get_MOM_input_nml_param("RESTART_INPUT_DIR"), ensemble_num));
+  restart_output_dir_ = string_utils::slasher(io::ensembler(get_MOM_input_nml_param("RESTART_OUTPUT_DIR"), ensemble_num));
 
   input_filename_     = io::ensembler(get_MOM_input_nml_param("INPUT_FILENAME"), ensemble_num);
   if (input_filename_.empty()) input_filename_ = "n"; // Default to "n" (new run) if not specified

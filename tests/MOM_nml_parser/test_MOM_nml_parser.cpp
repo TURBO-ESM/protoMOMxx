@@ -220,6 +220,15 @@ TEST(MOMNmlParserTest, CaseInsensitivity) {
   EXPECT_TRUE(nml.has_param("COORD_TYPE", "OCEAN"));
 }
 
+// A missing key leaves the variable unchanged, as in a Fortran namelist read.
+TEST(MOMNmlParserTest, MissingKey) {
+  NamelistParams nml((get_test_data_dir() / "namelist_simple.nml").string());
+
+  int nk = 2;
+  nml.get("NK", nk, "OCEAN");
+  EXPECT_EQ(nk, 2);
+}
+
 TEST(MOMNmlParserTest, TypeMismatch) {
   auto test_file_path = get_test_data_dir() / "namelist_simple.nml";
   ASSERT_TRUE(std::filesystem::exists(test_file_path)) << "Test file " << test_file_path << " does not exist";

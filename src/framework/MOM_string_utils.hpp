@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cctype>
 #include <string>
 #include <vector>
 
@@ -26,6 +27,26 @@ inline std::string lowercase(std::string_view sv) {
   for (char &c : out)
     c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
   return out;
+}
+
+/// @brief Convert a string_view to uppercase.
+/// @param sv The input string_view to convert.
+/// @return A new string with all characters converted to uppercase.
+inline std::string uppercase(std::string_view sv) {
+  std::string out(sv);
+  for (char &c : out)
+    c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+  return out;
+}
+
+/// @brief Terminate a directory name with a "/", or change it to "./" if it's blank.
+/// @param dir The directory name.
+/// @return The directory name, ending in "/".
+inline std::string slasher(std::string_view dir) {
+  const std::string_view d = trim(dir);
+  if (d.empty()) return "./";
+  if (d.back() == '/') return std::string(d);
+  return std::string(d) + "/";
 }
 
 /// @brief Check if a string_view is a valid identifier

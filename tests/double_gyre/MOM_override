@@ -1,1 +1,10 @@
-! Blank file in which we can put "overrides" for parameters
+! Select the unsplit RK2 version of double_gyre, which protoMOMxx implements first
+!
+! DT is shorter because the unsplit scheme steps the external gravity waves
+! explicitly. The split-only parameters in MOM_input (DTBT, DTBT_RESET_PERIOD,
+! BEBT, BOUND_BT_CORRECTION, BT_PROJECT_VELOCITY) are not read in this config.
+
+SPLIT = False
+USE_RK2 = True
+#override DT = 300.0
+

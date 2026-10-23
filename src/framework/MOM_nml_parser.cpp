@@ -206,6 +206,7 @@ NamelistParams::NamelistParams(const std::string &path) : path_(path) {
 
 template <typename T>
 void NamelistParams::get(const std::string &key, T &value, const std::string &namelist) const {
+  if (!has_param(key, namelist)) return;
   const auto &val = get_variant(key, namelist);
   if (std::holds_alternative<T>(val)) {
     value = std::get<T>(val);

@@ -7,12 +7,14 @@ VERBOSITY = 2                   ! default = 2
                                 !   0 = Only FATAL messages
                                 !   2 = Only FATAL, WARNING, NOTE [default]
                                 !   9 = All
-SPLIT = True                    ! default = True
+SPLIT = False                   ! default = True
                                 ! Use the split time stepping if true.
-SPLIT_RK4 = False               ! default = False
-                                ! If true, use a version of the split explicit time stepping scheme that
-                                ! exchanges velocities with step_MOM that have the average barotropic phase over
-                                ! a baroclinic timestep rather than the instantaneous barotropic phase.
+USE_RK2 = True                  ! default = False
+                                ! If true, use RK2 instead of RK3 in the unsplit time stepping.
+DT = 300.0                      !   [s]
+                                ! The (baroclinic) dynamics time step.  The time-step that is actually used will
+                                ! be an integer fraction of the forcing time-step (DT_FORCING in ocean-only mode
+                                ! or the coupling timestep in coupled mode.)
 
 ! === module MOM_domains ===
 REENTRANT_X = False             ! default = True
@@ -198,3 +200,29 @@ ODA_INCUPD = False              ! default = False
 SPONGE = False                  ! default = False
                                 ! If true, sponges may be applied anywhere in the domain. The exact location and
                                 ! properties of those sponges are specified via SPONGE_CONFIG.
+
+! === module MOM_main (MOM_driver) ===
+DT_FORCING = 2400.0             !   [s] default = 300.0
+                                ! The time step for changing forcing, coupling with other components, or
+                                ! potentially writing certain diagnostics. The default value is given by DT.
+TIMEUNIT = 8.64e+04             !   [s] default = 8.64e+04
+                                ! The time unit for DAYMAX, ENERGYSAVEDAYS, and RESTINT.
+DAYMAX = 10.0                   !   [days]
+                                ! The final time of the whole simulation, in units of TIMEUNIT seconds.  This
+                                ! also sets the potential end time of the present run segment if the end time is
+                                ! not set via ocean_solo_nml in input.nml.
+SINGLE_STEPPING_CALL = True     ! default = True
+                                ! If true, advance the state of MOM with a single step including both dynamics
+                                ! and thermodynamics.  If false the two phases are advanced with separate calls.
+RESTART_CONTROL = 3             ! default = 1
+                                ! An integer whose bits encode which restart files are written. Add 2 (bit 1)
+                                ! for a time-stamped file, and odd (bit 0) for a non-time-stamped file. A
+                                ! non-time-stamped restart file is saved at the end of the run segment for any
+                                ! non-negative value.
+RESTINT = 110.0                 !   [days] default = 0.0
+                                ! The interval between saves of the restart file in units of TIMEUNIT.  Use 0
+                                ! (the default) to not save incremental restart files at all.
+WRITE_CPU_STEPS = 1000          ! default = 1000
+                                ! The number of coupled timesteps between writing the cpu time. If this is not
+                                ! positive, do not check cpu time, and the segment run-length can not be set via
+                                ! an elapsed CPU time.

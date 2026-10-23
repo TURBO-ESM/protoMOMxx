@@ -1,6 +1,7 @@
 add_library(MOM_config_src_infra
   MOM_domain_infra.cpp
   MOM_infra.cpp
+  MOM_time_manager.cpp
 )
 
 target_include_directories(MOM_config_src_infra
