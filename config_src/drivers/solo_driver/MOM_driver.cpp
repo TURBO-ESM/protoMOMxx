@@ -11,6 +11,8 @@
 #include "MOM_directories.hpp"
 #include "MOM_infra.hpp"
 #include "MOM_logger.hpp"
+#include "MOM_run_control.hpp"
+#include "MOM_time_manager.hpp"
 
 /// @brief Main entry point for the protoMOMxx driver program.
 /// @param argc Number of arguments including binary name.
@@ -35,7 +37,8 @@ int main(int argc, char* argv[]) {
     // RuntimeParams reads the parameter files specified in input.nml.
     MOM::RuntimeParams params(directories.parameter_filenames(), "MOM_parameters_doc");
 
-    // todo: set_calendar_type(), time manager (Clock).
+    // The calendar and the start time of the run, from ocean_solo_nml.
+    const MOM::RunStart start = MOM::read_ocean_solo_nml("input.nml", directories.restart_input_dir());
     // defer: time_interp_external_init()
 
     // Initialize the core MOM object (the analogue of MOM6's initialize_MOM).
@@ -44,13 +47,22 @@ int main(int argc, char* argv[]) {
     // todo: extract_surface_state()
     // todo: surface_forcing_init()
     // defer: MOM_wave_interface_init(), data_override_init(), ice shelf hooks
-    // todo: read run-control params (DT, DT_FORCING, DAYMAX, ...) and run the
-    //       time loop:
-    //         while (clock.time() < clock.end()) {
-    //           set_forcing(...); model.step(...); clock.advance();
-    //         }
-    // todo: finish_MOM_initialization() on the first iteration
-    // defer: mech_forcing_diags(), forcing_diagnostics()
+
+    // The run-control parameters: the forcing time step and the end time.
+    const MOM::RunControl run = MOM::read_run_control(params, start.start_time);
+    // todo: close_param_file() (the unused-parameter check)
+    // defer: write_time_stamp_file(), MOM_write_cputime_init(), the restart schedule
+
+    // The main loop, one forcing time step per pass.
+    MOM::Time time = start.start_time;
+    while (time < run.time_end) {
+      // todo: set_forcing()
+      // todo: finish_MOM_initialization() on the first iteration
+      // todo: step_MOM()
+      time += run.time_step_ocean;
+      // defer: mech_forcing_diags(), forcing_diagnostics(), incremental restarts
+    }
+
     // defer: save_MOM_restart(), write_ocean_solo_res(), diag_mediator_end()
     // todo: MOM_end()
 

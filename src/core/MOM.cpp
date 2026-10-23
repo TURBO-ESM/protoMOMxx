@@ -42,7 +42,7 @@ Model::Config Model::read_config_switches(RuntimeParams &params) {
 
   params.get("SPLIT", config.split, {.default_value = true, .desc = "Use the split time stepping if true."});
 
-  params.get("SPLIT_RK4", config.split_rk4,
+  params.get("SPLIT_RK2B", config.use_alt_split,
              {.default_value = false,
               .desc = "If true, use a version of the split explicit time stepping scheme that "
                       "exchanges velocities with step_MOM that have the average barotropic phase over "
@@ -69,6 +69,14 @@ Model::Config Model::read_config_switches(RuntimeParams &params) {
               .desc = "If true, write out verbose debugging data.",
               .units = "nondim",
               .debugging_param = true});
+
+  params.get("DT", config.dt,
+             {.desc = "The (baroclinic) dynamics time step.  The time-step that "
+                      "is actually used will be an integer fraction of the "
+                      "forcing time-step (DT_FORCING in ocean-only mode or the "
+                      "coupling timestep in coupled mode.)",
+              .units = "s",
+              .fail_if_missing = true});
 
   return config;
 }
