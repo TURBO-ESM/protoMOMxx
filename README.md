@@ -93,6 +93,50 @@ cmake --build build -j
 ./build/protoMOMxx
 ```
 
+## TIM
+
+protoMOMxx links `TIM::tim`, TIM's C++ layer. If a TIM install can be found (add its prefix
+to `CMAKE_PREFIX_PATH` or set `TIM_DIR`), that TIM is used. Otherwise `tim/cpp` is built from
+`TIM_SOURCE_DIR`, which defaults to the `extern/TIM` submodule. An installed TIM needs MPI,
+NetCDF and AMReX with their Fortran components, so a Fortran compiler must be available. Pass
+`-DCMAKE_DISABLE_FIND_PACKAGE_TIM=ON` to always build the bundled copy.
+
+## MOM C++ kernels and the MOM6 bridge
+
+`src/mom_kernels/` holds AMReX ports of MOM6 kernels, and the `extern "C"` bridges that MOM6
+calls from its `#ifdef _TIM` branches. Both used to live in TIM. They build as two targets:
+
+| Target | Contents | Links |
+|---|---|---|
+| `protoMOMxx::mom_kernels` | the AMReX kernels (namespace `MOM`) | AMReX |
+| `protoMOMxx::mom_bridge` | the `turbotmp_*_bridge` entry points and `turbotmp/turbotmp_helper` | `mom_kernels`, `TIM::tim`, AMReX |
+
+Related CMake options:
+
+| Option | Default | Effect |
+|---|---|---|
+| `PROTOMOM_KERNELS_ONLY` | `OFF` | Build only `mom_kernels` and `mom_bridge` (and, with tests on, `test_mom`), not the solo driver |
+| `PROTOMOM_MOM_BRIDGE` | `ON` | Build `mom_bridge` |
+| `PROTOMOM_INSTALL` | `OFF` | Install both targets and a `protoMOMxxConfig.cmake`. Needs an installed TIM |
+
+With `PROTOMOM_INSTALL=ON`, MOM6 consumes the installed bridge with
+`find_package(protoMOMxx REQUIRED COMPONENTS MOM_BRIDGE)` and links `protoMOMxx::mom_bridge`:
+
+```bash
+cmake -S . -B build-kernels -DPROTOMOM_KERNELS_ONLY=ON -DPROTOMOM_INSTALL=ON \
+      -DCMAKE_PREFIX_PATH="/path/to/amrex/install;/path/to/tim/install" \
+      -DCMAKE_INSTALL_PREFIX=/path/to/protomomxx/install
+cmake --build build-kernels -j
+cmake --install build-kernels
+```
+
+`tests/test_mom/` is the GoogleTest suite for the kernels. It replays captured Fortran I/O
+passed through `-DTEST_MOM_DATA_DIR=<dir>`. With `PROTOMOM_ADD_TEST_TARGETS=ON` it is always
+built, but it is registered with ctest (label `test_mom`) only when `TEST_MOM_DATA_DIR` is set.
+It can also be configured on its own (`cmake -S tests/test_mom ...`), either against an
+installed AMReX or with AMReX built from `AMREX_SOURCE_DIR`. See
+`tests/test_mom/CMakeLists.txt`.
+
 # Contributing
 
 To run the doxygen documentation check, install doxygen and graphviz (via conda or your package manager), then run:

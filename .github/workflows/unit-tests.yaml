@@ -24,3 +24,12 @@ jobs:
 
       - name: Run the multi-rank tests on 2 MPI ranks
         run: ctest --test-dir ./build -L mpi --output-on-failure
+
+      # The configuration turbo-stack's Stage 1 uses: only mom_kernels and
+      # mom_bridge, no solo driver. Reuses the AMReX build_and_run.sh installed.
+      - name: Build only the MOM kernel and bridge targets
+        run: |
+          cmake -S . -B ./build-kernels-only \
+                -DPROTOMOM_KERNELS_ONLY=ON \
+                -DCMAKE_PREFIX_PATH="${PWD}/dependencies/amrex/install"
+          cmake --build ./build-kernels-only -j 2

@@ -17,6 +17,17 @@ if(NOT GTest_FOUND)
 endif()
 enable_testing()
 
+include(GoogleTest)
+
+# MOM C++ kernel tests (mom_kernels only; no TIM or model sources needed).
+add_subdirectory(test_mom)
+
+# The remaining tests need the model targets, which a kernels-only configure
+# does not define.
+if(PROTOMOM_KERNELS_ONLY)
+  return()
+endif()
+
 add_executable(test_MOM_logger MOM_logger/test_MOM_logger.cpp)
 add_executable(test_MOM_nml_parser MOM_nml_parser/test_MOM_nml_parser.cpp)
 add_executable(test_MOM_io MOM_io/test_MOM_io.cpp)
@@ -42,7 +53,6 @@ target_link_libraries(test_MOM_fixed_initialization GTest::gtest MOM_src_initial
 target_link_libraries(test_MOM_vertical_grid GTest::gtest_main MOM_src_types)
 target_link_libraries(test_MOM_state GTest::gtest MOM_src_initialization MOM_config_src_infra)
 
-include(GoogleTest)
 gtest_discover_tests(test_MOM_logger PROPERTIES LABELS "unit")
 gtest_discover_tests(test_MOM_nml_parser PROPERTIES LABELS "unit")
 gtest_discover_tests(test_MOM_io PROPERTIES LABELS "unit")
