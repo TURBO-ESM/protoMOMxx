@@ -13,8 +13,7 @@ Model::Model(RuntimeParams &params)
     vgrid_(params),
     state_(make_state(domain_, grid_, vgrid_, params)) {
 
-  // The remaining initialization phase to implement
-  initialize_dynamics(params);
+  initialize_dynamics();
 
   logger::note("MOM core initialization complete.");
 }
@@ -64,6 +63,39 @@ Model::Config Model::read_config_switches(RuntimeParams &params) {
     logger::fatal("FPMIX is only implemented for the split time stepping.");
   }
 
+  bool use_temperature = true;
+  params.get("ENABLE_THERMODYNAMICS", use_temperature,
+             {.default_value = true,
+              .desc = "If true, Temperature and salinity are used as state variables."});
+  if (use_temperature) {
+    // defer: the temperature and salinity state (the tv structure) and the
+    //        equation of state.
+    logger::fatal("MOM: Temperature and salinity as state variables "
+                  "(ENABLE_THERMODYNAMICS = True) are not implemented yet.");
+  }
+
+  bool diabatic_first = false;
+  params.get("DIABATIC_FIRST", diabatic_first,
+             {.default_value = false,
+              .desc = "If true, apply diabatic and thermodynamic processes, including buoyancy "
+                      "forcing and mass gain or loss, before stepping the dynamics forward."});
+  if (diabatic_first) {
+    // defer: the thermodynamic step of step_MOM (step_MOM_thermo).
+    logger::fatal("MOM: Applying the diabatic processes before the dynamics "
+                  "(DIABATIC_FIRST = True) is not implemented yet.");
+  }
+
+  bool adiabatic = false;
+  params.get("ADIABATIC", adiabatic,
+             {.default_value = false,
+              .desc = "There are no diapycnal mass fluxes if ADIABATIC is true.  This assumes "
+                      "that KD = 0.0 and that there is no buoyancy forcing, but makes the model "
+                      "faster by eliminating subroutine calls."});
+  if (!adiabatic) {
+    // defer: the diabatic processes (MOM_diabatic_driver) and the buoyancy forcing.
+    logger::fatal("MOM: The diapycnal mass fluxes (ADIABATIC = False) are not implemented yet.");
+  }
+
   params.get("DEBUG", config.debug,
              {.default_value = false,
               .desc = "If true, write out verbose debugging data.",
@@ -78,17 +110,41 @@ Model::Config Model::read_config_switches(RuntimeParams &params) {
               .units = "s",
               .fail_if_missing = true});
 
+  // Read so that it is logged. MOM6 uses DT_THERM for the thermodynamic and
+  // bottom boundary layer cadences of step_MOM, which are not implemented yet.
+  amrex::Real dt_therm = config.dt;
+  params.get("DT_THERM", dt_therm,
+             {.default_value = config.dt,
+              .desc = "The thermodynamic time step. Ideally DT_THERM should be an integer "
+                      "multiple of DT and of DT_TRACER_ADVECT and less than the forcing or "
+                      "coupling time-step. However, if THERMO_SPANS_COUPLING is true, DT_THERM "
+                      "can be an integer multiple of the coupling timestep. By default DT_THERM "
+                      "is set to DT.",
+              .units = "s"});
+
   return config;
 }
 
-void Model::initialize_dynamics(RuntimeParams &params) {
+void Model::initialize_dynamics() {
 
-  logger::note("initialize_dynamics: (stub)");
-
-  // todo: dynamics subsystem construction, dispatching on config_.split /
-  //       config_.use_RK2 as in MOM6's four-way initialize_dyn_* branch.
-  // defer: restart registration (register_restarts_dyn_*), diagnostics.
-  (void)params;
+  // defer: restart registration (register_restarts_dyn_*) and diagnostics.
+  if (config_.split && config_.use_alt_split) {
+    // defer: initialize_dyn_split_RK2b
+    logger::fatal("initialize_dynamics: The split RK2b time stepping (SPLIT_RK2B = True) "
+                  "is not implemented yet.");
+  } else if (config_.split) {
+    // defer: initialize_dyn_split_RK2
+    logger::fatal("initialize_dynamics: The split time stepping (SPLIT = True) "
+                  "is not implemented yet.");
+  } else if (config_.use_RK2) {
+    // todo: initialize_dyn_unsplit_RK2
+    logger::note("initialize_dynamics: The unsplit RK2 dynamics is not implemented yet, "
+                 "so the model state does not change in time.");
+  } else {
+    // defer: initialize_dyn_unsplit
+    logger::fatal("initialize_dynamics: The unsplit RK3 time stepping (USE_RK2 = False) "
+                  "is not implemented yet.");
+  }
 }
 
 } // namespace MOM

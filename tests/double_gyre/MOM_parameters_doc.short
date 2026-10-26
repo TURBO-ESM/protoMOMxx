@@ -6,10 +6,21 @@ SPLIT = False                   ! default = True
                                 ! Use the split time stepping if true.
 USE_RK2 = True                  ! default = False
                                 ! If true, use RK2 instead of RK3 in the unsplit time stepping.
+ENABLE_THERMODYNAMICS = False   ! default = True
+                                ! If true, Temperature and salinity are used as state variables.
+ADIABATIC = True                ! default = False
+                                ! There are no diapycnal mass fluxes if ADIABATIC is true.  This assumes that KD
+                                ! = 0.0 and that there is no buoyancy forcing, but makes the model faster by
+                                ! eliminating subroutine calls.
 DT = 300.0                      !   [s]
                                 ! The (baroclinic) dynamics time step.  The time-step that is actually used will
                                 ! be an integer fraction of the forcing time-step (DT_FORCING in ocean-only mode
                                 ! or the coupling timestep in coupled mode.)
+DT_THERM = 2400.0               !   [s] default = 300.0
+                                ! The thermodynamic time step. Ideally DT_THERM should be an integer multiple of
+                                ! DT and of DT_TRACER_ADVECT and less than the forcing or coupling time-step.
+                                ! However, if THERMO_SPANS_COUPLING is true, DT_THERM can be an integer multiple
+                                ! of the coupling timestep. By default DT_THERM is set to DT.
 
 ! === module MOM_domains ===
 REENTRANT_X = False             ! default = True

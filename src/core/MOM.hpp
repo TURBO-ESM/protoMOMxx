@@ -17,9 +17,7 @@ namespace MOM {
 ///
 /// The constructor performs the full initialization. It is the analogue of
 /// MOM6's initialize_MOM (src/core/MOM.F90). The constructor is decomposed
-/// into phases that mirror the topology of MOM6's initialize_MOM. The
-/// remaining phase, initialize_dynamics, is a stub that will be filled in by
-/// upcoming PRs.
+/// into phases that mirror the topology of MOM6's initialize_MOM.
 class Model {
 public:
   /// @brief Scalar configuration switches of the model (the analogue of the
@@ -82,10 +80,11 @@ private:
   /// @brief Read the scalar configuration switches into a Config object.
   static Config read_config_switches(RuntimeParams &params);
 
-  /// @brief Initialize the dynamics subsystem for the configured time
-  /// stepping scheme. Analogue of MOM6's register_restarts_dyn_* +
-  /// initialize_dyn_* four-way dispatch. (stub)
-  void initialize_dynamics(RuntimeParams &params);
+  /// @brief Initialize the dynamics for the configured time stepping scheme,
+  /// with MOM6's four-way dispatch of register_restarts_dyn_* and
+  /// initialize_dyn_* (split_RK2b, split_RK2, unsplit_RK2, unsplit).
+  /// @throws logger::FatalError for currently unsupported schemes.
+  void initialize_dynamics();
 };
 
 } // namespace MOM
