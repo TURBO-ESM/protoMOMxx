@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "MOM.hpp"
 #include "MOM_domains.hpp"
 #include "MOM_fixed_initialization.hpp"
@@ -16,6 +18,38 @@ Model::Model(RuntimeParams &params)
   initialize_dynamics();
 
   logger::note("MOM core initialization complete.");
+}
+
+void Model::step(const MechForcing &forces, const amrex::Real time_interval) {
+
+  // defer: the parts of step_MOM around the dynamics: the DEBUG checksums, the
+  //        halo update of the forcing, the thermodynamic, tracer advection and
+  //        bottom boundary layer cadences (DT_THERM, ...), and the diagnostics.
+
+  // The number of dynamics steps in this call, and their length [T ~> s].
+  int n_max = 1;
+  if (time_interval > config_.dt) {
+    n_max = static_cast<int>(std::ceil(time_interval / config_.dt - 0.001));
+  }
+  const amrex::Real dt = time_interval / amrex::Real(n_max);
+
+  for (int n = 1; n <= n_max; ++n) {
+    if (config_.split && config_.use_alt_split) {
+      // defer: step_MOM_dyn_split_RK2b
+      logger::fatal("step: The split RK2b time stepping (SPLIT_RK2B = True) "
+                    "is not implemented yet.");
+    } else if (config_.split) {
+      // defer: step_MOM_dyn_split_RK2
+      logger::fatal("step: The split time stepping (SPLIT = True) is not implemented yet.");
+    } else if (config_.use_RK2) {
+      // todo: step_MOM_dyn_unsplit_RK2, which advances the state over dt
+      //       with the forces.
+    } else {
+      // defer: step_MOM_dyn_unsplit
+      logger::fatal("step: The unsplit RK3 time stepping (USE_RK2 = False) "
+                    "is not implemented yet.");
+    }
+  }
 }
 
 Model::Config Model::read_config_switches(RuntimeParams &params) {

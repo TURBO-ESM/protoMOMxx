@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
     // defer: time_interp_external_init()
 
     // Initialize the core MOM object (the analogue of MOM6's initialize_MOM).
-    const MOM::Model model(params);
+    MOM::Model model(params);
 
     // defer: extract_surface_state(), the surface state, which nothing reads
     //        yet. MOM6's set_forcing passes it to the forcing configurations,
@@ -78,8 +78,10 @@ int main(int argc, char* argv[]) {
       surface_forcing.set_forcing(forces, model.grid());
       // todo: the forcing checksums (MOM_mech_forcing_chksum) when DEBUG is
       //       true, with the checksum oracle.
-      // todo: finish_MOM_initialization() on the first iteration
-      // todo: step_MOM()
+      // defer: finish_MOM_initialization() on the first pass, which writes the
+      //        initial conditions and the first energy output and sets up the
+      //        particles, none of which is implemented yet.
+      model.step(forces, MOM::time_to_real(run.time_step_ocean));
       time += run.time_step_ocean;
       // defer: mech_forcing_diags(), forcing_diagnostics(), incremental restarts
     }

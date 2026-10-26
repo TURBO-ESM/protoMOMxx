@@ -6,6 +6,7 @@
 
 #include "MOM_domain_infra.hpp"
 #include "MOM_file_parser.hpp"
+#include "MOM_forcing_type.hpp"
 #include "MOM_grid.hpp"
 #include "MOM_state.hpp"
 #include "MOM_vertical_grid.hpp"
@@ -35,6 +36,16 @@ public:
   /// @param params Runtime parameters. Injected by the driver.
   /// @pre The infrastructure layer (AMReX) is initialized.
   explicit Model(RuntimeParams &params);
+
+  /// @brief Advance the model over a time interval (the analogue of MOM6's
+  /// step_MOM). As in MOM6, the interval is split into equal dynamics steps
+  /// no longer than DT, and each step dispatches on the time stepping scheme.
+  /// The unsplit RK2 dynamics is not implemented yet, so the state does not
+  /// change.
+  /// @param forces The mechanical forcing over the interval.
+  /// @param time_interval The time interval covered by this call [T ~> s].
+  /// @throws logger::FatalError for currently unsupported schemes.
+  void step(const MechForcing &forces, amrex::Real time_interval);
 
   /// @brief Read-only access to the model configuration switches.
   /// @return Const reference to the model configuration switches.
