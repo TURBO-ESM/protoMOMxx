@@ -110,6 +110,17 @@ GINT = 0.0098                   !   [m s-2]
 
 ! === module MOM_state_initialization ===
 
+! === module MOM_surface_forcing ===
+VARIABLE_WINDS = False          ! default = True
+                                ! If true, the winds vary in time after the initialization.
+VARIABLE_BUOYFORCE = False      ! default = True
+                                ! If true, the buoyancy forcing varies in time after the initialization of the
+                                ! model.
+WIND_CONFIG = "2gyre"           ! default = "zero"
+                                ! The character string that indicates how wind forcing is specified.  Valid
+                                ! options include (file), (data_override), (2gyre), (1gyre), (gyres), (zero),
+                                ! (const), (Neverworld), (scurves), (ideal_hurr), (SCM_CVmix_tests) and (USER).
+
 ! === module MOM_main (MOM_driver) ===
 DT_FORCING = 2400.0             !   [s] default = 300.0
                                 ! The time step for changing forcing, coupling with other components, or

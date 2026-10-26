@@ -215,6 +215,33 @@ SPONGE = False                  ! default = False
                                 ! If true, sponges may be applied anywhere in the domain. The exact location and
                                 ! properties of those sponges are specified via SPONGE_CONFIG.
 
+! === module MOM_surface_forcing ===
+VARIABLE_WINDS = False          ! default = True
+                                ! If true, the winds vary in time after the initialization.
+VARIABLE_BUOYFORCE = False      ! default = True
+                                ! If true, the buoyancy forcing varies in time after the initialization of the
+                                ! model.
+BUOY_CONFIG = "zero"            ! default = "zero"
+                                ! The character string that indicates how buoyancy forcing is specified.  Valid
+                                ! options include (file), (data_override), (zero), (const), (linear), (MESO),
+                                ! (SCM_CVmix_tests), (BFB), (dumbbell), (USER) and (NONE).
+WIND_CONFIG = "2gyre"           ! default = "zero"
+                                ! The character string that indicates how wind forcing is specified.  Valid
+                                ! options include (file), (data_override), (2gyre), (1gyre), (gyres), (zero),
+                                ! (const), (Neverworld), (scurves), (ideal_hurr), (SCM_CVmix_tests) and (USER).
+TAUX_MAGNITUDE = 0.1            !   [Pa] default = 0.1
+                                ! The peak zonal wind stress when WIND_CONFIG = 2gyre.
+RESTOREBUOY = False             ! default = False
+                                ! If true, the buoyancy fluxes drive the model back toward some specified
+                                ! surface state with a rate given by FLUXCONST.
+USTAR_GUSTLESS_BUG = False      ! default = False
+                                ! If true include a bug in the time-averaging of the gustless wind friction
+                                ! velocity
+READ_GUST_2D = False            ! default = False
+                                ! If true, use a 2-dimensional gustiness supplied from an input file
+USE_WAVES = False               ! default = False
+                                ! If true, enables surface wave modules.
+
 ! === module MOM_main (MOM_driver) ===
 DT_FORCING = 2400.0             !   [s] default = 300.0
                                 ! The time step for changing forcing, coupling with other components, or
