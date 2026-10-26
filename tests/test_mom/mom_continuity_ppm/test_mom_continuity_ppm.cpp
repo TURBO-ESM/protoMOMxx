@@ -874,10 +874,6 @@ TEST(SetMeridBtCont, MatchesFortranCapture) {
     const auto   vBT_SS_after     = captured.fab_host("_vBT_SS_after");
     const auto   vBT_NN_after     = captured.fab_host("_vBT_NN_after");
     const auto   dv0              = captured.fab_device("_dv0");
-    const auto   vh_tot_0         = captured.fab_device("_vh_tot_0");
-    const auto   dvhdv_tot_0      = captured.fab_device("_dvhdv_tot_0");
-    const auto   dv_max_CFL       = captured.fab_device("_dv_max_CFL");
-    const auto   dv_min_CFL       = captured.fab_device("_dv_min_CFL");
     const double dt               = captured.real64("_dt");
     const auto   dyCv             = captured.fab_device("_dyCv");
     const auto   dx_Cv            = captured.fab_device("_dx_Cv");
@@ -902,10 +898,6 @@ TEST(SetMeridBtCont, MatchesFortranCapture) {
                            vBT_SS.array(),
                            vBT_NN.array(),
                            dv0.const_array(),
-                           vh_tot_0.const_array(),
-                           dvhdv_tot_0.const_array(),
-                           dv_max_CFL.const_array(),
-                           dv_min_CFL.const_array(),
                            dt,
                            dyCv.const_array(),
                            dx_Cv.const_array(),
@@ -965,10 +957,6 @@ TEST(SetZonalBtCont, MatchesFortranCapture) {
     const auto   uBT_WW_after     = captured.fab_host("_uBT_WW_after");
     const auto   uBT_EE_after     = captured.fab_host("_uBT_EE_after");
     const auto   du0              = captured.fab_device("_du0");
-    const auto   uh_tot_0         = captured.fab_device("_uh_tot_0");
-    const auto   duhdu_tot_0      = captured.fab_device("_duhdu_tot_0");
-    const auto   du_max_CFL       = captured.fab_device("_du_max_CFL");
-    const auto   du_min_CFL       = captured.fab_device("_du_min_CFL");
     const double dt               = captured.real64("_dt");
     const auto   dxCu             = captured.fab_device("_dxCu");
     const auto   dy_Cu            = captured.fab_device("_dy_Cu");
@@ -993,10 +981,6 @@ TEST(SetZonalBtCont, MatchesFortranCapture) {
                            uBT_WW.array(),
                            uBT_EE.array(),
                            du0.const_array(),
-                           uh_tot_0.const_array(),
-                           duhdu_tot_0.const_array(),
-                           du_max_CFL.const_array(),
-                           du_min_CFL.const_array(),
                            dt,
                            dxCu.const_array(),
                            dy_Cu.const_array(),
