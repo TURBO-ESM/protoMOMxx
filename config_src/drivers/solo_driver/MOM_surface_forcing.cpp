@@ -145,8 +145,17 @@ SurfaceForcing::SurfaceForcing(RuntimeParams &params) {
     logger::fatal("SurfaceForcing: USTAR_GUSTLESS_BUG = True is not supported. "
                   "Only the bug-fixed answers are implemented.");
   }
+
   // MOM6 also accepts FIX_USTAR_GUSTLESS_BUG, an obsolete parameter with the
-  // opposite sense.
+  // opposite sense. Setting it to false turns the bug on, so reject that too.
+  bool fix_ustar_gustless_bug = true;
+  params.get("FIX_USTAR_GUSTLESS_BUG", fix_ustar_gustless_bug,
+             {.default_value = true, .do_not_log = true});
+  if (!fix_ustar_gustless_bug) {
+    logger::fatal("SurfaceForcing: FIX_USTAR_GUSTLESS_BUG = False is not supported. "
+                  "Only the bug-fixed answers are implemented. FIX_USTAR_GUSTLESS_BUG is an "
+                  "obsolete parameter; use USTAR_GUSTLESS_BUG instead.");
+  }
 
   bool read_gust_2d = false;
   params.get("READ_GUST_2D", read_gust_2d,
