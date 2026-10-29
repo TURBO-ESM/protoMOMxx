@@ -22,25 +22,20 @@ endif()
 
 set(mom_turbotmp_dir ${CMAKE_CURRENT_SOURCE_DIR}/turbotmp)
 
-# Settings shared by every target built from these sources. Factored into one
-# place because of the FP-precision options: a target that misses them still
-# compiles and links, it just stops being bit-identical to Fortran, which is the
-# one property this directory exists to guarantee.
+# Settings shared by every target built from these sources.
 #
 # Include directories are deliberately not set here -- both targets are
 # exported and so need BUILD_INTERFACE/INSTALL_INTERFACE forms, which
 # install(EXPORT) rejects a bare source path for.
+#
+# The FP-precision options are not set here either but per source file, at the
+# bottom of this file (see the comment there). A source that misses them still
+# compiles and links, it just stops being bit-identical to Fortran, which is the
+# one property this directory exists to guarantee.
 function(mom_cpp_configure tgt)
     target_link_libraries(${tgt} PUBLIC AMReX::amrex_3d)
 
     target_compile_features(${tgt} PUBLIC cxx_std_17)
-
-    # To ensure bit-identical results with the Fortran reference, we need to
-    # disable FMA and reassociation.
-    target_compile_options(${tgt} PRIVATE
-        $<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>
-        $<$<CXX_COMPILER_ID:IntelLLVM,Intel>:-fp-model=precise>
-    )
 endfunction()
 
 # The AMReX kernels in namespace MOM. Their headers include only AMReX, so this
@@ -96,16 +91,50 @@ if(PROTOMOM_MOM_BRIDGE)
     endif()
 endif()
 
+set(mom_cpp_sources
+    mom_continuity_ppm.cpp
+    mom_interface_heights.cpp
+    turbotmp_mom_continuity_ppm_bridge.cpp
+    turbotmp_mom_interface_heights_bridge.cpp
+    ${mom_turbotmp_dir}/turbotmp_helper.cpp
+)
+
 # Every source here includes AMReX headers. With the CUDA backend those headers
 # use __host__/__device__ qualifiers and CUDA kernel-launch syntax, so nvcc must
 # compile them; CMake will not infer that from a .cpp extension. Source-file
 # properties are directory-scoped, so this covers both targets above.
 if(AMReX_GPU_BACKEND STREQUAL "CUDA")
-    set_source_files_properties(
-        mom_continuity_ppm.cpp
-        mom_interface_heights.cpp
-        turbotmp_mom_continuity_ppm_bridge.cpp
-        turbotmp_mom_interface_heights_bridge.cpp
-        ${mom_turbotmp_dir}/turbotmp_helper.cpp
-        PROPERTIES LANGUAGE CUDA)
+    set_source_files_properties(${mom_cpp_sources} PROPERTIES LANGUAGE CUDA)
 endif()
+
+# To ensure bit-identical results with the Fortran reference, we need to
+# disable FMA and reassociation, on the host and, with CUDA, on the device.
+#
+# These are source-file COMPILE_OPTIONS rather than target options because
+# CMake places source options after CMAKE_<LANG>_FLAGS and after every target
+# option, including the usage requirements inherited from AMReX::amrex_3d.
+# AMReX puts fast-math there (--use_fast_math under AMReX_CUDA_FASTMATH, which
+# defaults ON; -ffast-math under AMReX_FASTMATH), and both compilers resolve
+# conflicting options last-one-wins, so ours have to come last.
+#
+# - GNU/Clang: -ffp-contract=off alone does not undo -ffast-math's
+#   reassociation, so -fno-fast-math comes first.
+# - nvcc: --use_fast_math implies --fmad=true --ftz=true --prec-div=false
+#   --prec-sqrt=false; each is reset explicitly. Host flags are not nvcc
+#   options and must go through -Xcompiler. nvcc's host compiler is taken to
+#   be the C++ compiler (CMake's default for CMAKE_CUDA_HOST_COMPILER).
+set(mom_fp_options
+    # Host C++ compile
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-fno-fast-math>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-ffp-contract=off>
+    $<$<COMPILE_LANG_AND_ID:CXX,IntelLLVM,Intel>:-fp-model=precise>
+    # nvcc: device code
+    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--fmad=false>
+    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--ftz=false>
+    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--prec-div=true>
+    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--prec-sqrt=true>
+    # nvcc: host code, forwarded to the host compiler
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CXX_COMPILER_ID:GNU,Clang>>:-Xcompiler=-fno-fast-math,-ffp-contract=off>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CXX_COMPILER_ID:IntelLLVM,Intel>>:-Xcompiler=-fp-model=precise>
+)
+set_source_files_properties(${mom_cpp_sources} PROPERTIES COMPILE_OPTIONS "${mom_fp_options}")
