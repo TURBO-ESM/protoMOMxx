@@ -41,6 +41,15 @@ if(TEST_MOM_STANDALONE)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
     set(CMAKE_CXX_EXTENSIONS OFF)
 
+    # An installed AMReX built with AMReX_FORTRAN=ON requires Fortran to be
+    # enabled before find_package (AMReXConfig.cmake hard-errors otherwise).
+    # A no-op without a Fortran compiler.
+    include(CheckLanguage)
+    check_language(Fortran)
+    if(CMAKE_Fortran_COMPILER)
+        enable_language(Fortran)
+    endif()
+
     if(AMReX_GPU_BACKEND STREQUAL "CUDA")
         enable_language(CUDA)
     endif()
