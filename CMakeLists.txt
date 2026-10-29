@@ -46,7 +46,9 @@ if(NOT TARGET TIM::tim)
   # TIM_DIR is set when a TIMConfig.cmake was located. If it was located but
   # failed to load (e.g. a missing Fortran dependency), stop rather than
   # silently building a second TIM next to the one the caller pointed at.
-  if(NOT TIM_FOUND AND TIM_DIR)
+  # A disabled search leaves TIM_FOUND unset while a TIM_DIR cached by an
+  # earlier configure remains, so that case is not a load failure.
+  if(NOT CMAKE_DISABLE_FIND_PACKAGE_TIM AND NOT TIM_FOUND AND TIM_DIR)
     message(FATAL_ERROR
       "Found TIM's package config in '${TIM_DIR}' but it failed to load; see the "
       "messages above. An installed TIM needs MPI, NetCDF and AMReX with their "
