@@ -1481,7 +1481,7 @@ void vertvisc_tr(const Box& bxU0,
     /// diagnosed as 0 [L T-2 ~> m s-2].
     const Real accel_underflow = CS.vel_underflow * Idt;
 
-    const bool DoStokesMixing = (Us_x.p != nullptr);
+    const bool DoStokesMixing = CS.StokesMixing && (Us_x.p != nullptr);
     const bool lfpmix = fpmix;
 
     Box colU = bxU0;
