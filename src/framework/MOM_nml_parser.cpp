@@ -233,6 +233,7 @@ size_t NamelistParams::get_num_parameters() const {
 }
 
 // Explicit template instantiations
+/// @cond
 template void NamelistParams::get<bool>(const std::string &, bool &, const std::string &) const;
 template void NamelistParams::get<int>(const std::string &, int &, const std::string &) const;
 template void NamelistParams::get<double>(const std::string &, double &, const std::string &) const;
@@ -241,5 +242,6 @@ template void NamelistParams::get<std::vector<bool>>(const std::string &, std::v
 template void NamelistParams::get<std::vector<int>>(const std::string &, std::vector<int> &, const std::string &) const;
 template void NamelistParams::get<std::vector<double>>(const std::string &, std::vector<double> &, const std::string &) const;
 template void NamelistParams::get<std::vector<std::string>>(const std::string &, std::vector<std::string> &, const std::string &) const;
+/// @endcond
 
 } // namespace MOM
