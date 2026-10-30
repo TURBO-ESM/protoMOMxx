@@ -440,6 +440,7 @@ void RuntimeParams::get(const std::string &key, T &value, const ParamGetOptions 
 }
 
 // Explicit template instantiations for get
+/// @cond
 template void RuntimeParams::get<bool>(const std::string &, bool &, const ParamGetOptions &) const;
 template void RuntimeParams::get<int>(const std::string &, int &, const ParamGetOptions &) const;
 template void RuntimeParams::get<double>(const std::string &, double &, const ParamGetOptions &) const;
@@ -453,5 +454,6 @@ template void RuntimeParams::get<std::vector<double>>(const std::string &, std::
                                                       const ParamGetOptions &) const;
 template void RuntimeParams::get<std::vector<std::string>>(const std::string &, std::vector<std::string> &,
                                                            const ParamGetOptions &) const;
+/// @endcond
 
 } // namespace MOM

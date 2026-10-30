@@ -96,6 +96,8 @@ inline std::size_t find_unquoted(std::string_view s, char ch) {
 
 
 /// @brief Check whether all quotes (single and double) in a string are balanced.
+/// @param s String to check.
+/// @return True if every opened quote is closed.
 inline bool quotes_balanced(std::string_view s) {
   char in_quote = 0;
   for (char c : s) {
