@@ -6,6 +6,7 @@
 
 #include "MOM_domain_infra.hpp"
 #include "MOM_file_parser.hpp"
+#include "MOM_forcing_type.hpp"
 #include "MOM_grid.hpp"
 #include "MOM_state.hpp"
 #include "MOM_vertical_grid.hpp"
@@ -17,9 +18,7 @@ namespace MOM {
 ///
 /// The constructor performs the full initialization. It is the analogue of
 /// MOM6's initialize_MOM (src/core/MOM.F90). The constructor is decomposed
-/// into phases that mirror the topology of MOM6's initialize_MOM. The
-/// remaining phase, initialize_dynamics, is a stub that will be filled in by
-/// upcoming PRs.
+/// into phases that mirror the topology of MOM6's initialize_MOM.
 class Model {
 public:
   /// @brief Scalar configuration switches of the model (the analogue of the
@@ -37,6 +36,16 @@ public:
   /// @param params Runtime parameters. Injected by the driver.
   /// @pre The infrastructure layer (AMReX) is initialized.
   explicit Model(RuntimeParams &params);
+
+  /// @brief Advance the model over a time interval (the analogue of MOM6's
+  /// step_MOM). As in MOM6, the interval is split into equal dynamics steps
+  /// no longer than DT, and each step dispatches on the time stepping scheme.
+  /// The unsplit RK2 dynamics is not implemented yet, so the state does not
+  /// change.
+  /// @param forces The mechanical forcing over the interval.
+  /// @param time_interval The time interval covered by this call [T ~> s].
+  /// @throws logger::FatalError for currently unsupported schemes.
+  void step(const MechForcing &forces, amrex::Real time_interval);
 
   /// @brief Read-only access to the model configuration switches.
   /// @return Const reference to the model configuration switches.
@@ -82,10 +91,11 @@ private:
   /// @brief Read the scalar configuration switches into a Config object.
   static Config read_config_switches(RuntimeParams &params);
 
-  /// @brief Initialize the dynamics subsystem for the configured time
-  /// stepping scheme. Analogue of MOM6's register_restarts_dyn_* +
-  /// initialize_dyn_* four-way dispatch. (stub)
-  void initialize_dynamics(RuntimeParams &params);
+  /// @brief Initialize the dynamics for the configured time stepping scheme,
+  /// with MOM6's four-way dispatch of register_restarts_dyn_* and
+  /// initialize_dyn_* (split_RK2b, split_RK2, unsplit_RK2, unsplit).
+  /// @throws logger::FatalError for currently unsupported schemes.
+  void initialize_dynamics();
 };
 
 } // namespace MOM

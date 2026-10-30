@@ -1,5 +1,9 @@
 ! Parameter file for the Model unit tests: a second, smaller configuration
 ! for the two-instances-in-one-process test.
+SPLIT = False
+USE_RK2 = True
+ENABLE_THERMODYNAMICS = False
+ADIABATIC = True
 DT = 1200.0
 NIGLOBAL = 14
 NJGLOBAL = 10

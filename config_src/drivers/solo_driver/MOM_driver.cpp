@@ -9,9 +9,11 @@
 
 #include "MOM.hpp"
 #include "MOM_directories.hpp"
+#include "MOM_forcing_type.hpp"
 #include "MOM_infra.hpp"
 #include "MOM_logger.hpp"
 #include "MOM_run_control.hpp"
+#include "MOM_surface_forcing.hpp"
 #include "MOM_time_manager.hpp"
 
 /// @brief Main entry point for the protoMOMxx driver program.
@@ -42,23 +44,44 @@ int main(int argc, char* argv[]) {
     // defer: time_interp_external_init()
 
     // Initialize the core MOM object (the analogue of MOM6's initialize_MOM).
-    const MOM::Model model(params);
+    MOM::Model model(params);
 
-    // todo: extract_surface_state()
-    // todo: surface_forcing_init()
-    // defer: MOM_wave_interface_init(), data_override_init(), ice shelf hooks
+    // defer: extract_surface_state(), the surface state, which nothing reads
+    //        yet. MOM6's set_forcing passes it to the forcing configurations,
+    //        and the 2-gyre winds do not use it.
+
+    // The surface forcing (the analogue of MOM6's surface_forcing_init).
+    MOM::SurfaceForcing surface_forcing(params);
+
+    bool use_waves = false;
+    params.get("USE_WAVES", use_waves,
+               {.default_value = false,
+                .desc = "If true, enables surface wave modules."});
+    if (use_waves) {
+      // defer: MOM_wave_interface_init()
+      MOM::logger::fatal("MOM_driver: The surface wave modules (USE_WAVES = True) are not "
+                         "implemented yet.");
+    }
+    // defer: data_override_init(), ice shelf hooks
 
     // The run-control parameters: the forcing time step and the end time.
     const MOM::RunControl run = MOM::read_run_control(params, start.start_time);
     // todo: close_param_file() (the unused-parameter check)
     // defer: write_time_stamp_file(), MOM_write_cputime_init(), the restart schedule
 
+    // The mechanical forcing, which set_forcing sets for each forcing step.
+    MOM::MechForcing forces = MOM::make_mech_forcing(model.domain());
+
     // The main loop, one forcing time step per pass.
     MOM::Time time = start.start_time;
     while (time < run.time_end) {
-      // todo: set_forcing()
-      // todo: finish_MOM_initialization() on the first iteration
-      // todo: step_MOM()
+      surface_forcing.set_forcing(forces, model.grid());
+      // todo: the forcing checksums (MOM_mech_forcing_chksum) when DEBUG is
+      //       true, with the checksum oracle.
+      // defer: finish_MOM_initialization() on the first pass, which writes the
+      //        initial conditions and the first energy output and sets up the
+      //        particles, none of which is implemented yet.
+      model.step(forces, MOM::time_to_real(run.time_step_ocean));
       time += run.time_step_ocean;
       // defer: mech_forcing_diags(), forcing_diagnostics(), incremental restarts
     }
