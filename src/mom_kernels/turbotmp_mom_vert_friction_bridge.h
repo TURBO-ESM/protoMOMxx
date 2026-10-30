@@ -14,8 +14,8 @@
 struct vertvisc_opts_CS_C;
 /// @brief Alias letting C callers spell the options struct without the `struct` keyword.
 typedef struct vertvisc_opts_CS_C vertvisc_opts_CS_C;
-/// Defined in mom_vert_friction.hpp -- field-for-field mirror of the Fortran bind(C) type
-/// of the same name.
+/// Defined in turbotmp_mom_vert_friction_bridge.cpp -- field-for-field mirror of the Fortran
+/// bind(C) type of the same name.
 struct coef_opts_CS_C;
 /// @brief Alias letting C callers spell the coupling coefficient options without the `struct`
 /// keyword.
