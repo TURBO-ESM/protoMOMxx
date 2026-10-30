@@ -87,6 +87,7 @@ if(PROTOMOM_MOM_BRIDGE)
         install(FILES
             turbotmp_mom_continuity_ppm_bridge.h
             turbotmp_mom_interface_heights_bridge.h
+            turbotmp_mom_grid_c_types.h
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/protoMOMxx)
     endif()
 endif()
