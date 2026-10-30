@@ -417,7 +417,7 @@ TEST(VertviscCoefTr, MatchesFortranCapture) {
     }
 
     // Vertical viscosity control structure
-    coef_opts_CS_C CS{};
+    coef_opts_CS CS{};
     CS.coupling_CS.Hmix               = captured.real64("_CS_coupling_CS_Hmix");
     CS.coupling_CS.Kvml_invZ2         = captured.real64("_CS_coupling_CS_Kvml_invZ2");
     CS.coupling_CS.Kv                 = captured.real64("_CS_coupling_CS_Kv");

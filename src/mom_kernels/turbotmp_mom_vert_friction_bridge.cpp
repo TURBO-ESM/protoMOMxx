@@ -12,6 +12,49 @@
 
 using namespace amrex;
 
+/// @brief Options used in the GL90 vertical viscosity parameterization.
+/// Field-for-field mirror of the Fortran `bind(C)` type `GL90_CS_C` -- order and types must not
+/// change.
+struct GL90_CS_C {
+    bool   use_GL90_N2;                ///< If true, use GL90 vertical viscosity coefficient that is
+                                       ///< depth-independent; this corresponds to a kappa_GM that
+                                       ///< scales as N^2 with depth.
+    double kappa_gl90;                 ///< The scalar diffusivity used in the GL90 vertical
+                                       ///< viscosity scheme [L2 H Z-1 T-1 ~> m2 s-1 or Pa s]
+    bool   read_kappa_gl90;            ///< If true, read a file containing the spatially varying
+                                       ///< kappa_gl90
+    double alpha_gl90;                 ///< Coefficient used to compute a depth-independent GL90
+                                       ///< vertical viscosity via Kv_gl90 = alpha_gl90 * f^2. Note
+                                       ///< that the implied Kv_gl90 corresponds to a kappa_gl90
+                                       ///< that scales as N^2 with depth. [H Z T ~> m2 s or kg s m-1]
+    struct RealArray_C kappa_gl90_2d;  ///< 2D kappa_gl90 at h-points
+                                       ///< [L2 H Z-1 T-1 ~> m2 s-1 or Pa s]
+};
+
+/// @brief Options used in the vertical viscosity coupling coefficient calculations.
+/// Field-for-field mirror of the Fortran `bind(C)` type `coef_opts_CS_C` -- order and types must
+/// not change.
+struct coef_opts_CS_C {
+    coupling_CS_C coupling_CS; ///< Options used in the calculation of the coupling coefficients
+                               ///< across interfaces.
+    double Hbbl;               ///< The static bottom boundary layer thickness [Z ~> m].
+    double Hbbl_gl90;          ///< The static bottom boundary layer thickness used for GL90 [Z ~> m].
+    bool   use_GL90_in_SSW;    ///< If true, use the GL90 parameterization in stacked shallow water
+                               ///< mode (SSW). The calculation of the GL90 viscosity coefficient
+                               ///< uses the fact that in SSW we simply have 1/N^2 = h/g^prime,
+                               ///< where g^prime is the reduced gravity. This identity does not
+                               ///< generalize to non-SSW setups.
+    GL90_CS_C GL90_CS;         ///< Options used in the GL90 vertical viscosity parameterization.
+    bool   harmonic_visc;      ///< If true, the harmonic mean thicknesses are used
+                               ///< to calculate the viscous coupling between layers
+                               ///< except near the bottom.  Otherwise the arithmetic
+                               ///< mean thickness is used except near the bottom.
+    double harm_BL_val;        ///< A scale to determine when water is in the boundary
+                               ///< layers based solely on harmonic mean thicknesses
+                               ///< for the purpose of determining the extent to which
+                               ///< the thicknesses used in the viscosities are upwinded [nondim].
+};
+
 /// @brief Bridge for the MOM6 vertvisc_limit_vel subroutine.
 ///
 /// @param bxU0_HOST           The u-point box of the whole column, [IscB:IecB, jsc:jec, 1:nz]
@@ -557,6 +600,19 @@ void turbotmp_vertvisc_coef_tr_bridge(const Box_C* bxU0_HOST,
     if (Kv_gl90_v_allocated) turbotmp::copy_FortranHost_to_array4(coef_diag_HOST->Kv_gl90_v.data, Kv_gl90_v_DEV);
 
     ///-------------------------------------------------
+    /// The kernel's options: the scalar fields of CS_HOST (kappa_gl90_2d is passed as an Array4)
+    coef_opts_CS CS{};
+    CS.coupling_CS             = CS_HOST->coupling_CS;
+    CS.Hbbl                    = CS_HOST->Hbbl;
+    CS.Hbbl_gl90               = CS_HOST->Hbbl_gl90;
+    CS.use_GL90_in_SSW         = CS_HOST->use_GL90_in_SSW;
+    CS.GL90_CS.use_GL90_N2     = CS_HOST->GL90_CS.use_GL90_N2;
+    CS.GL90_CS.kappa_gl90      = CS_HOST->GL90_CS.kappa_gl90;
+    CS.GL90_CS.read_kappa_gl90 = CS_HOST->GL90_CS.read_kappa_gl90;
+    CS.GL90_CS.alpha_gl90      = CS_HOST->GL90_CS.alpha_gl90;
+    CS.harmonic_visc           = CS_HOST->harmonic_visc;
+    CS.harm_BL_val             = CS_HOST->harm_BL_val;
+
     /// Execute kernel
     ///-------------------------------------------------
     MOM::vertvisc_coef_tr(bxU0, bxV0,
@@ -577,7 +633,7 @@ void turbotmp_vertvisc_coef_tr_bridge(const Box_C* bxU0_HOST,
                           vgrid_HOST->H_to_m, vgrid_HOST->m_to_H, vgrid_HOST->RZ_to_H,
                           vgrid_HOST->Z_to_H, vgrid_HOST->T_to_s,
                           g_prime_arr,
-                          *CS_HOST,
+                          CS,
                           kappa_gl90_2d_DEV.arr,
                           a_u_DEV.arr, a_u_gl90_DEV.arr, h_u_DEV.arr,
                           a_v_DEV.arr, a_v_gl90_DEV.arr, h_v_DEV.arr,

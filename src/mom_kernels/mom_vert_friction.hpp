@@ -8,7 +8,6 @@
 #include <AMReX_Array4.H>
 
 #include "mom_vert_friction_kernel.hpp"
-#include "turbotmp_bridge_c_types.h"
 
 /// @brief Options used in the vertical viscosity solver and the velocity truncations.
 /// Field-for-field mirror of the Fortran `bind(C)` type `vertvisc_opts_CS_C` -- order and
@@ -41,10 +40,10 @@ struct vertvisc_opts_CS_C {
                                ///< viscosity is needed for diagnostics.
 };
 
-/// @brief Options used in the GL90 vertical viscosity parameterization.
-/// Field-for-field mirror of the Fortran `bind(C)` type `GL90_CS_C` -- order and types must not
-/// change.
-struct GL90_CS_C {
+/// @brief Options used in the GL90 vertical viscosity parameterization, as the kernel reads
+/// them: the scalar fields of the Fortran `bind(C)` type `GL90_CS_C`. Its `kappa_gl90_2d` array
+/// reaches the kernel as an Array4 argument instead.
+struct GL90_opts {
     bool   use_GL90_N2;                ///< If true, use GL90 vertical viscosity coefficient that is
                                        ///< depth-independent; this corresponds to a kappa_GM that
                                        ///< scales as N^2 with depth.
@@ -56,14 +55,12 @@ struct GL90_CS_C {
                                        ///< vertical viscosity via Kv_gl90 = alpha_gl90 * f^2. Note
                                        ///< that the implied Kv_gl90 corresponds to a kappa_gl90
                                        ///< that scales as N^2 with depth. [H Z T ~> m2 s or kg s m-1]
-    struct RealArray_C kappa_gl90_2d;  ///< 2D kappa_gl90 at h-points
-                                       ///< [L2 H Z-1 T-1 ~> m2 s-1 or Pa s]
 };
 
-/// @brief Options used in the vertical viscosity coupling coefficient calculations.
-/// Field-for-field mirror of the Fortran `bind(C)` type `coef_opts_CS_C` -- order and types must
-/// not change.
-struct coef_opts_CS_C {
+/// @brief Options used in the vertical viscosity coupling coefficient calculations, as the
+/// kernel reads them: the fields of the Fortran `bind(C)` type `coef_opts_CS_C`, with `GL90_CS`
+/// holding only its scalars. The bridge fills it from the Fortran mirror.
+struct coef_opts_CS {
     coupling_CS_C coupling_CS; ///< Options used in the calculation of the coupling coefficients
                                ///< across interfaces.
     double Hbbl;               ///< The static bottom boundary layer thickness [Z ~> m].
@@ -73,7 +70,7 @@ struct coef_opts_CS_C {
                                ///< uses the fact that in SSW we simply have 1/N^2 = h/g^prime,
                                ///< where g^prime is the reduced gravity. This identity does not
                                ///< generalize to non-SSW setups.
-    GL90_CS_C GL90_CS;         ///< Options used in the GL90 vertical viscosity parameterization.
+    GL90_opts GL90_CS;         ///< Options used in the GL90 vertical viscosity parameterization.
     bool   harmonic_visc;      ///< If true, the harmonic mean thicknesses are used
                                ///< to calculate the viscous coupling between layers
                                ///< except near the bottom.  Otherwise the arithmetic
@@ -375,7 +372,7 @@ void vertvisc_coef_tr(const Box& bxU0,
                       const Real Z_to_H,
                       const Real T_to_s,
                       Array4<const Real> const& g_prime,
-                      const coef_opts_CS_C& CS,
+                      const coef_opts_CS& CS,
                       Array4<const Real> const& kappa_gl90_2d,
                       Array4<Real>       const& a_u,
                       Array4<Real>       const& a_u_gl90,
