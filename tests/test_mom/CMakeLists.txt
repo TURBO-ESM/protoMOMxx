@@ -50,16 +50,18 @@ if(TEST_MOM_STANDALONE)
         enable_language(Fortran)
     endif()
 
-    if(AMReX_GPU_BACKEND STREQUAL "CUDA")
-        enable_language(CUDA)
-    endif()
-
     # --- AMReX ------------------------------------------------------------
     # Prefer an installed AMReX if available; otherwise build the in-tree source.
     set(AMREX_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../amrex"
         CACHE PATH "Path to the AMReX source tree")
 
     find_package(AMReX QUIET)
+    # Check after find_package: an installed AMReX sets AMReX_GPU_BACKEND from
+    # its config. A from-source build reads it from the user's -D value. CUDA
+    # must be on before mom_kernels and the tests mark sources LANGUAGE CUDA.
+    if(AMReX_GPU_BACKEND STREQUAL "CUDA")
+        enable_language(CUDA)
+    endif()
     if(NOT AMReX_FOUND)
         if(NOT EXISTS "${AMREX_SOURCE_DIR}/CMakeLists.txt")
             message(FATAL_ERROR
