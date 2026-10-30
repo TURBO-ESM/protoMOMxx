@@ -43,6 +43,7 @@ endfunction()
 add_library(mom_kernels STATIC
     mom_continuity_ppm.cpp
     mom_interface_heights.cpp
+    mom_coriolisadv.cpp
 )
 add_library(protoMOMxx::mom_kernels ALIAS mom_kernels)
 mom_cpp_configure(mom_kernels)
@@ -56,6 +57,7 @@ if(PROTOMOM_MOM_BRIDGE)
     add_library(mom_bridge STATIC
         turbotmp_mom_continuity_ppm_bridge.cpp
         turbotmp_mom_interface_heights_bridge.cpp
+        turbotmp_mom_coriolisadv_bridge.cpp
         ${mom_turbotmp_dir}/turbotmp_helper.cpp
     )
     add_library(protoMOMxx::mom_bridge ALIAS mom_bridge)
@@ -88,6 +90,7 @@ if(PROTOMOM_MOM_BRIDGE)
             turbotmp_mom_continuity_ppm_bridge.h
             turbotmp_mom_interface_heights_bridge.h
             turbotmp_mom_grid_c_types.h
+            turbotmp_mom_coriolisadv_bridge.h
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/protoMOMxx)
     endif()
 endif()
@@ -97,6 +100,8 @@ set(mom_cpp_sources
     mom_interface_heights.cpp
     turbotmp_mom_continuity_ppm_bridge.cpp
     turbotmp_mom_interface_heights_bridge.cpp
+    mom_coriolisadv.cpp
+    turbotmp_mom_coriolisadv_bridge.cpp
     ${mom_turbotmp_dir}/turbotmp_helper.cpp
 )
 
