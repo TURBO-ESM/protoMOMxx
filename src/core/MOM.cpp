@@ -1,6 +1,7 @@
+#include "MOM.hpp"
+
 #include <cmath>
 
-#include "MOM.hpp"
 #include "MOM_domains.hpp"
 #include "MOM_fixed_initialization.hpp"
 #include "MOM_logger.hpp"
