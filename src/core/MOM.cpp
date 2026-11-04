@@ -108,6 +108,20 @@ Model::Config Model::read_config_switches(RuntimeParams &params) {
                   "(ENABLE_THERMODYNAMICS = True) are not implemented yet.");
   }
 
+  // MOM6 reads CALC_RHO_FOR_SEA_LEVEL before ENABLE_THERMODYNAMICS, for the
+  // sea level of the surface state, which is not implemented yet.
+
+  bool use_EOS = use_temperature;
+  params.get("USE_EOS", use_EOS,
+             {.default_value = use_temperature,
+              .desc = "If true,  density is calculated from temperature and salinity with an "
+                      "equation of state.  If USE_EOS is true, ENABLE_THERMODYNAMICS must be true "
+                      "as well."});
+  if (use_EOS) {
+    // defer: the equation of state.
+    logger::fatal("MOM: The equation of state (USE_EOS = True) is not implemented yet.");
+  }
+
   bool diabatic_first = false;
   params.get("DIABATIC_FIRST", diabatic_first,
              {.default_value = false,
@@ -118,6 +132,9 @@ Model::Config Model::read_config_switches(RuntimeParams &params) {
     logger::fatal("MOM: Applying the diabatic processes before the dynamics "
                   "(DIABATIC_FIRST = True) is not implemented yet.");
   }
+
+  // MOM6 reads USE_CONTEMP_ABSSAL here, and ADVECT_TS after DO_DYNAMICS. Both
+  // matter only with temperature and salinity.
 
   bool adiabatic = false;
   params.get("ADIABATIC", adiabatic,
@@ -130,11 +147,85 @@ Model::Config Model::read_config_switches(RuntimeParams &params) {
     logger::fatal("MOM: The diapycnal mass fluxes (ADIABATIC = False) are not implemented yet.");
   }
 
+  bool do_dynamics = true;
+  params.get("DO_DYNAMICS", do_dynamics,
+             {.default_value = true,
+              .desc = "If False, skips the dynamics calls that update u & v, as well as the "
+                      "gravity wave adjustment to h. This may be a fragile feature, but can be "
+                      "useful during development"});
+  if (!do_dynamics) {
+    logger::fatal("MOM: Skipping the dynamics (DO_DYNAMICS = False) is not implemented yet.");
+  }
+
+  // MOM6 reads OFFLINE_TRACER_MODE only when the driver supports it, as the
+  // solo driver does.
+  bool offline_tracer_mode = false;
+  params.get("OFFLINE_TRACER_MODE", offline_tracer_mode,
+             {.default_value = false,
+              .desc = "If true, barotropic and baroclinic dynamics, thermodynamics are all "
+                      "bypassed with all the fields necessary to integrate the tracer advection "
+                      "and diffusion equation are read in from files stored from a previous "
+                      "integration of the prognostic model. NOTE: This option only used in the "
+                      "ocean_solo_driver."});
+  if (offline_tracer_mode) {
+    // defer: the offline tracer mode (MOM_offline_main).
+    logger::fatal("MOM: The offline tracer mode (OFFLINE_TRACER_MODE = True) is not "
+                  "implemented yet.");
+  }
+
+  bool use_ALE_algorithm = false;
+  params.get("USE_REGRIDDING", use_ALE_algorithm,
+             {.default_value = false,
+              .desc = "If True, use the ALE algorithm (regridding/remapping). If False, use the "
+                      "layered isopycnal algorithm."});
+  if (use_ALE_algorithm) {
+    // defer: ALE (MOM_ALE), with REMAP_UV_USING_OLD_ALG and REMAP_AUXILIARY_VARS.
+    logger::fatal("MOM: The ALE algorithm (USE_REGRIDDING = True) is not implemented yet.");
+  }
+
+  bool bulkmixedlayer = use_temperature && !use_ALE_algorithm;
+  params.get("BULKMIXEDLAYER", bulkmixedlayer,
+             {.default_value = use_temperature && !use_ALE_algorithm,
+              .desc = "If true, use a Kraus-Turner-like bulk mixed layer with transitional buffer "
+                      "layers.  Layers 1 through NKML+NKBL have variable densities. There must be "
+                      "at least NKML+NKBL+1 layers if BULKMIXEDLAYER is true. BULKMIXEDLAYER can "
+                      "not be used with USE_REGRIDDING. The default is influenced by "
+                      "ENABLE_THERMODYNAMICS."});
+  if (bulkmixedlayer) {
+    // defer: the bulk mixed layer, with NKML and NKBL.
+    logger::fatal("MOM: The bulk mixed layer (BULKMIXEDLAYER = True) is not implemented yet.");
+  }
+
+  bool use_porbar = false;
+  params.get("USE_POROUS_BARRIER", use_porbar,
+             {.default_value = false,
+              .desc = "If true, use porous barrier to constrain the widths and face areas at the "
+                      "edges of the grid cells. "});
+  if (use_porbar) {
+    // defer: the porous barriers (MOM_porous_barriers).
+    logger::fatal("MOM: The porous barriers (USE_POROUS_BARRIER = True) are not implemented yet.");
+  }
+
+  bool bathymetry_at_vel = false;
+  params.get("BATHYMETRY_AT_VEL", bathymetry_at_vel,
+             {.default_value = false,
+              .desc = "If true, there are separate values for the basin depths at velocity "
+                      "points.  Otherwise the effects of topography are entirely determined from "
+                      "thickness points."});
+  if (bathymetry_at_vel) {
+    // defer: the depths at velocity points.
+    logger::fatal("MOM: Separate depths at velocity points (BATHYMETRY_AT_VEL = True) are not "
+                  "implemented yet.");
+  }
+
   params.get("DEBUG", config.debug,
              {.default_value = false,
               .desc = "If true, write out verbose debugging data.",
               .units = "nondim",
               .debugging_param = true});
+
+  // MOM6 reads ENABLE_BUGS_BY_DEFAULT here, which sets the defaults of the
+  // bug-fix flags. No bug-fix flag is read yet.
 
   params.get("DT", config.dt,
              {.desc = "The (baroclinic) dynamics time step.  The time-step that "
@@ -155,6 +246,9 @@ Model::Config Model::read_config_switches(RuntimeParams &params) {
                       "can be an integer multiple of the coupling timestep. By default DT_THERM "
                       "is set to DT.",
               .units = "s"});
+
+  // MOM6 reads THERMO_SPANS_COUPLING and DT_TRACER_ADVECT next, for the
+  // thermodynamic and tracer advection cadences.
 
   return config;
 }
