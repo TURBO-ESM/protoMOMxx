@@ -53,13 +53,22 @@ int main(int argc, char* argv[]) {
     // The surface forcing (the analogue of MOM6's surface_forcing_init).
     MOM::SurfaceForcing surface_forcing(params);
 
+    // The surface waves. MOM6 calls MOM_wave_interface_init even when
+    // USE_WAVES is false, since it also sets up the statistical waves
+    // (USE_LA_LI2016), which KPP and ePBL use for the Langmuir number.
+    // defer: MOM_wave_interface_init()
     bool use_waves = false;
     params.get("USE_WAVES", use_waves,
                {.default_value = false,
                 .desc = "If true, enables surface wave modules."});
+    bool use_la_li2016 = false;
+    params.get("USE_LA_LI2016", use_la_li2016, {.default_value = false, .do_not_log = true});
     if (use_waves) {
-      // defer: MOM_wave_interface_init()
       MOM::logger::fatal("MOM_driver: The surface wave modules (USE_WAVES = True) are not "
+                         "implemented yet.");
+    }
+    if (use_la_li2016) {
+      MOM::logger::fatal("MOM_driver: The statistical waves (USE_LA_LI2016 = True) are not "
                          "implemented yet.");
     }
     // defer: data_override_init(), ice shelf hooks
