@@ -40,7 +40,7 @@ TEST(SurfaceForcing, TwoGyreWinds) {
 
   const double taux_magnitude = 0.1;  // [Pa] (the default)
   EXPECT_GT(forces.taux.min(0), 0.0);
-  EXPECT_EQ(forces.taux.max(0), 2.0 * taux_magnitude);
+  EXPECT_DOUBLE_EQ(forces.taux.max(0), 2.0 * taux_magnitude);
   EXPECT_EQ(forces.tauy.norminf(0, 1, domain.nghost()), 0.0);
 }
 
