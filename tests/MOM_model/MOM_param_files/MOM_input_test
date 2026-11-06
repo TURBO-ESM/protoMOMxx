@@ -1,6 +1,8 @@
 ! Parameter file for the Model unit tests.
 SPLIT = False
 USE_RK2 = True
+ENABLE_THERMODYNAMICS = False
+ADIABATIC = True
 DT = 300.0
 REENTRANT_X = False
 NIGLOBAL = 44
