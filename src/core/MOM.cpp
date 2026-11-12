@@ -15,7 +15,7 @@ Model::Model(RuntimeParams &params)
     vgrid_(params),
     state_(make_state(domain_, grid_, vgrid_, params)) {
 
-  initialize_dynamics();
+  initialize_dynamics(params);
 
   logger::note("MOM core initialization complete.");
 }
@@ -133,7 +133,6 @@ Model::Config Model::read_config_switches(RuntimeParams &params) {
   params.get("DEBUG", config.debug,
              {.default_value = false,
               .desc = "If true, write out verbose debugging data.",
-              .units = "nondim",
               .debugging_param = true});
 
   params.get("DT", config.dt,
@@ -159,7 +158,7 @@ Model::Config Model::read_config_switches(RuntimeParams &params) {
   return config;
 }
 
-void Model::initialize_dynamics() {
+void Model::initialize_dynamics(RuntimeParams &params) {
 
   // defer: restart registration (register_restarts_dyn_*) and diagnostics.
   if (config_.split && config_.use_alt_split) {
@@ -171,8 +170,8 @@ void Model::initialize_dynamics() {
     logger::fatal("initialize_dynamics: The split time stepping (SPLIT = True) "
                   "is not implemented yet.");
   } else if (config_.use_RK2) {
-    // todo: initialize_dyn_unsplit_RK2
-    logger::note("initialize_dynamics: The unsplit RK2 dynamics is not implemented yet, "
+    dyn_unsplit_RK2_CS_ = initialize_dyn_unsplit_RK2(grid_, vgrid_, params);
+    logger::note("initialize_dynamics: The unsplit RK2 time step is not implemented yet, "
                  "so the model state does not change in time.");
   } else {
     // defer: initialize_dyn_unsplit
