@@ -27,6 +27,9 @@ Grid::Grid(GridFields &&fields)
   check_created(fields_.areaT, "areaT");
   check_created(fields_.bathyT, "bathyT");
   check_created(fields_.mask2dT, "mask2dT");
+  check_created(fields_.IdxT, "IdxT");
+  check_created(fields_.IdyT, "IdyT");
+  check_created(fields_.IareaT, "IareaT");
 
   check_created(fields_.geoLatCu, "geoLatCu");
   check_created(fields_.geoLonCu, "geoLonCu");
@@ -34,6 +37,7 @@ Grid::Grid(GridFields &&fields)
   check_created(fields_.dyCu, "dyCu");
   check_created(fields_.areaCu, "areaCu");
   check_created(fields_.mask2dCu, "mask2dCu");
+  check_created(fields_.dy_Cu, "dy_Cu");
 
   check_created(fields_.geoLatCv, "geoLatCv");
   check_created(fields_.geoLonCv, "geoLonCv");
@@ -41,6 +45,7 @@ Grid::Grid(GridFields &&fields)
   check_created(fields_.dyCv, "dyCv");
   check_created(fields_.areaCv, "areaCv");
   check_created(fields_.mask2dCv, "mask2dCv");
+  check_created(fields_.dx_Cv, "dx_Cv");
 
   check_created(fields_.geoLatBu, "geoLatBu");
   check_created(fields_.geoLonBu, "geoLonBu");
