@@ -2,6 +2,7 @@
 add_library(MOM_src_types
   MOM_forcing_type.cpp
   MOM_grid.cpp
+  MOM_porous_barrier.cpp
   MOM_vertical_grid.cpp
 )
 

@@ -1,11 +1,119 @@
 #include "MOM_dynamics_unsplit_RK2.hpp"
 
+#include <AMReX_Gpu.H>
+#include <AMReX_MFIter.H>
+
 #include "MOM_logger.hpp"
 
 namespace MOM {
 
-DynUnsplitRK2CS initialize_dyn_unsplit_RK2(const Grid &G, const VerticalGrid &GV,
-                                           RuntimeParams &params) {
+namespace {
+
+// The routines below stand in for the modules that the time step calls but
+// that are not implemented yet. Each one sets its outputs to zero, or leaves
+// its arguments unchanged when it only updates them, so for now the step adds
+// no Coriolis, pressure, viscous or wind terms. Their arguments are the ones
+// that exist so far; the modules will add theirs.
+
+// todo: MOM6's CoriolisAdv_stencil (MOM_CoriolisAdv). It returns 2 for every
+//       Coriolis scheme but the WENO ones.
+int CoriolisAdv_stencil() { return 2; }
+
+// todo: MOM6's CorAdCalc (MOM_CoriolisAdv), which sets CAu and CAv.
+void CorAdCalc(const amrex::MultiFab & /*u*/, const amrex::MultiFab & /*v*/,
+               const amrex::MultiFab & /*h*/, const amrex::MultiFab & /*uh*/,
+               const amrex::MultiFab & /*vh*/, amrex::MultiFab &CAu, amrex::MultiFab &CAv,
+               const PorousBarrier & /*pbv*/) {
+  CAu.setVal(0.0);
+  CAv.setVal(0.0);
+}
+
+// todo: MOM6's PressureForce (MOM_PressureForce), which sets PFu and PFv.
+void PressureForce(const amrex::MultiFab & /*h*/, amrex::MultiFab &PFu, amrex::MultiFab &PFv) {
+  PFu.setVal(0.0);
+  PFv.setVal(0.0);
+}
+
+// todo: MOM6's horizontal_viscosity (MOM_hor_visc), which sets diffu and diffv.
+void horizontal_viscosity(const amrex::MultiFab & /*u*/, const amrex::MultiFab & /*v*/,
+                          const amrex::MultiFab & /*h*/, const amrex::MultiFab & /*uh*/,
+                          const amrex::MultiFab & /*vh*/, amrex::MultiFab &diffu,
+                          amrex::MultiFab &diffv, const amrex::Real /*dt*/) {
+  diffu.setVal(0.0);
+  diffv.setVal(0.0);
+}
+
+// todo: MOM6's set_viscous_ML (MOM_set_viscosity), which sets the viscosities
+//       of the surface mixed layer.
+void set_viscous_ML(const amrex::MultiFab & /*u*/, const amrex::MultiFab & /*v*/,
+                    const amrex::MultiFab & /*h*/, const MechForcing & /*forces*/,
+                    const amrex::Real /*dt*/) {}
+
+// todo: MOM6's thickness_to_dz (MOM_interface_heights), which sets the
+//       vertical extent of each layer.
+void thickness_to_dz(const amrex::MultiFab & /*h*/, amrex::MultiFab &dz) { dz.setVal(0.0); }
+
+// todo: MOM6's vertvisc_coef (MOM_vert_friction), which sets the coupling
+//       coefficients between the layers.
+void vertvisc_coef(const amrex::MultiFab & /*u*/, const amrex::MultiFab & /*v*/,
+                   const amrex::MultiFab & /*h*/, const amrex::MultiFab & /*dz*/,
+                   const MechForcing & /*forces*/, const amrex::Real /*dt*/) {}
+
+// todo: MOM6's vertvisc (MOM_vert_friction), which applies the vertical
+//       viscosity and the wind stress to u and v.
+void vertvisc(amrex::MultiFab & /*u*/, amrex::MultiFab & /*v*/, const amrex::MultiFab & /*h*/,
+              const MechForcing & /*forces*/, const amrex::Real /*dt*/) {}
+
+/// @brief h_av = (h + hp)/2, on the valid points and halo points around them.
+void average_thickness(const amrex::MultiFab &h, const amrex::MultiFab &hp,
+                       amrex::MultiFab &h_av, const int halo) {
+  for (amrex::MFIter mfi(h_av); mfi.isValid(); ++mfi) {
+    const amrex::Box bx = mom_box(amrex::grow(mfi.validbox(), amrex::IntVect(halo, halo, 0)));
+    const amrex::Array4<const amrex::Real> h_in = mom_const_array(h, mfi);
+    const amrex::Array4<const amrex::Real> h_p = mom_const_array(hp, mfi);
+    const amrex::Array4<amrex::Real> av = mom_array(h_av, mfi);
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+      av(i, j, k) = (h_in(i, j, k) + h_p(i, j, k)) * 0.5;
+    });
+  }
+}
+
+/// @brief out = mask * (u + dt * ((PF + CA) + diff)), on the valid points of a
+/// u or v field. out may be u itself.
+void add_accelerations(const amrex::MultiFab &mask, const amrex::MultiFab &u,
+                       const amrex::MultiFab &PF, const amrex::MultiFab &CA,
+                       const amrex::MultiFab &diff, const amrex::Real dt, amrex::MultiFab &out) {
+  for (amrex::MFIter mfi(out); mfi.isValid(); ++mfi) {
+    const amrex::Box bx = mom_box(mfi.validbox());
+    const amrex::Array4<const amrex::Real> m = mom_const_array(mask, mfi);
+    const amrex::Array4<const amrex::Real> u_in = mom_const_array(u, mfi);
+    const amrex::Array4<const amrex::Real> pf = mom_const_array(PF, mfi);
+    const amrex::Array4<const amrex::Real> ca = mom_const_array(CA, mfi);
+    const amrex::Array4<const amrex::Real> df = mom_const_array(diff, mfi);
+    const amrex::Array4<amrex::Real> o = mom_array(out, mfi);
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+      o(i, j, k) = m(i, j, 0) * (u_in(i, j, k) + dt * ((pf(i, j, k) + ca(i, j, k)) + df(i, j, k)));
+    });
+  }
+}
+
+/// @brief uhtr = uhtr + dt*uh, on the valid points of a u or v field and 2
+/// points around them.
+void accumulate_flux(const amrex::MultiFab &uh, const amrex::Real dt, amrex::MultiFab &uhtr) {
+  for (amrex::MFIter mfi(uhtr); mfi.isValid(); ++mfi) {
+    const amrex::Box bx = mom_box(amrex::grow(mfi.validbox(), amrex::IntVect(2, 2, 0)));
+    const amrex::Array4<const amrex::Real> flux = mom_const_array(uh, mfi);
+    const amrex::Array4<amrex::Real> sum = mom_array(uhtr, mfi);
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+      sum(i, j, k) = sum(i, j, k) + dt * flux(i, j, k);
+    });
+  }
+}
+
+} // namespace
+
+DynUnsplitRK2CS initialize_dyn_unsplit_RK2(const Domain &domain, const Grid &G,
+                                           const VerticalGrid &GV, RuntimeParams &params) {
 
   params.doc_module("MOM_dynamics_unsplit_RK2", "");
 
@@ -54,6 +162,21 @@ DynUnsplitRK2CS initialize_dyn_unsplit_RK2(const Grid &G, const VerticalGrid &GV
              {.default_value = CS.use_tides,
               .desc = "If true, calculate self-attraction and loading."});
 
+  // MOM6 creates the accelerations in register_restarts_dyn_unsplit_RK2.
+  const int nk = GV.nk();
+  CS.CAu = domain.make_u_field({.nk = nk});
+  CS.CAv = domain.make_v_field({.nk = nk});
+  CS.PFu = domain.make_u_field({.nk = nk});
+  CS.PFv = domain.make_v_field({.nk = nk});
+  CS.diffu = domain.make_u_field({.nk = nk});
+  CS.diffv = domain.make_v_field({.nk = nk});
+  CS.CAu.setVal(0.0);
+  CS.CAv.setVal(0.0);
+  CS.PFu.setVal(0.0);
+  CS.PFv.setVal(0.0);
+  CS.diffu.setVal(0.0);
+  CS.diffv.setVal(0.0);
+
   CS.continuity = continuity_init(G, GV, params);
   // todo: CoriolisAdv_init
   if (CS.calculate_SAL) {
@@ -69,6 +192,122 @@ DynUnsplitRK2CS initialize_dyn_unsplit_RK2(const Grid &G, const VerticalGrid &GV
   // todo: PressureForce_init, hor_visc_init and vertvisc_init
 
   return CS;
+}
+
+void step_MOM_dyn_unsplit_RK2(State &state, const amrex::Real dt, const MechForcing &forces,
+                              const Domain &domain, const Grid &G, const VerticalGrid &GV,
+                              DynUnsplitRK2CS &CS, const PorousBarrier &pbv, const bool x_first) {
+
+  // defer: the DEBUG checksums between the stages (MOM_state_chksum,
+  //        MOM_accel_chksum). initialize_dyn_unsplit_RK2 rejects DEBUG = True.
+  // defer: the open boundary updates, the surface pressure (p_surf) and the
+  //        diagnostics, which are not implemented in protoMOMxx.
+
+  // The names MOM6 uses for the state.
+  amrex::MultiFab &u = state.u;
+  amrex::MultiFab &v = state.v;
+  amrex::MultiFab &h = state.h;
+  amrex::MultiFab &uh = state.uh;
+  amrex::MultiFab &vh = state.vh;
+
+  const amrex::Real dt_pred = dt * CS.be;  // The time step of the predictor [T ~> s].
+  const int cor_stencil = CoriolisAdv_stencil();
+  const int nk = GV.nk();
+  const amrex::MultiFab &por_u = pbv.por_face_areaU;
+  const amrex::MultiFab &por_v = pbv.por_face_areaV;
+
+  amrex::MultiFab h_av = domain.make_h_field({.nk = nk});  // Averaged thicknesses [H ~> m or kg m-2].
+  amrex::MultiFab hp = domain.make_h_field({.nk = nk});    // Predicted thicknesses [H ~> m or kg m-2].
+  amrex::MultiFab dz = domain.make_h_field({.nk = nk});    // Vertical extent of the layers [Z ~> m].
+  amrex::MultiFab up = domain.make_u_field({.nk = nk});    // Predicted zonal velocity [L T-1 ~> m s-1].
+  amrex::MultiFab vp = domain.make_v_field({.nk = nk});    // Predicted meridional velocity [L T-1 ~> m s-1].
+  h_av.setVal(0.0);
+  hp.setVal(0.0);
+  up.setVal(0.0);
+  vp.setVal(0.0);
+
+  // diffu = horizontal viscosity terms (u, h)
+  horizontal_viscosity(u, v, h, uh, vh, CS.diffu, CS.diffv, dt);
+  domain.pass_vector(CS.diffu, CS.diffv);
+
+  // This continuity step is only for the Coriolis terms: the denominator of
+  // the PV and the mass transport.
+  // uh = u[n-1]*h[n-1/2]
+  // hp = h[n-1/2] + dt/2 div . uh
+  continuity(u, v, h, hp, uh, vh, dt_pred, G, GV, CS.continuity, por_u, por_v, x_first);
+  // MOM6 exchanges only cor_stencil halo points of hp, uh and vh, and of u
+  // and v below. These exchanges fill the whole halo.
+  domain.pass_var(hp);
+  domain.pass_vector(uh, vh);
+  if (cor_stencil > 2) domain.pass_vector(u, v);
+
+  // h_av = (h + hp)/2  (used in the PV denominator)
+  average_thickness(h, hp, h_av, cor_stencil);
+
+  // CAu = -(f+zeta)/h_av vh + d/dx KE  (function of u[n-1] and uh[n-1])
+  CorAdCalc(u, v, h_av, uh, vh, CS.CAu, CS.CAv, pbv);
+
+  // PFu = d/dx M(h_av, T, S)  (function of h[n-1/2])
+  PressureForce(h, CS.PFu, CS.PFv);
+  domain.pass_vector(CS.PFu, CS.PFv);
+  domain.pass_vector(CS.CAu, CS.CAv);
+
+  // up+[n-1/2] = u[n-1] + dt_pred * (PFu + CAu)
+  add_accelerations(G.mask2dCu(), u, CS.PFu, CS.CAu, CS.diffu, dt_pred, up);
+  add_accelerations(G.mask2dCv(), v, CS.PFv, CS.CAv, CS.diffv, dt_pred, vp);
+
+  // up[n-1/2] <- up*[n-1/2] + dt/2 d/dz visc d/dz up[n-1/2]
+  const amrex::Real dt_visc = CS.dt_visc_bug ? dt_pred : dt;
+  set_viscous_ML(u, v, h_av, forces, dt_visc);
+  thickness_to_dz(h_av, dz);
+  vertvisc_coef(up, vp, h_av, dz, forces, dt_pred);
+  vertvisc(up, vp, h_av, forces, dt_pred);
+  domain.pass_vector(up, vp);
+
+  // uh = up[n-1/2] * h[n-1/2]
+  // h_av = h + dt div . uh
+  continuity(up, vp, h, hp, uh, vh, dt, G, GV, CS.continuity, por_u, por_v, x_first);
+  domain.pass_var(hp);
+  domain.pass_vector(uh, vh);
+
+  // h_av <- (h + hp)/2  (centered at n-1/2)
+  average_thickness(h, hp, h_av, cor_stencil);
+
+  // CAu = -(f+zeta(up))/h_av vh + d/dx KE(up)  (function of up[n-1/2], h[n-1/2])
+  CorAdCalc(up, vp, h_av, uh, vh, CS.CAu, CS.CAv, pbv);
+
+  // up* = u[n] + (1+gamma) * dt * (PFu + CAu)  Extrapolated for damping
+  // u*[n+1] = u[n] + dt * (PFu + CAu)
+  // up must be set first, from u[n].
+  const amrex::Real dt_begw = dt * (1.0 + CS.begw);
+  add_accelerations(G.mask2dCu(), u, CS.PFu, CS.CAu, CS.diffu, dt_begw, up);
+  add_accelerations(G.mask2dCu(), u, CS.PFu, CS.CAu, CS.diffu, dt, u);
+  add_accelerations(G.mask2dCv(), v, CS.PFv, CS.CAv, CS.diffv, dt_begw, vp);
+  add_accelerations(G.mask2dCv(), v, CS.PFv, CS.CAv, CS.diffv, dt, v);
+
+  // up[n] <- up* + dt d/dz visc d/dz up
+  // u[n] <- u*[n] + dt d/dz visc d/dz u[n]
+  thickness_to_dz(h_av, dz);
+  vertvisc_coef(up, vp, h_av, dz, forces, dt);
+  vertvisc(up, vp, h_av, forces, dt);
+  vertvisc_coef(u, v, h_av, dz, forces, dt);
+  vertvisc(u, v, h_av, forces, dt);
+  domain.pass_vector(up, vp);
+  domain.pass_vector(u, v);
+
+  // uh = up[n] * h[n]  (up[n] might be extrapolated to damp gravity waves)
+  // h[n+1] = h[n] + dt div . uh
+  continuity(up, vp, h, h, uh, vh, dt, G, GV, CS.continuity, por_u, por_v, x_first);
+  domain.pass_var(h);
+  domain.pass_vector(uh, vh);
+
+  // Sum the volume fluxes for the tracer advection.
+  // defer: the reset of uhtr and vhtr after the tracer advection.
+  accumulate_flux(uh, dt, state.uhtr);
+  accumulate_flux(vh, dt, state.vhtr);
+
+  // defer: eta_av, the time-mean sea surface height, which only the
+  //        diagnostics and the surface state read.
 }
 
 } // namespace MOM
