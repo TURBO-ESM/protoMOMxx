@@ -112,14 +112,13 @@ void accumulate_flux(const amrex::MultiFab &uh, const amrex::Real dt, amrex::Mul
 
 } // namespace
 
-DynUnsplitRK2CS initialize_dyn_unsplit_RK2(const Domain &domain, const Grid &G,
-                                           const VerticalGrid &GV, RuntimeParams &params) {
+DynUnsplitRK2 make_dyn_unsplit_RK2(const Domain &domain, const Grid &G, const VerticalGrid &GV,
+                                   const PorousBarrier &pbv, RuntimeParams &params) {
 
   params.doc_module("MOM_dynamics_unsplit_RK2", "");
 
-  DynUnsplitRK2CS CS;
-
-  params.get("BE", CS.be,
+  amrex::Real be = 0.0;
+  params.get("BE", be,
              {.default_value = 0.6,
               .desc = "If SPLIT is true, BE determines the relative weighting "
                       "of a 2nd-order Runga-Kutta baroclinic time stepping "
@@ -129,7 +128,8 @@ DynUnsplitRK2CS initialize_dyn_unsplit_RK2(const Domain &domain, const Grid &G,
                       "BE is also applicable if SPLIT is false and USE_RK2 "
                       "is true.",
               .units = "nondim"});
-  params.get("BEGW", CS.begw,
+  amrex::Real begw = 0.0;
+  params.get("BEGW", begw,
              {.default_value = 0.0,
               .desc = "If SPLIT is true, BEGW is a number from 0 to 1 that "
                       "controls the extent to which the treatment of gravity "
@@ -139,67 +139,62 @@ DynUnsplitRK2CS initialize_dyn_unsplit_RK2(const Domain &domain, const Grid &G,
                       "between 0 and 0.5 to damp gravity waves.",
               .units = "nondim"});
 
-  params.get("UNSPLIT_DT_VISC_BUG", CS.dt_visc_bug,
+  bool dt_visc_bug = false;
+  params.get("UNSPLIT_DT_VISC_BUG", dt_visc_bug,
              {.default_value = false,
               .desc = "If false, use the correct timestep in the viscous terms applied in the first "
                       "predictor step with the unsplit time stepping scheme, and in the calculation "
                       "of the turbulent mixed layer properties for viscosity with unsplit or "
                       "unsplit_RK2.  If true, an older incorrect value is used."});
 
-  params.get("DEBUG", CS.debug,
+  bool debug = false;
+  params.get("DEBUG", debug,
              {.default_value = false,
               .desc = "If true, write out verbose debugging data.",
               .debugging_param = true});
-  if (CS.debug) {
+  if (debug) {
     // defer: the DEBUG checksums of the time step.
-    logger::fatal("initialize_dyn_unsplit_RK2: The debugging checksums (DEBUG = True) "
+    logger::fatal("make_dyn_unsplit_RK2: The debugging checksums (DEBUG = True) "
                   "are not implemented yet.");
   }
-  params.get("TIDES", CS.use_tides,
+  bool use_tides = false;
+  params.get("TIDES", use_tides,
              {.default_value = false,
               .desc = "If true, apply tidal momentum forcing."});
-  params.get("CALCULATE_SAL", CS.calculate_SAL,
-             {.default_value = CS.use_tides,
+  bool calculate_SAL = false;
+  params.get("CALCULATE_SAL", calculate_SAL,
+             {.default_value = use_tides,
               .desc = "If true, calculate self-attraction and loading."});
 
-  // MOM6 creates the accelerations in register_restarts_dyn_unsplit_RK2.
-  const int nk = GV.nk();
-  CS.CAu = domain.make_u_field({.nk = nk});
-  CS.CAv = domain.make_v_field({.nk = nk});
-  CS.PFu = domain.make_u_field({.nk = nk});
-  CS.PFv = domain.make_v_field({.nk = nk});
-  CS.diffu = domain.make_u_field({.nk = nk});
-  CS.diffv = domain.make_v_field({.nk = nk});
-  CS.CAu.setVal(0.0);
-  CS.CAv.setVal(0.0);
-  CS.PFu.setVal(0.0);
-  CS.PFv.setVal(0.0);
-  CS.diffu.setVal(0.0);
-  CS.diffv.setVal(0.0);
-
-  CS.continuity = continuity_init(G, GV, params);
+  DynUnsplitRK2 dyn{.domain = domain,
+                    .G = G,
+                    .GV = GV,
+                    .pbv = pbv,
+                    .be = be,
+                    .begw = begw,
+                    .dt_visc_bug = dt_visc_bug,
+                    .continuity = make_continuity(G, GV, pbv, params)};
   // todo: CoriolisAdv_init
-  if (CS.calculate_SAL) {
+  if (calculate_SAL) {
     // defer: SAL_init
-    logger::fatal("initialize_dyn_unsplit_RK2: Self-attraction and loading "
+    logger::fatal("make_dyn_unsplit_RK2: Self-attraction and loading "
                   "(CALCULATE_SAL = True) is not implemented yet.");
   }
-  if (CS.use_tides) {
+  if (use_tides) {
     // defer: tidal_forcing_init
-    logger::fatal("initialize_dyn_unsplit_RK2: Tidal forcing (TIDES = True) "
+    logger::fatal("make_dyn_unsplit_RK2: Tidal forcing (TIDES = True) "
                   "is not implemented yet.");
   }
   // todo: PressureForce_init, hor_visc_init and vertvisc_init
 
-  return CS;
+  return dyn;
 }
 
-void step_MOM_dyn_unsplit_RK2(State &state, const amrex::Real dt, const MechForcing &forces,
-                              const Domain &domain, const Grid &G, const VerticalGrid &GV,
-                              DynUnsplitRK2CS &CS, const PorousBarrier &pbv, const bool x_first) {
+void DynUnsplitRK2::step(State &state, const amrex::Real dt, const MechForcing &forces,
+                         const bool x_first) const {
 
   // defer: the DEBUG checksums between the stages (MOM_state_chksum,
-  //        MOM_accel_chksum). initialize_dyn_unsplit_RK2 rejects DEBUG = True.
+  //        MOM_accel_chksum). make_dyn_unsplit_RK2 rejects DEBUG = True.
   // defer: the open boundary updates, the surface pressure (p_surf) and the
   //        diagnostics, which are not implemented in protoMOMxx.
 
@@ -210,11 +205,27 @@ void step_MOM_dyn_unsplit_RK2(State &state, const amrex::Real dt, const MechForc
   amrex::MultiFab &uh = state.uh;
   amrex::MultiFab &vh = state.vh;
 
-  const amrex::Real dt_pred = dt * CS.be;  // The time step of the predictor [T ~> s].
+  const amrex::Real dt_pred = dt * be;  // The time step of the predictor [T ~> s].
   const int cor_stencil = CoriolisAdv_stencil();
   const int nk = GV.nk();
-  const amrex::MultiFab &por_u = pbv.por_face_areaU;
-  const amrex::MultiFab &por_v = pbv.por_face_areaV;
+
+  // The accelerations [L T-2 ~> m s-2]. MOM6 sets them to zero once and keeps
+  // them between steps in its control structure, for its diagnostics. Here
+  // they are set to zero at the start of every step instead. The answers are
+  // the same as long as each step writes every point of them that it reads.
+  // todo: check this as each stub is replaced by its module.
+  amrex::MultiFab CAu = domain.make_u_field({.nk = nk});    // Coriolis and advection.
+  amrex::MultiFab CAv = domain.make_v_field({.nk = nk});
+  amrex::MultiFab PFu = domain.make_u_field({.nk = nk});    // Pressure force.
+  amrex::MultiFab PFv = domain.make_v_field({.nk = nk});
+  amrex::MultiFab diffu = domain.make_u_field({.nk = nk});  // Horizontal viscosity.
+  amrex::MultiFab diffv = domain.make_v_field({.nk = nk});
+  CAu.setVal(0.0);
+  CAv.setVal(0.0);
+  PFu.setVal(0.0);
+  PFv.setVal(0.0);
+  diffu.setVal(0.0);
+  diffv.setVal(0.0);
 
   amrex::MultiFab h_av = domain.make_h_field({.nk = nk});  // Averaged thicknesses [H ~> m or kg m-2].
   amrex::MultiFab hp = domain.make_h_field({.nk = nk});    // Predicted thicknesses [H ~> m or kg m-2].
@@ -227,14 +238,14 @@ void step_MOM_dyn_unsplit_RK2(State &state, const amrex::Real dt, const MechForc
   vp.setVal(0.0);
 
   // diffu = horizontal viscosity terms (u, h)
-  horizontal_viscosity(u, v, h, uh, vh, CS.diffu, CS.diffv, dt);
-  domain.pass_vector(CS.diffu, CS.diffv);
+  horizontal_viscosity(u, v, h, uh, vh, diffu, diffv, dt);
+  domain.pass_vector(diffu, diffv);
 
   // This continuity step is only for the Coriolis terms: the denominator of
   // the PV and the mass transport.
   // uh = u[n-1]*h[n-1/2]
   // hp = h[n-1/2] + dt/2 div . uh
-  continuity(u, v, h, hp, uh, vh, dt_pred, G, GV, CS.continuity, por_u, por_v, x_first);
+  continuity.continuity(u, v, h, hp, uh, vh, dt_pred, x_first);
   // MOM6 exchanges only cor_stencil halo points of hp, uh and vh, and of u
   // and v below. These exchanges fill the whole halo.
   domain.pass_var(hp);
@@ -245,19 +256,19 @@ void step_MOM_dyn_unsplit_RK2(State &state, const amrex::Real dt, const MechForc
   average_thickness(h, hp, h_av, cor_stencil);
 
   // CAu = -(f+zeta)/h_av vh + d/dx KE  (function of u[n-1] and uh[n-1])
-  CorAdCalc(u, v, h_av, uh, vh, CS.CAu, CS.CAv, pbv);
+  CorAdCalc(u, v, h_av, uh, vh, CAu, CAv, pbv);
 
   // PFu = d/dx M(h_av, T, S)  (function of h[n-1/2])
-  PressureForce(h, CS.PFu, CS.PFv);
-  domain.pass_vector(CS.PFu, CS.PFv);
-  domain.pass_vector(CS.CAu, CS.CAv);
+  PressureForce(h, PFu, PFv);
+  domain.pass_vector(PFu, PFv);
+  domain.pass_vector(CAu, CAv);
 
   // up+[n-1/2] = u[n-1] + dt_pred * (PFu + CAu)
-  add_accelerations(G.mask2dCu(), u, CS.PFu, CS.CAu, CS.diffu, dt_pred, up);
-  add_accelerations(G.mask2dCv(), v, CS.PFv, CS.CAv, CS.diffv, dt_pred, vp);
+  add_accelerations(G.mask2dCu(), u, PFu, CAu, diffu, dt_pred, up);
+  add_accelerations(G.mask2dCv(), v, PFv, CAv, diffv, dt_pred, vp);
 
   // up[n-1/2] <- up*[n-1/2] + dt/2 d/dz visc d/dz up[n-1/2]
-  const amrex::Real dt_visc = CS.dt_visc_bug ? dt_pred : dt;
+  const amrex::Real dt_visc = dt_visc_bug ? dt_pred : dt;
   set_viscous_ML(u, v, h_av, forces, dt_visc);
   thickness_to_dz(h_av, dz);
   vertvisc_coef(up, vp, h_av, dz, forces, dt_pred);
@@ -266,7 +277,7 @@ void step_MOM_dyn_unsplit_RK2(State &state, const amrex::Real dt, const MechForc
 
   // uh = up[n-1/2] * h[n-1/2]
   // h_av = h + dt div . uh
-  continuity(up, vp, h, hp, uh, vh, dt, G, GV, CS.continuity, por_u, por_v, x_first);
+  continuity.continuity(up, vp, h, hp, uh, vh, dt, x_first);
   domain.pass_var(hp);
   domain.pass_vector(uh, vh);
 
@@ -274,16 +285,16 @@ void step_MOM_dyn_unsplit_RK2(State &state, const amrex::Real dt, const MechForc
   average_thickness(h, hp, h_av, cor_stencil);
 
   // CAu = -(f+zeta(up))/h_av vh + d/dx KE(up)  (function of up[n-1/2], h[n-1/2])
-  CorAdCalc(up, vp, h_av, uh, vh, CS.CAu, CS.CAv, pbv);
+  CorAdCalc(up, vp, h_av, uh, vh, CAu, CAv, pbv);
 
   // up* = u[n] + (1+gamma) * dt * (PFu + CAu)  Extrapolated for damping
   // u*[n+1] = u[n] + dt * (PFu + CAu)
   // up must be set first, from u[n].
-  const amrex::Real dt_begw = dt * (1.0 + CS.begw);
-  add_accelerations(G.mask2dCu(), u, CS.PFu, CS.CAu, CS.diffu, dt_begw, up);
-  add_accelerations(G.mask2dCu(), u, CS.PFu, CS.CAu, CS.diffu, dt, u);
-  add_accelerations(G.mask2dCv(), v, CS.PFv, CS.CAv, CS.diffv, dt_begw, vp);
-  add_accelerations(G.mask2dCv(), v, CS.PFv, CS.CAv, CS.diffv, dt, v);
+  const amrex::Real dt_begw = dt * (1.0 + begw);
+  add_accelerations(G.mask2dCu(), u, PFu, CAu, diffu, dt_begw, up);
+  add_accelerations(G.mask2dCu(), u, PFu, CAu, diffu, dt, u);
+  add_accelerations(G.mask2dCv(), v, PFv, CAv, diffv, dt_begw, vp);
+  add_accelerations(G.mask2dCv(), v, PFv, CAv, diffv, dt, v);
 
   // up[n] <- up* + dt d/dz visc d/dz up
   // u[n] <- u*[n] + dt d/dz visc d/dz u[n]
@@ -297,7 +308,7 @@ void step_MOM_dyn_unsplit_RK2(State &state, const amrex::Real dt, const MechForc
 
   // uh = up[n] * h[n]  (up[n] might be extrapolated to damp gravity waves)
   // h[n+1] = h[n] + dt div . uh
-  continuity(up, vp, h, h, uh, vh, dt, G, GV, CS.continuity, por_u, por_v, x_first);
+  continuity.continuity(up, vp, h, h, uh, vh, dt, x_first);
   domain.pass_var(h);
   domain.pass_vector(uh, vh);
 

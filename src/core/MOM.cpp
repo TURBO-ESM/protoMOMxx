@@ -43,8 +43,7 @@ void Model::step(const MechForcing &forces, const amrex::Real time_interval) {
       // defer: step_MOM_dyn_split_RK2
       logger::fatal("step: The split time stepping (SPLIT = True) is not implemented yet.");
     } else if (config_.use_RK2) {
-      step_MOM_dyn_unsplit_RK2(state_, dt, forces, domain_, grid_, vgrid_, *dyn_unsplit_RK2_CS_,
-                               pbv_, config_.first_direction % 2 == 0);
+      dyn_unsplit_RK2_->step(state_, dt, forces, config_.first_direction % 2 == 0);
     } else {
       // defer: step_MOM_dyn_unsplit
       logger::fatal("step: The unsplit RK3 time stepping (USE_RK2 = False) "
@@ -201,7 +200,7 @@ void Model::initialize_dynamics(RuntimeParams &params) {
     logger::fatal("initialize_dynamics: The split time stepping (SPLIT = True) "
                   "is not implemented yet.");
   } else if (config_.use_RK2) {
-    dyn_unsplit_RK2_CS_ = initialize_dyn_unsplit_RK2(domain_, grid_, vgrid_, params);
+    dyn_unsplit_RK2_.emplace(make_dyn_unsplit_RK2(domain_, grid_, vgrid_, pbv_, params));
     logger::note("initialize_dynamics: The Coriolis, pressure, viscosity and vertical "
                  "friction terms of the unsplit RK2 step are stubs that add nothing yet, "
                  "so a state at rest stays at rest.");

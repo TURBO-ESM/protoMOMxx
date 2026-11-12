@@ -44,6 +44,13 @@ public:
   /// @pre The infrastructure layer (AMReX) is initialized.
   explicit Model(RuntimeParams &params);
 
+  // The time stepper refers to the model's own domain, grids and open face
+  // fractions. A copy or a move would leave it pointing at the original's.
+  Model(const Model &) = delete;
+  Model &operator=(const Model &) = delete;
+  Model(Model &&) = delete;
+  Model &operator=(Model &&) = delete;
+
   /// @brief Advance the model over a time interval (the analogue of MOM6's
   /// step_MOM). As in MOM6, the interval is split into equal dynamics steps
   /// no longer than DT, and each step dispatches on the time stepping scheme.
@@ -99,9 +106,10 @@ private:
   /// porous barriers.
   PorousBarrier pbv_;
 
-  /// @brief The unsplit RK2 time stepper's options. Set only when SPLIT is
-  /// false and USE_RK2 is true.
-  std::optional<DynUnsplitRK2CS> dyn_unsplit_RK2_CS_;
+  /// @brief The unsplit RK2 time stepper. Set only when SPLIT is false and
+  /// USE_RK2 is true. It refers to domain_, grid_, vgrid_ and pbv_, which are
+  /// declared before it so that they outlive it.
+  std::optional<DynUnsplitRK2> dyn_unsplit_RK2_;
 
   /// @brief Read the scalar configuration switches into a Config object.
   static Config read_config_switches(RuntimeParams &params);

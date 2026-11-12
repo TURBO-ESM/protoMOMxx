@@ -31,13 +31,14 @@ void check_field(const amrex::MultiFab &mf, const Stagger stagger, const int hal
 
 } // namespace
 
-ContinuityCS continuity_init(const Grid &G, const VerticalGrid &GV, RuntimeParams &params) {
+Continuity make_continuity(const Grid &G, const VerticalGrid &GV, const PorousBarrier &pbv,
+                           RuntimeParams &params) {
 
   params.doc_module("MOM_continuity_PPM", "");
 
-  ContinuityCS CS;
-  reconstruction_CS_C &rec = CS.reconstruction;
-  transport_adjust_CS_C &adj = CS.transport_adjust;
+  Continuity solver{.G = G, .GV = GV, .pbv = pbv};
+  reconstruction_CS_C &rec = solver.reconstruction;
+  transport_adjust_CS_C &adj = solver.transport_adjust;
 
   params.get("MONOTONIC_CONTINUITY", rec.monotonic,
              {.default_value = false,
@@ -61,13 +62,13 @@ ContinuityCS continuity_init(const Grid &G, const VerticalGrid &GV, RuntimeParam
                       "mode where its minimal stencil is useful."});
 
   // Now that the scheme is known, check that the halo is wide enough for it.
-  const int stencil = continuity_stencil(CS);
+  const int stencil = solver.stencil();
   if (ni_halo(G.mask2dT()) < stencil) {
-    logger::fatal("continuity_init: the x-halo needs to be increased by ",
+    logger::fatal("make_continuity: the x-halo needs to be increased by ",
                   stencil - ni_halo(G.mask2dT()), ".");
   }
   if (nj_halo(G.mask2dT()) < stencil) {
-    logger::fatal("continuity_init: the y-halo needs to be increased by ",
+    logger::fatal("make_continuity: the y-halo needs to be increased by ",
                   stencil - nj_halo(G.mask2dT()), ".");
   }
 
@@ -128,33 +129,31 @@ ContinuityCS continuity_init(const Grid &G, const VerticalGrid &GV, RuntimeParam
                       "is bounded from below by a sub-roundoff value. Otherwise the "
                       "minimum is 0."});
 
-  return CS;
+  return solver;
 }
 
-int continuity_stencil(const ContinuityCS &CS) {
+int Continuity::stencil() const {
   int stencil = 3;
-  if (CS.reconstruction.simple_2nd) stencil = 2;
-  if (CS.reconstruction.upwind_1st) stencil = 1;
+  if (reconstruction.simple_2nd) stencil = 2;
+  if (reconstruction.upwind_1st) stencil = 1;
   return stencil;
 }
 
-void continuity(const amrex::MultiFab &u, const amrex::MultiFab &v,
-                const amrex::MultiFab &hin, amrex::MultiFab &h,
-                amrex::MultiFab &uh, amrex::MultiFab &vh, const amrex::Real dt,
-                const Grid &G, const VerticalGrid &GV, const ContinuityCS &CS,
-                const amrex::MultiFab &por_face_areaU,
-                const amrex::MultiFab &por_face_areaV, const bool x_first) {
-  // The grid's fields always have the right stagger, and continuity_init
-  // checks their halo, so only the arguments are checked here.
-  const int stencil = continuity_stencil(CS);
-  check_field(u, Stagger::XFace, stencil, "u");
-  check_field(v, Stagger::YFace, stencil, "v");
-  check_field(hin, Stagger::Cell, stencil, "hin");
-  check_field(h, Stagger::Cell, stencil, "h");
-  check_field(uh, Stagger::XFace, stencil, "uh");
-  check_field(vh, Stagger::YFace, stencil, "vh");
-  check_field(por_face_areaU, Stagger::XFace, stencil, "por_face_areaU");
-  check_field(por_face_areaV, Stagger::YFace, stencil, "por_face_areaV");
+void Continuity::continuity(const amrex::MultiFab &u, const amrex::MultiFab &v,
+                            const amrex::MultiFab &hin, amrex::MultiFab &h,
+                            amrex::MultiFab &uh, amrex::MultiFab &vh, const amrex::Real dt,
+                            const bool x_first) const {
+  // Check every field the kernel reads. The grid's fields all have the same
+  // halo and always have the right stagger, so mask2dT stands for them.
+  check_field(u, Stagger::XFace, stencil(), "u");
+  check_field(v, Stagger::YFace, stencil(), "v");
+  check_field(hin, Stagger::Cell, stencil(), "hin");
+  check_field(h, Stagger::Cell, stencil(), "h");
+  check_field(uh, Stagger::XFace, stencil(), "uh");
+  check_field(vh, Stagger::YFace, stencil(), "vh");
+  check_field(G.mask2dT(), Stagger::Cell, stencil(), "the grid");
+  check_field(pbv.por_face_areaU, Stagger::XFace, stencil(), "por_face_areaU");
+  check_field(pbv.por_face_areaV, Stagger::YFace, stencil(), "por_face_areaV");
 
   // The loop doesn't use tiling, because the kernel extends its loops into the
   // halo itself.
@@ -169,7 +168,7 @@ void continuity(const amrex::MultiFab &u, const amrex::MultiFab &v,
 
     MOM::continuity_PPM(mom_const_array(u, mfi), mom_const_array(v, mfi),
                         mom_const_array(hin, mfi), mom_array(h, mfi),
-                        mom_array(uh, mfi), mom_array(vh, mfi), dt, compute_box, stencil,
+                        mom_array(uh, mfi), mom_array(vh, mfi), dt, compute_box, stencil(),
                         x_first, mom_const_array(G.mask2dT(), mfi),
                         mom_const_array(G.dy_Cu(), mfi), mom_const_array(G.IareaT(), mfi),
                         mom_const_array(G.IdxT(), mfi), mom_const_array(G.areaT(), mfi),
@@ -178,9 +177,9 @@ void continuity(const amrex::MultiFab &u, const amrex::MultiFab &v,
                         mom_const_array(G.IdyT(), mfi), mom_const_array(G.dyT(), mfi),
                         mom_const_array(G.mask2dCv(), mfi), mom_const_array(G.dyCv(), mfi),
                         data_box.smallEnd(0), data_box.bigEnd(0), GV.Angstrom_H(),
-                        GV.H_subroundoff(), CS.reconstruction, CS.transport_adjust,
-                        /*obc=*/nullptr, mom_const_array(por_face_areaU, mfi),
-                        mom_const_array(por_face_areaV, mfi),
+                        GV.H_subroundoff(), reconstruction, transport_adjust,
+                        /*obc=*/nullptr, mom_const_array(pbv.por_face_areaU, mfi),
+                        mom_const_array(pbv.por_face_areaV, mfi),
                         // uhbt, vhbt, visc_rem_u, visc_rem_v: absent
                         {}, {}, {}, {},
                         // u_cor, v_cor: absent
