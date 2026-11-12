@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <string>
 
 #include "MOM_logger.hpp"
@@ -103,8 +104,8 @@ VerticalGrid::VerticalGrid(RuntimeParams &params) {
 
   // defer: the rest of verticalGridInit. H_RESCALE_POWER with the
   //        thickness-unit conversion factor family (H_to_m, Z_to_H, ...)
-  //        and the subroundoff thicknesses, which will be implemented with
-  //        the thickness/units layer, and the mixed-layer layer counts
+  //        and dZ_subroundoff, which will be implemented with the
+  //        thickness/units layer, and the mixed-layer layer counts
   //        (nkml, nk_rho_varies), which will be implemented with the bulk
   //        mixed layer.
 
@@ -126,6 +127,9 @@ VerticalGrid::VerticalGrid(RuntimeParams &params) {
     //        with the thickness/units layer.
     logger::fatal("VerticalGrid: Angstrom_H in the non-Boussinesq mode is not implemented.");
   }
+  // MOM6 sets GV%H_subroundoff = 1e-20 * max(GV%Angstrom_H, GV%m_to_H*1e-17),
+  // where m_to_H is 1 for the same reason as above.
+  H_subroundoff_ = 1e-20 * std::max(Angstrom_H_, 1e-17);
 
   // defer: the diagnosed MAXIMUM_DEPTH (MOM6's diagnoseMaximumDepth)
   params.get("MAXIMUM_DEPTH", max_depth_,
