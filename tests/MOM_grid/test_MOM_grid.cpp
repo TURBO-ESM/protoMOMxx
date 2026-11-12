@@ -60,8 +60,9 @@ MOM::Grid make_spherical_grid(const MOM::Domain &domain, const MOM::GridExtents 
   return MOM::Grid(std::move(fields));
 }
 
-// Check the value of a single-level field at point (i, j), over every local
-// box grown by its ghost cells that holds the point. Ranks holding none of it
+// Check the value of a single-level field at point (i, j), numbered as in
+// MOM6 (u(i, j) is the east face of cell (i, j)), over every
+// local box grown by its ghost cells that holds the point. Ranks holding none of it
 // stay quiet, but the check fails if no rank holds it at all. Boxes that overlap
 // in their ghost regions are all compared, so they have to agree.
 // todo: consider making this helper function more widely available
@@ -70,9 +71,9 @@ void expect_value_at(const amrex::MultiFab &mf, const int i, const int j,
                      const double expected) {
   bool found = false;
   for (amrex::MFIter mfi(mf); mfi.isValid(); ++mfi) {
-    if (mfi.growntilebox().contains(amrex::IntVect(i, j, 0))) {
+    if (MOM::mom_box(mfi.growntilebox()).contains(amrex::IntVect(i, j, 0))) {
       found = true;
-      EXPECT_DOUBLE_EQ(mf.const_array(mfi)(i, j, 0), expected);
+      EXPECT_DOUBLE_EQ(MOM::mom_const_array(mf, mfi)(i, j, 0), expected);
     }
   }
   amrex::ParallelDescriptor::ReduceBoolOr(found);
@@ -178,9 +179,9 @@ TEST(Grid, FlatTopographyAndClosedBoundaryHalos) {
   // The land halos close the masks at the walls: wall faces and vertices are
   // masked out and their u-cell areas are zero; the interior is all ocean.
   expect_value_at(grid.mask2dT(), -1, NJ / 2, 0.0);
-  expect_value_at(grid.mask2dCu(), 0, NJ / 2, 0.0);
-  expect_value_at(grid.mask2dBu(), 0, NJ / 2, 0.0);
-  expect_value_at(grid.areaCu(), 0, NJ / 2, 0.0);
+  expect_value_at(grid.mask2dCu(), -1, NJ / 2, 0.0);
+  expect_value_at(grid.mask2dBu(), -1, NJ / 2, 0.0);
+  expect_value_at(grid.areaCu(), -1, NJ / 2, 0.0);
   EXPECT_DOUBLE_EQ(grid.mask2dT().min(0), 1.0);
   EXPECT_DOUBLE_EQ(grid.areaCu().max(0), grid.dxCu().max(0) * grid.dyCu().max(0));
 }
@@ -189,7 +190,7 @@ TEST(Grid, FlatTopographyAndClosedBoundaryHalos) {
 // An explicit MASKING_DEPTH turns cells at least that shallow into land: the
 // spoon shallows northward, so the north-center cell is land and the deep
 // south-center cell is ocean. The face and vertex masks follow the h mask
-// through the southwest stencils, checked everywhere.
+// through MOM6's stencils, checked everywhere.
 TEST(Grid, MaskingDepthLandAndMaskStencils) {
   const MOM::Domain domain({.ni_global = NI, .nj_global = NJ,
                             .ni_halo = HALO, .nj_halo = HALO,
@@ -204,19 +205,20 @@ TEST(Grid, MaskingDepthLandAndMaskStencils) {
   expect_value_at(grid.mask2dT(), NI / 2, 0, 1.0);
 
   for (amrex::MFIter mfi(grid.mask2dT()); mfi.isValid(); ++mfi) {
-    const auto maskT = grid.mask2dT().const_array(mfi);
-    const auto maskCu = grid.mask2dCu().const_array(mfi);
-    const auto maskCv = grid.mask2dCv().const_array(mfi);
-    const auto maskBu = grid.mask2dBu().const_array(mfi);
-    // The valid q nodes of the box, which cover its valid u/v nodes too.
-    const amrex::Box bx = amrex::convert(mfi.validbox(), amrex::IntVect(1, 1, 0));
+    const auto maskT = MOM::mom_const_array(grid.mask2dT(), mfi);
+    const auto maskCu = MOM::mom_const_array(grid.mask2dCu(), mfi);
+    const auto maskCv = MOM::mom_const_array(grid.mask2dCv(), mfi);
+    const auto maskBu = MOM::mom_const_array(grid.mask2dBu(), mfi);
+    // The valid q points of the box, which cover its valid u/v points too.
+    const amrex::Box bx =
+        MOM::mom_box(amrex::convert(mfi.validbox(), amrex::IntVect(1, 1, 0)));
     for (int j = bx.smallEnd(1); j <= bx.bigEnd(1); ++j) {
       for (int i = bx.smallEnd(0); i <= bx.bigEnd(0); ++i) {
-        EXPECT_DOUBLE_EQ(maskCu(i, j, 0), maskT(i - 1, j, 0) * maskT(i, j, 0));
-        EXPECT_DOUBLE_EQ(maskCv(i, j, 0), maskT(i, j - 1, 0) * maskT(i, j, 0));
+        EXPECT_DOUBLE_EQ(maskCu(i, j, 0), maskT(i, j, 0) * maskT(i + 1, j, 0));
+        EXPECT_DOUBLE_EQ(maskCv(i, j, 0), maskT(i, j, 0) * maskT(i, j + 1, 0));
         EXPECT_DOUBLE_EQ(maskBu(i, j, 0),
-                         (maskCu(i, j - 1, 0) * maskCu(i, j, 0)) *
-                         (maskCv(i - 1, j, 0) * maskCv(i, j, 0)));
+                         (maskCu(i, j, 0) * maskCu(i, j + 1, 0)) *
+                         (maskCv(i, j, 0) * maskCv(i + 1, j, 0)));
       }
     }
   }
@@ -250,7 +252,7 @@ TEST(Grid, ReentrantXGeoLonKeepsMonotonicExtrapolation) {
 
   // The wrap keeps the western edge faces open: their western neighbor is
   // the wet easternmost cell, where a closed boundary would mask them out.
-  expect_value_at(grid.mask2dCu(), 0, nj / 2, 1.0);
+  expect_value_at(grid.mask2dCu(), -1, nj / 2, 1.0);
 }
 
 // Unfilled extents cannot be consumed.

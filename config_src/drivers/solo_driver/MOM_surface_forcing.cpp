@@ -6,6 +6,7 @@
 #include <cmath>
 #include <numbers>
 
+#include "MOM_domain_infra.hpp"
 #include "MOM_grid_initialize.hpp"
 #include "MOM_logger.hpp"
 
@@ -22,9 +23,9 @@ void wind_forcing_2gyre(MechForcing &forces, const Grid &grid,
   const amrex::Real PI = std::numbers::pi_v<amrex::Real>;
 
   for (amrex::MFIter mfi(forces.taux); mfi.isValid(); ++mfi) {
-    const amrex::Box bx = amrex::makeSlab(mfi.validbox(), 2, 0);
-    const amrex::Array4<amrex::Real> taux = forces.taux.array(mfi);
-    const amrex::Array4<const amrex::Real> lat = grid.geoLatCu().const_array(mfi);
+    const amrex::Box bx = amrex::makeSlab(mom_box(mfi.validbox()), 2, 0);
+    const amrex::Array4<amrex::Real> taux = mom_array(forces.taux, mfi);
+    const amrex::Array4<const amrex::Real> lat = mom_const_array(grid.geoLatCu(), mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
       taux(i, j, 0) = taux_mag * (1.0 - std::cos(2.0 * PI * (lat(i, j, 0) - south_lat) / len_lat));
     });

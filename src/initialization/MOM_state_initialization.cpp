@@ -2,6 +2,7 @@
 
 #include "MOM_state_initialization.hpp"
 
+#include "MOM_domain_infra.hpp"
 #include "MOM_logger.hpp"
 
 namespace MOM {
@@ -26,9 +27,9 @@ void initialize_thickness_uniform(amrex::MultiFab &dz,
 
   for (amrex::MFIter mfi(dz); mfi.isValid(); ++mfi) {
     // Slab (2D) box to ensure sequential iteration over k.
-    const amrex::Box bx = amrex::makeSlab(mfi.validbox(), 2, 0);
-    const amrex::Array4<amrex::Real> h = dz.array(mfi);
-    const amrex::Array4<const amrex::Real> D = depth_tot.const_array(mfi);
+    const amrex::Box bx = amrex::makeSlab(mom_box(mfi.validbox()), 2, 0);
+    const amrex::Array4<amrex::Real> h = mom_array(dz, mfi);
+    const amrex::Array4<const amrex::Real> D = mom_const_array(depth_tot, mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
       // Walk the interfaces from the bottom up. Interface k is the top of
       // layer k, so eta_below holds MOM6's eta1D(K+1) and eta its eta1D(K).

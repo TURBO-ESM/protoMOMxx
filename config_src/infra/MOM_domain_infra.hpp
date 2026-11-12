@@ -6,9 +6,12 @@
 #include <optional>
 
 #include <AMReX.H>
+#include <AMReX_Array4.H>
 #include <AMReX_BoxArray.H>
 #include <AMReX_DistributionMapping.H>
+#include <AMReX_IndexType.H>
 #include <AMReX_IntVect.H>
+#include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_Periodicity.H>
 
@@ -19,6 +22,63 @@ namespace MOM {
 
 /// @brief The staggering (grid residency) of a field. An alias of TIM::Stagger
 using Stagger = TIM::Stagger;
+
+/// @brief A view of one box of a field, indexed as in MOM6.
+///
+/// Through this view, u(i) is the east face of cell i, as in MOM6, rather than
+/// the west face, as in the AMReX storage. v and q points shift the same way.
+/// The view uses the field's own memory and only shifts the index by one:
+/// view(i) is storage(i+1). Nothing is copied. A u field shifts in i, a v
+/// field in j, a q field in both, and an h field not at all, so the view of an
+/// h field is the field itself.
+///
+/// Only loops need the view. Halo exchanges, copies and reductions use the
+/// MultiFab.
+/// @param a The storage of one box of the field.
+/// @param ixType The field's index type, from MultiFab::ixType(). It tells the
+///        view which directions to shift.
+/// @return The same data, indexed as in MOM6.
+template <class T>
+amrex::Array4<T> mom_view(const amrex::Array4<T> &a, const amrex::IndexType ixType) {
+  const amrex::IntVect shift = ixType.ixType();  // 1 in each direction that shifts
+  const amrex::Dim3 lo = amrex::lbound(a);
+  const amrex::Dim3 hi = amrex::ubound(a);
+  return amrex::Array4<T>(a.p,
+                          amrex::Dim3{lo.x - shift[0], lo.y - shift[1], lo.z - shift[2]},
+                          amrex::Dim3{hi.x + 1 - shift[0], hi.y + 1 - shift[1], hi.z + 1 - shift[2]},
+                          a.nComp());
+}
+
+/// @brief One box of a field, indexed as in MOM6; see mom_view.
+/// @param mf The field.
+/// @param mfi The box. The iterator can come from any field on the same
+///        boxes, e.g. loop over an h field and get the view of a u field.
+/// @return The view of the box's data, including its ghost cells.
+inline amrex::Array4<amrex::Real> mom_array(amrex::MultiFab &mf, const amrex::MFIter &mfi) {
+  return mom_view(mf.array(mfi), mf.ixType());
+}
+
+/// @brief The read-only MOM-convention view of one box of a field; see mom_view.
+/// @param mf The field.
+/// @param mfi The box. The iterator can come from any field on the same
+///        boxes, e.g. loop over an h field and get the view of a u field.
+/// @return The view of the box's data, including its ghost cells.
+inline amrex::Array4<const amrex::Real> mom_const_array(const amrex::MultiFab &mf,
+                                                        const amrex::MFIter &mfi) {
+  return mom_view(mf.const_array(mfi), mf.ixType());
+}
+
+/// @brief The box to loop over when indexing a view.
+///
+/// A box from the storage, e.g. MFIter::validbox() of a u field, uses the
+/// AMReX numbering. mom_box shifts it like the view, so a loop that indexes
+/// the view covers the same points.
+/// @param bx A box from the field's storage, e.g. MFIter::validbox().
+/// @return The same points, numbered as in the view.
+inline amrex::Box mom_box(const amrex::Box &bx) {
+  const amrex::IntVect shift = bx.ixType().ixType();  // 1 in each direction that shifts
+  return amrex::Box(bx.smallEnd() - shift, bx.bigEnd() - shift);
+}
 
 /// @brief The construction specification of a field. Passed to make_?_field().
 /// nk defaults to an invalid value and is validated at field creation (runtime).
@@ -68,12 +128,13 @@ struct DomainSpec {
 /// consumed at field creation (AMReX halos are per-field ghost cells), not
 /// baked into the domain's index space.
 ///
-/// The field factories follow AMReX's southwest convention, where a nodal index
-/// sits on the low side of its cell: u point (i,j) is the west face of cell
-/// (i,j), v point (i,j) its south face, and q point (i,j) its southwest
-/// corner. MOM6 uses the northeast convention (u(I=i,j) is the east face of
-/// h(i,j)), so transcribed stencils shift by one: MOM6's
-/// uh(I,j) - uh(I-1,j) becomes uh(i+1,j) - uh(i,j) here.
+/// Fields are stored the AMReX way: u point i is the west face of cell i, v
+/// point j the south face of cell j, and q point (i,j) the southwest corner of
+/// cell (i,j). MOM6 numbers them from the other side: the east face, the north
+/// face and the northeast corner. Loops read and write fields through
+/// mom_view, which renumbers the points to match MOM6, so code ported from
+/// MOM6 keeps MOM6's indices. Halo exchanges and other operations on whole
+/// fields don't depend on the numbering and use the fields directly.
 class Domain {
 public:
   /// @brief Construct the domain and its horizontal decomposition.
@@ -145,7 +206,7 @@ public:
                                .nghost_i = spec.nghost_i, .nghost_j = spec.nghost_j});
   }
 
-  /// @brief Create a field at u points (west faces) on this domain.
+  /// @brief Create a field at u points on this domain.
   /// @param spec The field specification; see FieldSpec. Aborts if the
   ///        required argument (nk) is unset or invalid.
   /// @return The newly created field.
@@ -155,7 +216,7 @@ public:
                                .nghost_i = spec.nghost_i, .nghost_j = spec.nghost_j});
   }
 
-  /// @brief Create a field at v points (south faces) on this domain.
+  /// @brief Create a field at v points on this domain.
   /// @param spec The field specification; see FieldSpec. Aborts if the
   ///        required argument (nk) is unset or invalid.
   /// @return The newly created field.

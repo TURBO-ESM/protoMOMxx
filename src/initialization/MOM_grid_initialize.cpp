@@ -7,6 +7,7 @@
 
 #include "MOM_grid_initialize.hpp"
 
+#include "MOM_domain_infra.hpp"
 #include "MOM_logger.hpp"
 #include "MOM_shared_initialization.hpp"
 
@@ -77,17 +78,19 @@ GridFields spherical_grid_fields(const Domain &domain, const GridExtents &extent
   // All values are computed analytically from the global index (AMReX indices
   // are global), over the grown boxes: halo values (including those beyond
   // the global domain edges) extrapolate the same formulas, as in MOM6.
-  // Cell centers sit at half-integer indices, corners at integer indices;
-  // latitudes are clamped to [-90, 90] as in MOM6.
+  // The loops index the fields through mom_view, as in MOM6: cell i runs from
+  // i to i+1 in index units, so its center is at i + 0.5, and its east face
+  // and northeast corner are at i + 1. Latitudes are clamped to [-90, 90] as
+  // in MOM6.
 
   // h points (cell centers)
   for (amrex::MFIter mfi(fields.geoLatT); mfi.isValid(); ++mfi) {
-    const amrex::Box bx = mfi.growntilebox();
-    const amrex::Array4<amrex::Real> geoLatT = fields.geoLatT.array(mfi);
-    const amrex::Array4<amrex::Real> geoLonT = fields.geoLonT.array(mfi);
-    const amrex::Array4<amrex::Real> dxT = fields.dxT.array(mfi);
-    const amrex::Array4<amrex::Real> dyT = fields.dyT.array(mfi);
-    const amrex::Array4<amrex::Real> areaT = fields.areaT.array(mfi);
+    const amrex::Box bx = mom_box(mfi.growntilebox());
+    const amrex::Array4<amrex::Real> geoLatT = mom_array(fields.geoLatT, mfi);
+    const amrex::Array4<amrex::Real> geoLonT = mom_array(fields.geoLonT, mfi);
+    const amrex::Array4<amrex::Real> dxT = mom_array(fields.dxT, mfi);
+    const amrex::Array4<amrex::Real> dyT = mom_array(fields.dyT, mfi);
+    const amrex::Array4<amrex::Real> areaT = mom_array(fields.areaT, mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
       geoLonT(i, j, 0) = west_lon + dLon * (i + 0.5);
       geoLatT(i, j, 0) = amrex::min(amrex::max(south_lat + dLat * (j + 0.5),
@@ -98,15 +101,15 @@ GridFields spherical_grid_fields(const Domain &domain, const GridExtents &extent
     });
   }
 
-  // u points (west faces: corner longitudes, cell-center latitudes)
+  // u points (east faces: corner longitudes, cell-center latitudes)
   for (amrex::MFIter mfi(fields.geoLatCu); mfi.isValid(); ++mfi) {
-    const amrex::Box bx = mfi.growntilebox();
-    const amrex::Array4<amrex::Real> geoLatCu = fields.geoLatCu.array(mfi);
-    const amrex::Array4<amrex::Real> geoLonCu = fields.geoLonCu.array(mfi);
-    const amrex::Array4<amrex::Real> dxCu = fields.dxCu.array(mfi);
-    const amrex::Array4<amrex::Real> dyCu = fields.dyCu.array(mfi);
+    const amrex::Box bx = mom_box(mfi.growntilebox());
+    const amrex::Array4<amrex::Real> geoLatCu = mom_array(fields.geoLatCu, mfi);
+    const amrex::Array4<amrex::Real> geoLonCu = mom_array(fields.geoLonCu, mfi);
+    const amrex::Array4<amrex::Real> dxCu = mom_array(fields.dxCu, mfi);
+    const amrex::Array4<amrex::Real> dyCu = mom_array(fields.dyCu, mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
-      geoLonCu(i, j, 0) = west_lon + dLon * i;
+      geoLonCu(i, j, 0) = west_lon + dLon * (i + 1);
       geoLatCu(i, j, 0) = amrex::min(amrex::max(south_lat + dLat * (j + 0.5),
                                                 amrex::Real(-90.0)), amrex::Real(90.0));
       dxCu(i, j, 0) = rad_earth * std::cos(geoLatCu(i, j, 0) * PI_180) * dL_di;
@@ -114,33 +117,33 @@ GridFields spherical_grid_fields(const Domain &domain, const GridExtents &extent
     });
   }
 
-  // v points (south faces: cell-center longitudes, corner latitudes)
+  // v points (north faces: cell-center longitudes, corner latitudes)
   for (amrex::MFIter mfi(fields.geoLatCv); mfi.isValid(); ++mfi) {
-    const amrex::Box bx = mfi.growntilebox();
-    const amrex::Array4<amrex::Real> geoLatCv = fields.geoLatCv.array(mfi);
-    const amrex::Array4<amrex::Real> geoLonCv = fields.geoLonCv.array(mfi);
-    const amrex::Array4<amrex::Real> dxCv = fields.dxCv.array(mfi);
-    const amrex::Array4<amrex::Real> dyCv = fields.dyCv.array(mfi);
+    const amrex::Box bx = mom_box(mfi.growntilebox());
+    const amrex::Array4<amrex::Real> geoLatCv = mom_array(fields.geoLatCv, mfi);
+    const amrex::Array4<amrex::Real> geoLonCv = mom_array(fields.geoLonCv, mfi);
+    const amrex::Array4<amrex::Real> dxCv = mom_array(fields.dxCv, mfi);
+    const amrex::Array4<amrex::Real> dyCv = mom_array(fields.dyCv, mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
       geoLonCv(i, j, 0) = west_lon + dLon * (i + 0.5);
-      geoLatCv(i, j, 0) = amrex::min(amrex::max(south_lat + dLat * j,
+      geoLatCv(i, j, 0) = amrex::min(amrex::max(south_lat + dLat * (j + 1),
                                                 amrex::Real(-90.0)), amrex::Real(90.0));
       dxCv(i, j, 0) = rad_earth * std::cos(geoLatCv(i, j, 0) * PI_180) * dL_di;
       dyCv(i, j, 0) = dy;
     });
   }
 
-  // q points (cell corners)
+  // q points (northeast corners)
   for (amrex::MFIter mfi(fields.geoLatBu); mfi.isValid(); ++mfi) {
-    const amrex::Box bx = mfi.growntilebox();
-    const amrex::Array4<amrex::Real> geoLatBu = fields.geoLatBu.array(mfi);
-    const amrex::Array4<amrex::Real> geoLonBu = fields.geoLonBu.array(mfi);
-    const amrex::Array4<amrex::Real> dxBu = fields.dxBu.array(mfi);
-    const amrex::Array4<amrex::Real> dyBu = fields.dyBu.array(mfi);
-    const amrex::Array4<amrex::Real> areaBu = fields.areaBu.array(mfi);
+    const amrex::Box bx = mom_box(mfi.growntilebox());
+    const amrex::Array4<amrex::Real> geoLatBu = mom_array(fields.geoLatBu, mfi);
+    const amrex::Array4<amrex::Real> geoLonBu = mom_array(fields.geoLonBu, mfi);
+    const amrex::Array4<amrex::Real> dxBu = mom_array(fields.dxBu, mfi);
+    const amrex::Array4<amrex::Real> dyBu = mom_array(fields.dyBu, mfi);
+    const amrex::Array4<amrex::Real> areaBu = mom_array(fields.areaBu, mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
-      geoLonBu(i, j, 0) = west_lon + dLon * i;
-      geoLatBu(i, j, 0) = amrex::min(amrex::max(south_lat + dLat * j,
+      geoLonBu(i, j, 0) = west_lon + dLon * (i + 1);
+      geoLatBu(i, j, 0) = amrex::min(amrex::max(south_lat + dLat * (j + 1),
                                                 amrex::Real(-90.0)), amrex::Real(90.0));
       dxBu(i, j, 0) = rad_earth * std::cos(geoLatBu(i, j, 0) * PI_180) * dL_di;
       dyBu(i, j, 0) = dy;
@@ -242,9 +245,9 @@ void set_masks(const Domain &domain, GridFields &fields,
 
   // The h-point mask
   for (amrex::MFIter mfi(fields.mask2dT); mfi.isValid(); ++mfi) {
-    const amrex::Box bx = mfi.validbox();
-    const amrex::Array4<amrex::Real> maskT = fields.mask2dT.array(mfi);
-    const amrex::Array4<const amrex::Real> D = fields.bathyT.const_array(mfi);
+    const amrex::Box bx = mom_box(mfi.validbox());
+    const amrex::Array4<amrex::Real> maskT = mom_array(fields.mask2dT, mfi);
+    const amrex::Array4<const amrex::Real> D = mom_const_array(fields.bathyT, mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
       maskT(i, j, 0) = (D(i, j, 0) <= mask_depth) ? 0.0 : 1.0;
     });
@@ -254,20 +257,20 @@ void set_masks(const Domain &domain, GridFields &fields,
 
   // The face masks: a face is open when both neighboring cells are ocean.
   for (amrex::MFIter mfi(fields.mask2dCu); mfi.isValid(); ++mfi) {
-    const amrex::Box bx = mfi.validbox();
-    const amrex::Array4<amrex::Real> maskCu = fields.mask2dCu.array(mfi);
-    const amrex::Array4<const amrex::Real> maskT = fields.mask2dT.const_array(mfi);
+    const amrex::Box bx = mom_box(mfi.validbox());
+    const amrex::Array4<amrex::Real> maskCu = mom_array(fields.mask2dCu, mfi);
+    const amrex::Array4<const amrex::Real> maskT = mom_const_array(fields.mask2dT, mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
-      maskCu(i, j, 0) = maskT(i - 1, j, 0) * maskT(i, j, 0);
+      maskCu(i, j, 0) = maskT(i, j, 0) * maskT(i + 1, j, 0);
     });
   }
 
   for (amrex::MFIter mfi(fields.mask2dCv); mfi.isValid(); ++mfi) {
-    const amrex::Box bx = mfi.validbox();
-    const amrex::Array4<amrex::Real> maskCv = fields.mask2dCv.array(mfi);
-    const amrex::Array4<const amrex::Real> maskT = fields.mask2dT.const_array(mfi);
+    const amrex::Box bx = mom_box(mfi.validbox());
+    const amrex::Array4<amrex::Real> maskCv = mom_array(fields.mask2dCv, mfi);
+    const amrex::Array4<const amrex::Real> maskT = mom_const_array(fields.mask2dT, mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
-      maskCv(i, j, 0) = maskT(i, j - 1, 0) * maskT(i, j, 0);
+      maskCv(i, j, 0) = maskT(i, j, 0) * maskT(i, j + 1, 0);
     });
   }
 
@@ -278,13 +281,13 @@ void set_masks(const Domain &domain, GridFields &fields,
 
   // The vertex mask, from the masks of the four faces that meet at the vertex.
   for (amrex::MFIter mfi(fields.mask2dBu); mfi.isValid(); ++mfi) {
-    const amrex::Box bx = mfi.validbox();
-    const amrex::Array4<amrex::Real> maskBu = fields.mask2dBu.array(mfi);
-    const amrex::Array4<const amrex::Real> maskCu = fields.mask2dCu.const_array(mfi);
-    const amrex::Array4<const amrex::Real> maskCv = fields.mask2dCv.const_array(mfi);
+    const amrex::Box bx = mom_box(mfi.validbox());
+    const amrex::Array4<amrex::Real> maskBu = mom_array(fields.mask2dBu, mfi);
+    const amrex::Array4<const amrex::Real> maskCu = mom_const_array(fields.mask2dCu, mfi);
+    const amrex::Array4<const amrex::Real> maskCv = mom_const_array(fields.mask2dCv, mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
-      maskBu(i, j, 0) = (maskCu(i, j - 1, 0) * maskCu(i, j, 0)) *
-                        (maskCv(i - 1, j, 0) * maskCv(i, j, 0));
+      maskBu(i, j, 0) = (maskCu(i, j, 0) * maskCu(i, j + 1, 0)) *
+                        (maskCv(i, j, 0) * maskCv(i + 1, j, 0));
     });
   }
 
@@ -295,11 +298,11 @@ void set_masks(const Domain &domain, GridFields &fields,
 
   // The u/v-cell areas, from the masked (open) face lengths.
   for (amrex::MFIter mfi(fields.areaCu); mfi.isValid(); ++mfi) {
-    const amrex::Box bx = mfi.growntilebox();
-    const amrex::Array4<amrex::Real> areaCu = fields.areaCu.array(mfi);
-    const amrex::Array4<const amrex::Real> maskCu = fields.mask2dCu.const_array(mfi);
-    const amrex::Array4<const amrex::Real> dxCu = fields.dxCu.const_array(mfi);
-    const amrex::Array4<const amrex::Real> dyCu = fields.dyCu.const_array(mfi);
+    const amrex::Box bx = mom_box(mfi.growntilebox());
+    const amrex::Array4<amrex::Real> areaCu = mom_array(fields.areaCu, mfi);
+    const amrex::Array4<const amrex::Real> maskCu = mom_const_array(fields.mask2dCu, mfi);
+    const amrex::Array4<const amrex::Real> dxCu = mom_const_array(fields.dxCu, mfi);
+    const amrex::Array4<const amrex::Real> dyCu = mom_const_array(fields.dyCu, mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
       const amrex::Real dy_Cu = maskCu(i, j, 0) * dyCu(i, j, 0);
       areaCu(i, j, 0) = dxCu(i, j, 0) * dy_Cu;
@@ -307,11 +310,11 @@ void set_masks(const Domain &domain, GridFields &fields,
   }
 
   for (amrex::MFIter mfi(fields.areaCv); mfi.isValid(); ++mfi) {
-    const amrex::Box bx = mfi.growntilebox();
-    const amrex::Array4<amrex::Real> areaCv = fields.areaCv.array(mfi);
-    const amrex::Array4<const amrex::Real> maskCv = fields.mask2dCv.const_array(mfi);
-    const amrex::Array4<const amrex::Real> dxCv = fields.dxCv.const_array(mfi);
-    const amrex::Array4<const amrex::Real> dyCv = fields.dyCv.const_array(mfi);
+    const amrex::Box bx = mom_box(mfi.growntilebox());
+    const amrex::Array4<amrex::Real> areaCv = mom_array(fields.areaCv, mfi);
+    const amrex::Array4<const amrex::Real> maskCv = mom_const_array(fields.mask2dCv, mfi);
+    const amrex::Array4<const amrex::Real> dxCv = mom_const_array(fields.dxCv, mfi);
+    const amrex::Array4<const amrex::Real> dyCv = mom_const_array(fields.dyCv, mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
       const amrex::Real dx_Cv = maskCv(i, j, 0) * dxCv(i, j, 0);
       areaCv(i, j, 0) = dyCv(i, j, 0) * dx_Cv;
