@@ -45,7 +45,8 @@ void initialize_with(const std::string &override_file) {
   const MOM::Domain domain = MOM::make_domain(params);
   const MOM::Grid G = MOM::make_grid(domain, params);
   const MOM::VerticalGrid GV(params);
-  (void)MOM::initialize_dyn_unsplit_RK2(domain, G, GV, params);
+  const MOM::PorousBarrier pbv = MOM::make_porous_barrier(domain, GV.nk());
+  (void)MOM::make_dyn_unsplit_RK2(domain, G, GV, pbv, params);
 }
 
 /// @brief The largest absolute value of a field, ghost cells included.
@@ -98,16 +99,15 @@ TEST(DynUnsplitRK2Test, StateAtRestStaysAtRest) {
     const MOM::Grid G = MOM::make_grid(domain, params);
     const MOM::VerticalGrid GV(params);
     MOM::State state = MOM::make_state(domain, G, GV, params);
-    MOM::DynUnsplitRK2CS CS = MOM::initialize_dyn_unsplit_RK2(domain, G, GV, params);
     const MOM::PorousBarrier pbv = MOM::make_porous_barrier(domain, GV.nk());
+    const MOM::DynUnsplitRK2 dyn = MOM::make_dyn_unsplit_RK2(domain, G, GV, pbv, params);
     const MOM::MechForcing forces = MOM::make_mech_forcing(domain);
 
     const amrex::IntVect ng = state.h.nGrowVect();
     amrex::MultiFab h_start(state.h.boxArray(), state.h.DistributionMap(), state.h.nComp(), ng);
     amrex::MultiFab::Copy(h_start, state.h, 0, 0, state.h.nComp(), ng);
 
-    MOM::step_MOM_dyn_unsplit_RK2(state, /*dt=*/300.0, forces, domain, G, GV, CS, pbv,
-                                  /*x_first=*/true);
+    dyn.step(state, /*dt=*/300.0, forces, /*x_first=*/true);
 
     EXPECT_EQ(max_difference(state.h, h_start), 0.0) << n_boxes << " boxes";
     EXPECT_EQ(max_abs(state.u), 0.0) << n_boxes << " boxes";

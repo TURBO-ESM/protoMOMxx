@@ -24,6 +24,7 @@
 #include "MOM_grid.hpp"
 #include "MOM_infra.hpp"
 #include "MOM_logger.hpp"
+#include "MOM_porous_barrier.hpp"
 #include "MOM_state.hpp"
 #include "MOM_state_initialization.hpp"
 #include "MOM_vertical_grid.hpp"
@@ -73,34 +74,37 @@ struct Case {
   MOM::Grid G;
   MOM::VerticalGrid GV;
   MOM::State state;
-  MOM::ContinuityCS CS;
+  MOM::PorousBarrier pbv;  ///< The open face fractions: 1, as MOM6 sets them.
+  MOM::Continuity continuity;
   amrex::MultiFab h, uh, vh;  ///< The solver's outputs, set to 0 at first.
-  amrex::MultiFab por_face_areaU, por_face_areaV;  ///< 1, as MOM6 sets them.
+
+  // continuity refers to this case's grids and open face fractions. A copy or
+  // a move would leave it pointing at the original's.
+  Case(const Case &) = delete;
+  Case &operator=(const Case &) = delete;
+  Case(Case &&) = delete;
+  Case &operator=(Case &&) = delete;
 
   explicit Case(const int n_boxes)
       : domain(split_domain(params, n_boxes)),
         G(MOM::make_grid(domain, params)),
         GV(params),
         state(MOM::make_state(domain, G, GV, params)),
-        CS(MOM::continuity_init(G, GV, params)),
+        pbv(MOM::make_porous_barrier(domain, GV.nk())),
+        continuity(MOM::make_continuity(G, GV, pbv, params)),
         h(domain.make_h_field({.nk = GV.nk()})),
         uh(domain.make_u_field({.nk = GV.nk()})),
-        vh(domain.make_v_field({.nk = GV.nk()})),
-        por_face_areaU(domain.make_u_field({.nk = GV.nk()})),
-        por_face_areaV(domain.make_v_field({.nk = GV.nk()})) {
+        vh(domain.make_v_field({.nk = GV.nk()})) {
     set_flow(state.u, G.mask2dCu(), 0.5);
     set_flow(state.v, G.mask2dCv(), 0.2);
     h.setVal(0.0);
     uh.setVal(0.0);
     vh.setVal(0.0);
-    por_face_areaU.setVal(1.0);
-    por_face_areaV.setVal(1.0);
   }
 
   /// Run the solver over one time step, zonal direction first.
   void run() {
-    MOM::continuity(state.u, state.v, state.h, h, uh, vh, dt, G, GV, CS,
-                    por_face_areaU, por_face_areaV, /*x_first=*/true);
+    continuity.continuity(state.u, state.v, state.h, h, uh, vh, dt, /*x_first=*/true);
   }
 };
 
@@ -157,8 +161,8 @@ TEST(ContinuityTest, MatchesKernelOnMOM6Numbering) {
                            mask2dCu = copy(c.G.mask2dCu()), dxCu = copy(c.G.dxCu()),
                            dx_Cv = copy(c.G.dx_Cv()), IdyT = copy(c.G.IdyT()),
                            dyT = copy(c.G.dyT()), mask2dCv = copy(c.G.mask2dCv()),
-                           dyCv = copy(c.G.dyCv()), por_u = copy(c.por_face_areaU),
-                           por_v = copy(c.por_face_areaV);
+                           dyCv = copy(c.G.dyCv()), por_u = copy(c.pbv.por_face_areaU),
+                           por_v = copy(c.pbv.por_face_areaV);
     amrex::FArrayBox h(hin.box(), hin.nComp()), uh(u.box(), u.nComp()), vh(v.box(), v.nComp());
     h.setVal<amrex::RunOn::Device>(0.0);
     uh.setVal<amrex::RunOn::Device>(0.0);
@@ -166,12 +170,13 @@ TEST(ContinuityTest, MatchesKernelOnMOM6Numbering) {
 
     MOM::continuity_PPM(
         u.const_array(), v.const_array(), hin.const_array(), h.array(), uh.array(), vh.array(),
-        dt, mfi.validbox(), MOM::continuity_stencil(c.CS), /*x_first=*/true,
+        dt, mfi.validbox(), c.continuity.stencil(), /*x_first=*/true,
         mask2dT.const_array(), dy_Cu.const_array(), IareaT.const_array(), IdxT.const_array(),
         areaT.const_array(), dxT.const_array(), mask2dCu.const_array(), dxCu.const_array(),
         dx_Cv.const_array(), IdyT.const_array(), dyT.const_array(), mask2dCv.const_array(),
         dyCv.const_array(), hin.box().smallEnd(0), hin.box().bigEnd(0), c.GV.Angstrom_H(),
-        c.GV.H_subroundoff(), c.CS.reconstruction, c.CS.transport_adjust, /*obc=*/nullptr,
+        c.GV.H_subroundoff(), c.continuity.reconstruction, c.continuity.transport_adjust,
+        /*obc=*/nullptr,
         por_u.const_array(), por_v.const_array(), {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
         {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {});
     amrex::Gpu::streamSynchronize();
@@ -201,7 +206,8 @@ TEST(ContinuityTest, NarrowHaloIsFatal) {
   const MOM::Domain domain({.ni_global = 44, .nj_global = 40, .ni_halo = 2, .nj_halo = 2});
   const MOM::Grid G = MOM::make_grid(domain, params);
   const MOM::VerticalGrid GV(params);
-  EXPECT_THROW(MOM::continuity_init(G, GV, params), MOM::logger::FatalError);
+  const MOM::PorousBarrier pbv = MOM::make_porous_barrier(domain, GV.nk());
+  EXPECT_THROW(MOM::make_continuity(G, GV, pbv, params), MOM::logger::FatalError);
 }
 
 // Passing a field with the wrong stagger is fatal. Otherwise the view would
@@ -211,16 +217,15 @@ TEST(ContinuityTest, WrongStaggerIsFatal) {
   const MOM::Domain domain = MOM::make_domain(params);
   const MOM::Grid G = MOM::make_grid(domain, params);
   const MOM::VerticalGrid GV(params);
+  const MOM::PorousBarrier pbv = MOM::make_porous_barrier(domain, GV.nk());
+  const MOM::Continuity continuity = MOM::make_continuity(G, GV, pbv, params);
   const amrex::MultiFab h_as_u = domain.make_h_field({.nk = 1});
   const amrex::MultiFab v = domain.make_v_field({.nk = 1});
   const amrex::MultiFab hin = domain.make_h_field({.nk = 1});
   amrex::MultiFab h = domain.make_h_field({.nk = 1});
   amrex::MultiFab uh = domain.make_u_field({.nk = 1});
   amrex::MultiFab vh = domain.make_v_field({.nk = 1});
-  const amrex::MultiFab por_face_areaU = domain.make_u_field({.nk = 1});
-  const amrex::MultiFab por_face_areaV = domain.make_v_field({.nk = 1});
-  EXPECT_THROW(MOM::continuity(h_as_u, v, hin, h, uh, vh, 1.0, G, GV, MOM::ContinuityCS{},
-                               por_face_areaU, por_face_areaV, /*x_first=*/true),
+  EXPECT_THROW(continuity.continuity(h_as_u, v, hin, h, uh, vh, 1.0, /*x_first=*/true),
                MOM::logger::FatalError);
 }
 
