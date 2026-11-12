@@ -20,6 +20,9 @@ ADIABATIC = True                ! default = False
                                 ! There are no diapycnal mass fluxes if ADIABATIC is true.  This assumes that KD
                                 ! = 0.0 and that there is no buoyancy forcing, but makes the model faster by
                                 ! eliminating subroutine calls.
+USE_POROUS_BARRIER = False      ! default = False
+                                ! If true, use porous barrier to constrain the widths and face areas at the
+                                ! edges of the grid cells.
 DT = 300.0                      !   [s]
                                 ! The (baroclinic) dynamics time step.  The time-step that is actually used will
                                 ! be an integer fraction of the forcing time-step (DT_FORCING in ocean-only mode
@@ -29,6 +32,15 @@ DT_THERM = 2400.0               !   [s] default = 300.0
                                 ! DT and of DT_TRACER_ADVECT and less than the forcing or coupling time-step.
                                 ! However, if THERMO_SPANS_COUPLING is true, DT_THERM can be an integer multiple
                                 ! of the coupling timestep. By default DT_THERM is set to DT.
+FIRST_DIRECTION = 0             ! default = 0
+                                ! An integer that indicates which direction goes first in parts of the code that
+                                ! use directionally split updates, with even numbers (or 0) used for x- first
+                                ! and odd numbers used for y-first.
+ALTERNATE_FIRST_DIRECTION = False ! default = False
+                                ! If true, after every dynamic timestep alternate whether the x- or y- direction
+                                ! updates occur first in directionally split parts of the calculation. If this
+                                ! is true, FIRST_DIRECTION applies at the start of a new run or if the next
+                                ! first direction can not be found in the restart file.
 
 ! === module MOM_domains ===
 REENTRANT_X = False             ! default = True

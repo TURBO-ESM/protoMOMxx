@@ -11,6 +11,7 @@
 #include "MOM_file_parser.hpp"
 #include "MOM_forcing_type.hpp"
 #include "MOM_grid.hpp"
+#include "MOM_porous_barrier.hpp"
 #include "MOM_state.hpp"
 #include "MOM_vertical_grid.hpp"
 
@@ -33,6 +34,9 @@ public:
     bool fpmix = false;           ///< Use the FPMIX algorithm.
     bool debug = false;           ///< Write verbose debugging data.
     amrex::Real dt = 0.0;         ///< The baroclinic dynamics time step [T ~> s].
+    int first_direction = 0;      ///< Which direction goes first in directionally
+                                  ///< split updates: x if even, y if odd. MOM6
+                                  ///< keeps it in G%first_direction.
   };
 
   /// @brief Initialize the model (the analogue of MOM6's initialize_MOM).
@@ -43,8 +47,8 @@ public:
   /// @brief Advance the model over a time interval (the analogue of MOM6's
   /// step_MOM). As in MOM6, the interval is split into equal dynamics steps
   /// no longer than DT, and each step dispatches on the time stepping scheme.
-  /// The unsplit RK2 dynamics is not implemented yet, so the state does not
-  /// change.
+  /// The force terms of the unsplit RK2 step are stubs for now, so a state at
+  /// rest stays at rest.
   /// @param forces The mechanical forcing over the interval.
   /// @param time_interval The time interval covered by this call [T ~> s].
   /// @throws logger::FatalError for currently unsupported schemes.
@@ -90,6 +94,10 @@ private:
   /// @brief The prognostic state: the velocities and the layer thicknesses,
   /// on domain_'s decomposition with vgrid_'s layers.
   State state_;
+
+  /// @brief The open fractions of the cell faces, 1 everywhere without
+  /// porous barriers.
+  PorousBarrier pbv_;
 
   /// @brief The unsplit RK2 time stepper's options. Set only when SPLIT is
   /// false and USE_RK2 is true.
