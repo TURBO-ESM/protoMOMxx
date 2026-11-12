@@ -2,9 +2,12 @@
 /// @file MOM.hpp
 /// @brief Main header for the Modular Ocean Model (MOM) core.
 
+#include <optional>
+
 #include <AMReX_REAL.H>
 
 #include "MOM_domain_infra.hpp"
+#include "MOM_dynamics_unsplit_RK2.hpp"
 #include "MOM_file_parser.hpp"
 #include "MOM_forcing_type.hpp"
 #include "MOM_grid.hpp"
@@ -88,14 +91,19 @@ private:
   /// on domain_'s decomposition with vgrid_'s layers.
   State state_;
 
+  /// @brief The unsplit RK2 time stepper's options. Set only when SPLIT is
+  /// false and USE_RK2 is true.
+  std::optional<DynUnsplitRK2CS> dyn_unsplit_RK2_CS_;
+
   /// @brief Read the scalar configuration switches into a Config object.
   static Config read_config_switches(RuntimeParams &params);
 
   /// @brief Initialize the dynamics for the configured time stepping scheme,
   /// with MOM6's four-way dispatch of register_restarts_dyn_* and
   /// initialize_dyn_* (split_RK2b, split_RK2, unsplit_RK2, unsplit).
+  /// @param params Runtime parameters.
   /// @throws logger::FatalError for currently unsupported schemes.
-  void initialize_dynamics();
+  void initialize_dynamics(RuntimeParams &params);
 };
 
 } // namespace MOM
