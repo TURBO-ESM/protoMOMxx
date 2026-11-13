@@ -455,9 +455,11 @@ almost no state, so these globals remain.) So:
   type, and a mix-up is only caught at run time. Compile-time safety would need
   thin wrapper types (§18).
 - **Index origin:** AMReX puts a face or node on the low (southwest) side of
-  its cell, MOM6 on the northeast side. Only the labels shift: MOM6's `u(I=i)`
-  is AMReX's node `i+1`, so `uh(I) - uh(I-1)` becomes `uh(i+1) - uh(i)`. Values
-  follow the physical position, never the label.
+  its cell, MOM6 on the northeast side. Fields are stored the AMReX way, and
+  loops index them through a view (`mom_view`) that shifts the index by one
+  without copying: the view's `u(i)` is MOM6's `u(I=i)` and AMReX's node
+  `i+1`. So stencils copied from MOM6 keep MOM6's indices. Halo exchanges and
+  other operations on whole fields use the fields directly.
 - **Staggering is stated once,** where a field is created (`make_h_field`,
   `make_u_field`, etc.).
 

@@ -4,6 +4,7 @@
 
 #include "MOM_shared_initialization.hpp"
 
+#include "MOM_domain_infra.hpp"
 #include "MOM_logger.hpp"
 
 namespace MOM {
@@ -52,9 +53,9 @@ amrex::MultiFab set_rotation_planetary(const Domain &domain,
   const amrex::Real omega = spec.omega;
 
   for (amrex::MFIter mfi(CoriolisBu); mfi.isValid(); ++mfi) {
-    const amrex::Box bx = mfi.growntilebox();
-    const amrex::Array4<amrex::Real> f = CoriolisBu.array(mfi);
-    const amrex::Array4<const amrex::Real> lat = geoLatBu.const_array(mfi);
+    const amrex::Box bx = mom_box(mfi.growntilebox());
+    const amrex::Array4<amrex::Real> f = mom_array(CoriolisBu, mfi);
+    const amrex::Array4<const amrex::Real> lat = mom_const_array(geoLatBu, mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
       f(i, j, 0) = (2.0 * omega) * std::sin((PI * lat(i, j, 0)) / 180.0);
     });
@@ -167,10 +168,10 @@ amrex::MultiFab initialize_topography_named(const Domain &domain,
     // A bowl-shaped (sort of) bottom topography with a vertical wall at the
     // southern face, deepest in the south-central basin.
     for (amrex::MFIter mfi(bathyT); mfi.isValid(); ++mfi) {
-      const amrex::Box bx = mfi.validbox();
-      const amrex::Array4<amrex::Real> D = bathyT.array(mfi);
-      const amrex::Array4<const amrex::Real> lat = geoLatT.const_array(mfi);
-      const amrex::Array4<const amrex::Real> lon = geoLonT.const_array(mfi);
+      const amrex::Box bx = mom_box(mfi.validbox());
+      const amrex::Array4<amrex::Real> D = mom_array(bathyT, mfi);
+      const amrex::Array4<const amrex::Real> lat = mom_const_array(geoLatT, mfi);
+      const amrex::Array4<const amrex::Real> lon = mom_const_array(geoLonT, mfi);
       amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
         D(i, j, 0) = Dedge + D0 *
             (std::sin(PI * (lon(i, j, 0) - west_lon) / len_lon) *
@@ -187,8 +188,8 @@ amrex::MultiFab initialize_topography_named(const Domain &domain,
   // MOM6's "here just for safety" clamp, over the same cells the named
   // configurations fill.
   for (amrex::MFIter mfi(bathyT); mfi.isValid(); ++mfi) {
-    const amrex::Box bx = mfi.validbox();
-    const amrex::Array4<amrex::Real> D = bathyT.array(mfi);
+    const amrex::Box bx = mom_box(mfi.validbox());
+    const amrex::Array4<amrex::Real> D = mom_array(bathyT, mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
       amrex::Real val = D(i, j, 0);
       val = (val > max_depth) ? max_depth : val;
@@ -215,8 +216,8 @@ void limit_topography(amrex::MultiFab &bathyT, const TopoSpec &spec) {
     }
 
     for (amrex::MFIter mfi(bathyT); mfi.isValid(); ++mfi) {
-      const amrex::Box bx = mfi.growntilebox();
-      const amrex::Array4<amrex::Real> D = bathyT.array(mfi);
+      const amrex::Box bx = mom_box(mfi.growntilebox());
+      const amrex::Array4<amrex::Real> D = mom_array(bathyT, mfi);
       amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
         D(i, j, 0) = amrex::min(amrex::max(D(i, j, 0), 0.5 * min_depth), max_depth);
       });
@@ -226,8 +227,8 @@ void limit_topography(amrex::MultiFab &bathyT, const TopoSpec &spec) {
 
     const amrex::Real land_depth = amrex::min(min_depth, *spec.mask_depth);
     for (amrex::MFIter mfi(bathyT); mfi.isValid(); ++mfi) {
-      const amrex::Box bx = mfi.growntilebox();
-      const amrex::Array4<amrex::Real> D = bathyT.array(mfi);
+      const amrex::Box bx = mom_box(mfi.growntilebox());
+      const amrex::Array4<amrex::Real> D = mom_array(bathyT, mfi);
       amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
         if (D(i, j, 0) > land_depth) {
           D(i, j, 0) = amrex::min(amrex::max(D(i, j, 0), min_depth), max_depth);
