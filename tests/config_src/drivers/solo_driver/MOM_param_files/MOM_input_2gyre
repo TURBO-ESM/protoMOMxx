@@ -1,0 +1,13 @@
+! Parameter file for the surface forcing unit tests: a small spherical grid
+! whose middle row of u points is at 40N, halfway between SOUTHLAT and the
+! northern edge.
+NIGLOBAL = 4
+NJGLOBAL = 5
+GRID_CONFIG = "spherical"
+SOUTHLAT = 30.0
+LENLAT = 20.0
+LENLON = 4.0
+TOPO_CONFIG = "flat"
+MAXIMUM_DEPTH = 2000.0
+ADIABATIC = True
+WIND_CONFIG = "2gyre"

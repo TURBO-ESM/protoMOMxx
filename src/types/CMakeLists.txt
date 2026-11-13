@@ -1,5 +1,6 @@
 # CMake configuration for src/types
 add_library(MOM_src_types
+  MOM_forcing_type.cpp
   MOM_grid.cpp
   MOM_vertical_grid.cpp
 )
