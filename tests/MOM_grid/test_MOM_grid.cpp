@@ -180,7 +180,7 @@ TEST(Grid, FlatTopographyAndClosedBoundaryHalos) {
   // masked out and their u-cell areas are zero; the interior is all ocean.
   expect_value_at(grid.mask2dT(), -1, NJ / 2, 0.0);
   expect_value_at(grid.mask2dCu(), -1, NJ / 2, 0.0);
-  expect_value_at(grid.mask2dBu(), -1, NJ / 2, 0.0);
+  expect_value_at(grid.mask2dBu(), -1, NJ / 2 - 1, 0.0);  // the south end of that wall face
   expect_value_at(grid.areaCu(), -1, NJ / 2, 0.0);
   EXPECT_DOUBLE_EQ(grid.mask2dT().min(0), 1.0);
   EXPECT_DOUBLE_EQ(grid.areaCu().max(0), grid.dxCu().max(0) * grid.dyCu().max(0));
