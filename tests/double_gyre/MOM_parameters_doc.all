@@ -20,6 +20,9 @@ ADIABATIC = True                ! default = False
                                 ! There are no diapycnal mass fluxes if ADIABATIC is true.  This assumes that KD
                                 ! = 0.0 and that there is no buoyancy forcing, but makes the model faster by
                                 ! eliminating subroutine calls.
+USE_POROUS_BARRIER = False      ! default = False
+                                ! If true, use porous barrier to constrain the widths and face areas at the
+                                ! edges of the grid cells.
 DT = 300.0                      !   [s]
                                 ! The (baroclinic) dynamics time step.  The time-step that is actually used will
                                 ! be an integer fraction of the forcing time-step (DT_FORCING in ocean-only mode
@@ -29,6 +32,15 @@ DT_THERM = 2400.0               !   [s] default = 300.0
                                 ! DT and of DT_TRACER_ADVECT and less than the forcing or coupling time-step.
                                 ! However, if THERMO_SPANS_COUPLING is true, DT_THERM can be an integer multiple
                                 ! of the coupling timestep. By default DT_THERM is set to DT.
+FIRST_DIRECTION = 0             ! default = 0
+                                ! An integer that indicates which direction goes first in parts of the code that
+                                ! use directionally split updates, with even numbers (or 0) used for x- first
+                                ! and odd numbers used for y-first.
+ALTERNATE_FIRST_DIRECTION = False ! default = False
+                                ! If true, after every dynamic timestep alternate whether the x- or y- direction
+                                ! updates occur first in directionally split parts of the calculation. If this
+                                ! is true, FIRST_DIRECTION applies at the start of a new run or if the next
+                                ! first direction can not be found in the restart file.
 
 ! === module MOM_domains ===
 REENTRANT_X = False             ! default = True
@@ -214,6 +226,72 @@ ODA_INCUPD = False              ! default = False
 SPONGE = False                  ! default = False
                                 ! If true, sponges may be applied anywhere in the domain. The exact location and
                                 ! properties of those sponges are specified via SPONGE_CONFIG.
+
+! === module MOM_dynamics_unsplit_RK2 ===
+BE = 0.6                        !   [nondim] default = 0.6
+                                ! If SPLIT is true, BE determines the relative weighting of a 2nd-order
+                                ! Runga-Kutta baroclinic time stepping scheme (0.5) and a backward Euler scheme
+                                ! (1) that is used for the Coriolis and inertial terms.  BE may be from 0.5 to
+                                ! 1, but instability may occur near 0.5. BE is also applicable if SPLIT is false
+                                ! and USE_RK2 is true.
+BEGW = 0.0                      !   [nondim] default = 0.0
+                                ! If SPLIT is true, BEGW is a number from 0 to 1 that controls the extent to
+                                ! which the treatment of gravity waves is forward-backward (0) or simulated
+                                ! backward Euler (1).  0 is almost always used. If SPLIT is false and USE_RK2 is
+                                ! true, BEGW can be between 0 and 0.5 to damp gravity waves.
+UNSPLIT_DT_VISC_BUG = False     ! default = False
+                                ! If false, use the correct timestep in the viscous terms applied in the first
+                                ! predictor step with the unsplit time stepping scheme, and in the calculation
+                                ! of the turbulent mixed layer properties for viscosity with unsplit or
+                                ! unsplit_RK2.  If true, an older incorrect value is used.
+TIDES = False                   ! default = False
+                                ! If true, apply tidal momentum forcing.
+CALCULATE_SAL = False           ! default = False
+                                ! If true, calculate self-attraction and loading.
+
+! === module MOM_continuity_PPM ===
+MONOTONIC_CONTINUITY = False    ! default = False
+                                ! If true, CONTINUITY_PPM uses the Colella and Woodward monotonic limiter.  The
+                                ! default (false) is to use a simple positive definite limiter.
+SIMPLE_2ND_PPM_CONTINUITY = False ! default = False
+                                ! If true, CONTINUITY_PPM uses a simple 2nd order (arithmetic mean)
+                                ! interpolation of the edge values. This may give better PV conservation
+                                ! properties. While it formally reduces the accuracy of the continuity solver
+                                ! itself in the strongly advective limit, it does not reduce the overall order
+                                ! of accuracy of the dynamic core.
+UPWIND_1ST_CONTINUITY = False   ! default = False
+                                ! If true, CONTINUITY_PPM becomes a 1st-order upwind continuity solver.  This
+                                ! scheme is highly diffusive but may be useful for debugging or in single-column
+                                ! mode where its minimal stencil is useful.
+ETA_TOLERANCE = 1.0e-12         !   [m] default = 1.0e-10
+                                ! The tolerance for the differences between the barotropic and baroclinic
+                                ! estimates of the sea surface height due to the fluxes through each face.  The
+                                ! total tolerance for SSH is 4 times this value.  The default is
+                                ! 0.5*NK*ANGSTROM, and this should not be set less than about
+                                ! 10^-15*MAXIMUM_DEPTH.
+VELOCITY_TOLERANCE = 3.0e+08    !   [m s-1] default = 3.0e+08
+                                ! The tolerance for barotropic velocity discrepancies between the barotropic
+                                ! solution and  the sum of the layer thicknesses.
+CONT_PPM_AGGRESS_ADJUST = False ! default = False
+                                ! If true, allow the adjusted velocities to have a relative CFL change up to
+                                ! 0.5.
+CONT_PPM_VOLUME_BASED_CFL = False ! default = False
+                                ! If true, use the ratio of the open face lengths to the tracer cell areas when
+                                ! estimating CFL numbers.  The default is set by CONT_PPM_AGGRESS_ADJUST.
+CONTINUITY_CFL_LIMIT = 0.5      !   [nondim] default = 0.5
+                                ! The maximum CFL of the adjusted velocities.
+CONT_PPM_BETTER_ITER = True     ! default = True
+                                ! If true, stop corrective iterations using a velocity based criterion and only
+                                ! stop if the iteration is better than all predecessors.
+CONT_PPM_USE_VISC_REM_MAX = True ! default = True
+                                ! If true, use more appropriate limiting bounds for corrections in strongly
+                                ! viscous columns.
+CONT_PPM_MARGINAL_FACE_AREAS = True ! default = True
+                                ! If true, use the marginal face areas from the continuity solver for use as the
+                                ! weights in the barotropic solver. Otherwise use the transport averaged areas.
+CONT_USE_H_MARG_MIN = False     ! default = False
+                                ! If true, the marginal thickness used and returned from continuity is bounded
+                                ! from below by a sub-roundoff value. Otherwise the minimum is 0.
 
 ! === module MOM_surface_forcing ===
 VARIABLE_WINDS = False          ! default = True

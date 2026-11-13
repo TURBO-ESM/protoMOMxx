@@ -92,6 +92,26 @@ TEST(MOMDomainsTest, MomViewLabelsFacesLikeMOM6) {
   check(domain.make_q_field({.nk = 1}), 1, 1);
 }
 
+// has_stagger is true only for the stagger a field was made with, and the
+// halo widths are the ones the field was made with.
+TEST(MOMDomainsTest, StaggerAndHaloQueries) {
+  using MOM::Stagger;
+  const MOM::Domain domain({.ni_global = 8, .nj_global = 6, .ni_halo = 3, .nj_halo = 2});
+  const auto expect_only = [](const amrex::MultiFab &mf, const Stagger stagger) {
+    for (const Stagger s : {Stagger::Cell, Stagger::XFace, Stagger::YFace, Stagger::Node}) {
+      EXPECT_EQ(MOM::has_stagger(mf, s), s == stagger);
+    }
+  };
+  expect_only(domain.make_h_field({.nk = 1}), Stagger::Cell);
+  expect_only(domain.make_u_field({.nk = 1}), Stagger::XFace);
+  expect_only(domain.make_v_field({.nk = 1}), Stagger::YFace);
+  expect_only(domain.make_q_field({.nk = 1}), Stagger::Node);
+
+  const amrex::MultiFab u = domain.make_u_field({.nk = 1});
+  EXPECT_EQ(MOM::ni_halo(u), 3);
+  EXPECT_EQ(MOM::nj_halo(u), 2);
+}
+
 /// @brief Test-binary entry point: initialize GTest, bring up the
 /// infrastructure layer, and run all tests.
 int main(int argc, char **argv) {

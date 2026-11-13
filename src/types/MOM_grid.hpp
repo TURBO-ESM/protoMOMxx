@@ -68,6 +68,18 @@ public:
   /// @return The h-point mask field.
   const amrex::MultiFab &mask2dT() const { return fields_.mask2dT; }
 
+  /// @brief 1/dxT, or 0 where dxT is 0 [L-1 ~> m-1].
+  /// @return The h-point inverse zonal grid spacing.
+  const amrex::MultiFab &IdxT() const { return fields_.IdxT; }
+
+  /// @brief 1/dyT, or 0 where dyT is 0 [L-1 ~> m-1].
+  /// @return The h-point inverse meridional grid spacing.
+  const amrex::MultiFab &IdyT() const { return fields_.IdyT; }
+
+  /// @brief 1/areaT, or 0 where areaT is 0 [L-2 ~> m-2].
+  /// @return The inverse h-cell area field.
+  const amrex::MultiFab &IareaT() const { return fields_.IareaT; }
+
   /// @brief The geographic latitude at u points [degrees_N].
   /// @return The u-point latitude field.
   const amrex::MultiFab &geoLatCu() const { return fields_.geoLatCu; }
@@ -92,6 +104,10 @@ public:
   /// @return The u-point mask field.
   const amrex::MultiFab &mask2dCu() const { return fields_.mask2dCu; }
 
+  /// @brief The open length of the u faces: dyCu, or 0 at land faces [L ~> m].
+  /// @return The u-face open length field.
+  const amrex::MultiFab &dy_Cu() const { return fields_.dy_Cu; }
+
   /// @brief The geographic latitude at v points [degrees_N].
   /// @return The v-point latitude field.
   const amrex::MultiFab &geoLatCv() const { return fields_.geoLatCv; }
@@ -115,6 +131,10 @@ public:
   /// @brief The land/sea mask at v points: 0 for boundary, 1 for ocean [nondim].
   /// @return The v-point mask field.
   const amrex::MultiFab &mask2dCv() const { return fields_.mask2dCv; }
+
+  /// @brief The open length of the v faces: dxCv, or 0 at land faces [L ~> m].
+  /// @return The v-face open length field.
+  const amrex::MultiFab &dx_Cv() const { return fields_.dx_Cv; }
 
   /// @brief The geographic latitude at q (corner) points [degrees_N].
   /// @return The q-point latitude field.

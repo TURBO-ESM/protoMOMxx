@@ -23,6 +23,24 @@ namespace MOM {
 /// @brief The staggering (grid residency) of a field. An alias of TIM::Stagger
 using Stagger = TIM::Stagger;
 
+/// @brief Whether a field's points are at the given stagger.
+/// @param mf The field.
+/// @param stagger The stagger to check for.
+/// @return True if the field's points are at that stagger.
+inline bool has_stagger(const amrex::MultiFab &mf, const Stagger stagger) {
+  return mf.ixType() == amrex::IndexType(TIM::nodality(stagger));
+}
+
+/// @brief The number of halo points a field has in i.
+/// @param mf The field.
+/// @return The field's halo width in i.
+inline int ni_halo(const amrex::MultiFab &mf) { return mf.nGrowVect()[0]; }
+
+/// @brief The number of halo points a field has in j.
+/// @param mf The field.
+/// @return The field's halo width in j.
+inline int nj_halo(const amrex::MultiFab &mf) { return mf.nGrowVect()[1]; }
+
 /// @brief A view of one box of a field, indexed as in MOM6.
 ///
 /// Through this view, u(i) is the east face of cell i, as in MOM6, rather than

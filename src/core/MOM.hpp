@@ -2,12 +2,16 @@
 /// @file MOM.hpp
 /// @brief Main header for the Modular Ocean Model (MOM) core.
 
+#include <optional>
+
 #include <AMReX_REAL.H>
 
 #include "MOM_domain_infra.hpp"
+#include "MOM_dynamics_unsplit_RK2.hpp"
 #include "MOM_file_parser.hpp"
 #include "MOM_forcing_type.hpp"
 #include "MOM_grid.hpp"
+#include "MOM_porous_barrier.hpp"
 #include "MOM_state.hpp"
 #include "MOM_vertical_grid.hpp"
 
@@ -30,6 +34,9 @@ public:
     bool fpmix = false;           ///< Use the FPMIX algorithm.
     bool debug = false;           ///< Write verbose debugging data.
     amrex::Real dt = 0.0;         ///< The baroclinic dynamics time step [T ~> s].
+    int first_direction = 0;      ///< Which direction goes first in directionally
+                                  ///< split updates: x if even, y if odd. MOM6
+                                  ///< keeps it in G%first_direction.
   };
 
   /// @brief Initialize the model (the analogue of MOM6's initialize_MOM).
@@ -37,11 +44,18 @@ public:
   /// @pre The infrastructure layer (AMReX) is initialized.
   explicit Model(RuntimeParams &params);
 
+  // The time stepper refers to the model's own domain, grids and open face
+  // fractions. A copy or a move would leave it pointing at the original's.
+  Model(const Model &) = delete;
+  Model &operator=(const Model &) = delete;
+  Model(Model &&) = delete;
+  Model &operator=(Model &&) = delete;
+
   /// @brief Advance the model over a time interval (the analogue of MOM6's
   /// step_MOM). As in MOM6, the interval is split into equal dynamics steps
   /// no longer than DT, and each step dispatches on the time stepping scheme.
-  /// The unsplit RK2 dynamics is not implemented yet, so the state does not
-  /// change.
+  /// The force terms of the unsplit RK2 step are stubs for now, so a state at
+  /// rest stays at rest.
   /// @param forces The mechanical forcing over the interval.
   /// @param time_interval The time interval covered by this call [T ~> s].
   /// @throws logger::FatalError for currently unsupported schemes.
@@ -88,14 +102,24 @@ private:
   /// on domain_'s decomposition with vgrid_'s layers.
   State state_;
 
+  /// @brief The open fractions of the cell faces, 1 everywhere without
+  /// porous barriers.
+  PorousBarrier pbv_;
+
+  /// @brief The unsplit RK2 time stepper. Set only when SPLIT is false and
+  /// USE_RK2 is true. It refers to domain_, grid_, vgrid_ and pbv_, which are
+  /// declared before it so that they outlive it.
+  std::optional<DynUnsplitRK2> dyn_unsplit_RK2_;
+
   /// @brief Read the scalar configuration switches into a Config object.
   static Config read_config_switches(RuntimeParams &params);
 
   /// @brief Initialize the dynamics for the configured time stepping scheme,
   /// with MOM6's four-way dispatch of register_restarts_dyn_* and
   /// initialize_dyn_* (split_RK2b, split_RK2, unsplit_RK2, unsplit).
+  /// @param params Runtime parameters.
   /// @throws logger::FatalError for currently unsupported schemes.
-  void initialize_dynamics();
+  void initialize_dynamics(RuntimeParams &params);
 };
 
 } // namespace MOM

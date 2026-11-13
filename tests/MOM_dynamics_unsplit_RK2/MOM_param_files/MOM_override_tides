@@ -1,0 +1,5 @@
+! Added to double_gyre's MOM_input in the unsplit RK2 setup tests:
+! TIDES = True, which is not implemented yet. CALCULATE_SAL defaults to
+! TIDES, so it is turned off to reach the tides check.
+TIDES = True
+CALCULATE_SAL = False

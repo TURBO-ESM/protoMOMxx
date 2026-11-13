@@ -83,6 +83,14 @@ State make_state(const Domain &domain, const Grid &grid,
   state.u.setVal(0.0);
   state.v.setVal(0.0);
   state.h.setVal(vgrid.Angstrom_H());
+  state.uh = domain.make_u_field({.nk = nk});
+  state.vh = domain.make_v_field({.nk = nk});
+  state.uhtr = domain.make_u_field({.nk = nk});
+  state.vhtr = domain.make_v_field({.nk = nk});
+  state.uh.setVal(0.0);
+  state.vh.setVal(0.0);
+  state.uhtr.setVal(0.0);
+  state.vhtr.setVal(0.0);
 
   params.doc_module("MOM_state_initialization", "");
 

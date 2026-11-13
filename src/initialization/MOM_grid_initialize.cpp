@@ -15,6 +15,12 @@ namespace MOM {
 
 namespace {
 
+// 1/val, or 0 where val is 0.
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+amrex::Real Adcroft_reciprocal(const amrex::Real val) {
+  return (val != 0.0) ? 1.0 / val : 0.0;
+}
+
 // Check that the extents describe a usable grid.
 void check_extents(const GridExtents &extents, const std::string_view caller) {
   if (!(extents.len_lat > 0.0) || !(extents.len_lon > 0.0)) {
@@ -293,31 +299,59 @@ void set_masks(const Domain &domain, GridFields &fields,
 
   domain.pass_var(fields.mask2dBu);
 
+  fields.dy_Cu = domain.make_u_field({.nk = 1});
+  fields.dx_Cv = domain.make_v_field({.nk = 1});
   fields.areaCu = domain.make_u_field({.nk = 1});
   fields.areaCv = domain.make_v_field({.nk = 1});
 
-  // The u/v-cell areas, from the masked (open) face lengths.
+  // The open face lengths, and the u/v-cell areas from them.
   for (amrex::MFIter mfi(fields.areaCu); mfi.isValid(); ++mfi) {
     const amrex::Box bx = mom_box(mfi.growntilebox());
+    const amrex::Array4<amrex::Real> dy_Cu = mom_array(fields.dy_Cu, mfi);
     const amrex::Array4<amrex::Real> areaCu = mom_array(fields.areaCu, mfi);
     const amrex::Array4<const amrex::Real> maskCu = mom_const_array(fields.mask2dCu, mfi);
     const amrex::Array4<const amrex::Real> dxCu = mom_const_array(fields.dxCu, mfi);
     const amrex::Array4<const amrex::Real> dyCu = mom_const_array(fields.dyCu, mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
-      const amrex::Real dy_Cu = maskCu(i, j, 0) * dyCu(i, j, 0);
-      areaCu(i, j, 0) = dxCu(i, j, 0) * dy_Cu;
+      dy_Cu(i, j, 0) = maskCu(i, j, 0) * dyCu(i, j, 0);
+      areaCu(i, j, 0) = dxCu(i, j, 0) * dy_Cu(i, j, 0);
     });
   }
 
   for (amrex::MFIter mfi(fields.areaCv); mfi.isValid(); ++mfi) {
     const amrex::Box bx = mom_box(mfi.growntilebox());
+    const amrex::Array4<amrex::Real> dx_Cv = mom_array(fields.dx_Cv, mfi);
     const amrex::Array4<amrex::Real> areaCv = mom_array(fields.areaCv, mfi);
     const amrex::Array4<const amrex::Real> maskCv = mom_const_array(fields.mask2dCv, mfi);
     const amrex::Array4<const amrex::Real> dxCv = mom_const_array(fields.dxCv, mfi);
     const amrex::Array4<const amrex::Real> dyCv = mom_const_array(fields.dyCv, mfi);
     amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
-      const amrex::Real dx_Cv = maskCv(i, j, 0) * dxCv(i, j, 0);
-      areaCv(i, j, 0) = dyCv(i, j, 0) * dx_Cv;
+      dx_Cv(i, j, 0) = maskCv(i, j, 0) * dxCv(i, j, 0);
+      areaCv(i, j, 0) = dyCv(i, j, 0) * dx_Cv(i, j, 0);
+    });
+  }
+}
+
+void set_derived_metrics(const Domain &domain, GridFields &fields) {
+
+  fields.IdxT = domain.make_h_field({.nk = 1});
+  fields.IdyT = domain.make_h_field({.nk = 1});
+  fields.IareaT = domain.make_h_field({.nk = 1});
+
+  for (amrex::MFIter mfi(fields.dxT); mfi.isValid(); ++mfi) {
+    const amrex::Box bx = mom_box(mfi.growntilebox());
+    const amrex::Array4<amrex::Real> dxT = mom_array(fields.dxT, mfi);
+    const amrex::Array4<amrex::Real> dyT = mom_array(fields.dyT, mfi);
+    const amrex::Array4<const amrex::Real> areaT = mom_const_array(fields.areaT, mfi);
+    const amrex::Array4<amrex::Real> IdxT = mom_array(fields.IdxT, mfi);
+    const amrex::Array4<amrex::Real> IdyT = mom_array(fields.IdyT, mfi);
+    const amrex::Array4<amrex::Real> IareaT = mom_array(fields.IareaT, mfi);
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+      if (dxT(i, j, 0) < 0.0) dxT(i, j, 0) = 0.0;
+      if (dyT(i, j, 0) < 0.0) dyT(i, j, 0) = 0.0;
+      IdxT(i, j, 0) = Adcroft_reciprocal(dxT(i, j, 0));
+      IdyT(i, j, 0) = Adcroft_reciprocal(dyT(i, j, 0));
+      IareaT(i, j, 0) = Adcroft_reciprocal(areaT(i, j, 0));
     });
   }
 }

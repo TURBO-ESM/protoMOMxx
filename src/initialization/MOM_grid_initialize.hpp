@@ -37,22 +37,32 @@ GridFields set_grid_metrics(const Domain &domain, RuntimeParams &params);
 GridFields spherical_grid_fields(const Domain &domain, const GridExtents &extents);
 
 /// @brief Read the masking depths and set the land/sea masks and the
-/// mask-dependent u/v-cell areas. The analogue of MOM6's initialize_masks.
+/// mask-dependent open face lengths and u/v-cell areas. The analogue of
+/// MOM6's initialize_masks.
 /// @param domain The computational domain the fields are created on.
 /// @param fields The grid fields. Requires bathyT and the u/v grid
-///        spacings; creates the masks and areaCu/areaCv.
+///        spacings; creates the masks, dy_Cu/dx_Cv and areaCu/areaCv.
 /// @param params Runtime parameters.
 void initialize_masks(const Domain &domain, GridFields &fields,
                       RuntimeParams &params);
 
 /// @brief Set the land/sea masks (mask2dT/Cu/Cv/Bu) from the bottom depth,
 /// with points no deeper than the masking depth masked as land, and the
-/// u/v-cell areas (areaCu/areaCv), which are zero across land faces.
+/// open face lengths (dy_Cu/dx_Cv) and u/v-cell areas (areaCu/areaCv), which
+/// are zero across land faces.
 /// @param domain The computational domain the fields are created on.
 /// @param fields The grid fields. Requires bathyT and the u/v grid
-///        spacings; creates the masks and areaCu/areaCv.
+///        spacings; creates the masks, dy_Cu/dx_Cv and areaCu/areaCv.
 /// @param mask_depth The depth at or below which a point is land [Z ~> m].
 void set_masks(const Domain &domain, GridFields &fields,
                amrex::Real mask_depth);
+
+/// @brief Compute 1/dxT, 1/dyT and 1/areaT, with 0 where the spacing or area
+/// is 0, over the grown boxes (halos included). Negative dxT and dyT are set
+/// to 0 first, as in MOM6.
+/// @param domain The computational domain the fields are created on.
+/// @param fields The grid fields. Requires dxT, dyT and areaT; creates IdxT,
+///        IdyT and IareaT.
+void set_derived_metrics(const Domain &domain, GridFields &fields);
 
 } // namespace MOM

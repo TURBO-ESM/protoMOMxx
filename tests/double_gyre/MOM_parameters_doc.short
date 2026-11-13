@@ -110,6 +110,16 @@ GINT = 0.0098                   !   [m s-2]
 
 ! === module MOM_state_initialization ===
 
+! === module MOM_dynamics_unsplit_RK2 ===
+
+! === module MOM_continuity_PPM ===
+ETA_TOLERANCE = 1.0e-12         !   [m] default = 1.0e-10
+                                ! The tolerance for the differences between the barotropic and baroclinic
+                                ! estimates of the sea surface height due to the fluxes through each face.  The
+                                ! total tolerance for SSH is 4 times this value.  The default is
+                                ! 0.5*NK*ANGSTROM, and this should not be set less than about
+                                ! 10^-15*MAXIMUM_DEPTH.
+
 ! === module MOM_surface_forcing ===
 VARIABLE_WINDS = False          ! default = True
                                 ! If true, the winds vary in time after the initialization.
