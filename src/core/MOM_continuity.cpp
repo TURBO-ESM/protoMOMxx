@@ -155,6 +155,15 @@ void Continuity::continuity(const amrex::MultiFab &u, const amrex::MultiFab &v,
   check_field(pbv.por_face_areaU, Stagger::XFace, stencil(), "por_face_areaU");
   check_field(pbv.por_face_areaV, Stagger::YFace, stencil(), "por_face_areaV");
 
+  // todo: temporary placeholders for MOM6's optional arguments, until the split
+  //       scheme passes them. The kernel treats an empty Array4 as an absent arg.
+  const amrex::Array4<const amrex::Real> uhbt{}, vhbt{}, visc_rem_u{}, visc_rem_v{};
+  const amrex::Array4<amrex::Real> u_cor{}, v_cor{}, du_cor{}, dv_cor{};
+  // The arrays of MOM6's BT_cont.
+  const amrex::Array4<amrex::Real> FA_u_W0{}, FA_u_E0{}, FA_u_WW{}, FA_u_EE{}, uBT_WW{}, uBT_EE{};
+  const amrex::Array4<amrex::Real> FA_v_S0{}, FA_v_N0{}, FA_v_SS{}, FA_v_NN{}, vBT_SS{}, vBT_NN{};
+  const amrex::Array4<amrex::Real> h_u{}, h_v{};
+
   // The loop doesn't use tiling, because the kernel extends its loops into the
   // halo itself.
   for (amrex::MFIter mfi(hin); mfi.isValid(); ++mfi) {
@@ -179,15 +188,10 @@ void Continuity::continuity(const amrex::MultiFab &u, const amrex::MultiFab &v,
                         data_box.smallEnd(0), data_box.bigEnd(0), GV.Angstrom_H(),
                         GV.H_subroundoff(), reconstruction, transport_adjust,
                         /*obc=*/nullptr, mom_const_array(pbv.por_face_areaU, mfi),
-                        mom_const_array(pbv.por_face_areaV, mfi),
-                        // uhbt, vhbt, visc_rem_u, visc_rem_v: absent
-                        {}, {}, {}, {},
-                        // u_cor, v_cor: absent
-                        {}, {},
-                        // the BT_cont face areas and velocity corrections: absent
-                        {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-                        // h_u, h_v, du_cor, dv_cor: absent
-                        {}, {}, {}, {});
+                        mom_const_array(pbv.por_face_areaV, mfi), uhbt, vhbt, visc_rem_u,
+                        visc_rem_v, u_cor, v_cor, FA_u_W0, FA_u_E0, FA_u_WW, FA_u_EE, uBT_WW,
+                        uBT_EE, FA_v_S0, FA_v_N0, FA_v_SS, FA_v_NN, vBT_SS, vBT_NN, h_u, h_v,
+                        du_cor, dv_cor);
 
     // The kernel returns its scratch to The_Arena() while its launches may
     // still be queued on this box's GPU stream. Wait for them, so that the
