@@ -18,6 +18,7 @@ namespace MOM {
 /// @brief The horizontal grid: metric fields at the four C-grid point types
 /// (h: cell centers, q: cell corners, u: west faces, v: south faces), the
 /// bottom topography and land/sea masks, and the Coriolis parameter.
+/// Using mom_view, a loop can index the points as MOM6 does.
 ///
 /// GridFields is the construction-phase counterpart of this class. The
 /// field values are computed in src/initialization (where the GRID_CONFIG

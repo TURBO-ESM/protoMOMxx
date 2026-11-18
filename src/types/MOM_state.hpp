@@ -15,7 +15,8 @@ namespace MOM {
 
 /// @brief The prognostic ocean state: u at the u points (west faces), v at
 /// the v points (south faces), and h at the h points (cell centers), each
-/// with nk layers on the domain's decomposition.
+/// with nk layers on the domain's decomposition. Using mom_view, a loop can
+/// index u and v as MOM6 does.
 ///
 /// State is a plain struct rather than a class: the time stepping writes u, v
 /// and h every step, so there is no invariant for a class to protect. Model
