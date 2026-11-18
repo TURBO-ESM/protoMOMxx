@@ -34,6 +34,9 @@ struct GridFields {
                              ///< the surface [Z ~> m].
   amrex::MultiFab mask2dT;   ///< 0 for land points and 1 for ocean points at
                              ///< h points [nondim].
+  amrex::MultiFab IdxT;      ///< 1/dxT, or 0 where dxT is 0 [L-1 ~> m-1].
+  amrex::MultiFab IdyT;      ///< 1/dyT, or 0 where dyT is 0 [L-1 ~> m-1].
+  amrex::MultiFab IareaT;    ///< 1/areaT, or 0 where areaT is 0 [L-2 ~> m-2].
 
   amrex::MultiFab geoLatCu;  ///< The geographic latitude at u points [degrees_N].
   amrex::MultiFab geoLonCu;  ///< The geographic longitude at u points [degrees_E].
@@ -42,6 +45,8 @@ struct GridFields {
   amrex::MultiFab areaCu;    ///< The areas of the u-grid cells [L2 ~> m2].
   amrex::MultiFab mask2dCu;  ///< 0 for boundary points and 1 for ocean points at
                              ///< u points [nondim].
+  amrex::MultiFab dy_Cu;     ///< The open length of the u faces: dyCu, or 0 at
+                             ///< land faces [L ~> m].
 
   amrex::MultiFab geoLatCv;  ///< The geographic latitude at v points [degrees_N].
   amrex::MultiFab geoLonCv;  ///< The geographic longitude at v points [degrees_E].
@@ -50,6 +55,8 @@ struct GridFields {
   amrex::MultiFab areaCv;    ///< The areas of the v-grid cells [L2 ~> m2].
   amrex::MultiFab mask2dCv;  ///< 0 for boundary points and 1 for ocean points at
                              ///< v points [nondim].
+  amrex::MultiFab dx_Cv;     ///< The open length of the v faces: dxCv, or 0 at
+                             ///< land faces [L ~> m].
 
   amrex::MultiFab geoLatBu;  ///< The geographic latitude at q points [degrees_N].
   amrex::MultiFab geoLonBu;  ///< The geographic longitude at q points [degrees_E].

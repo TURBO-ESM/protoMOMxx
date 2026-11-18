@@ -57,6 +57,7 @@ MOM::Grid make_spherical_grid(const MOM::Domain &domain, const MOM::GridExtents 
   MOM::set_masks(domain, fields, spec.mask_depth.value_or(spec.min_depth));
   fields.CoriolisBu =
       MOM::set_rotation_planetary(domain, fields.geoLatBu, {.omega = OMEGA});
+  MOM::set_derived_metrics(domain, fields);
   return MOM::Grid(std::move(fields));
 }
 
@@ -145,6 +146,11 @@ TEST(Grid, DoubleGyreGridSanity) {
   EXPECT_DOUBLE_EQ(grid.areaT().max(0), grid.dxT().max(0) * grid.dyT().max(0));
   EXPECT_DOUBLE_EQ(grid.areaBu().max(0), grid.dxBu().max(0) * grid.dyBu().max(0));
 
+  // The largest reciprocals come from the smallest spacings and areas.
+  EXPECT_DOUBLE_EQ(grid.IdxT().max(0), 1.0 / grid.dxT().min(0));
+  EXPECT_DOUBLE_EQ(grid.IdyT().max(0), 1.0 / grid.dyT().min(0));
+  EXPECT_DOUBLE_EQ(grid.IareaT().max(0), 1.0 / grid.areaT().min(0));
+
   // f = 2 OMEGA sin(lat) increases northward from the southern boundary,
   // where sin(30 degrees N) = 1/2 makes f equal to OMEGA itself.
   EXPECT_NEAR(grid.CoriolisBu().min(0), OMEGA, 1e-12 * OMEGA);
@@ -182,8 +188,11 @@ TEST(Grid, FlatTopographyAndClosedBoundaryHalos) {
   expect_value_at(grid.mask2dCu(), -1, NJ / 2, 0.0);
   expect_value_at(grid.mask2dBu(), -1, NJ / 2 - 1, 0.0);  // the south end of that wall face
   expect_value_at(grid.areaCu(), -1, NJ / 2, 0.0);
+  expect_value_at(grid.dy_Cu(), -1, NJ / 2, 0.0);
+  expect_value_at(grid.dx_Cv(), NI / 2, -1, 0.0);
   EXPECT_DOUBLE_EQ(grid.mask2dT().min(0), 1.0);
   EXPECT_DOUBLE_EQ(grid.areaCu().max(0), grid.dxCu().max(0) * grid.dyCu().max(0));
+  EXPECT_DOUBLE_EQ(grid.dy_Cu().max(0), grid.dyCu().max(0));
 }
 
 

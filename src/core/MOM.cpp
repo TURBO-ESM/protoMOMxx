@@ -13,9 +13,10 @@ Model::Model(RuntimeParams &params)
     domain_(make_domain(params)),
     grid_(make_grid(domain_, params)),
     vgrid_(params),
-    state_(make_state(domain_, grid_, vgrid_, params)) {
+    state_(make_state(domain_, grid_, vgrid_, params)),
+    pbv_(make_porous_barrier(domain_, vgrid_.nk())) {
 
-  initialize_dynamics();
+  initialize_dynamics(params);
 
   logger::note("MOM core initialization complete.");
 }
@@ -42,8 +43,7 @@ void Model::step(const MechForcing &forces, const amrex::Real time_interval) {
       // defer: step_MOM_dyn_split_RK2
       logger::fatal("step: The split time stepping (SPLIT = True) is not implemented yet.");
     } else if (config_.use_RK2) {
-      // todo: step_MOM_dyn_unsplit_RK2, which advances the state over dt
-      //       with the forces.
+      dyn_unsplit_RK2_->step(state_, dt, forces, config_.first_direction % 2 == 0);
     } else {
       // defer: step_MOM_dyn_unsplit
       logger::fatal("step: The unsplit RK3 time stepping (USE_RK2 = False) "
@@ -130,10 +130,20 @@ Model::Config Model::read_config_switches(RuntimeParams &params) {
     logger::fatal("MOM: The diapycnal mass fluxes (ADIABATIC = False) are not implemented yet.");
   }
 
+  bool use_porbar = false;
+  params.get("USE_POROUS_BARRIER", use_porbar,
+             {.default_value = false,
+              .desc = "If true, use porous barrier to constrain the widths "
+                      "and face areas at the edges of the grid cells."});
+  if (use_porbar) {
+    // defer: porous_barriers_init and the update of the open fractions in
+    //        each step (porous_widths_layer).
+    logger::fatal("MOM: Porous barriers (USE_POROUS_BARRIER = True) are not implemented yet.");
+  }
+
   params.get("DEBUG", config.debug,
              {.default_value = false,
               .desc = "If true, write out verbose debugging data.",
-              .units = "nondim",
               .debugging_param = true});
 
   params.get("DT", config.dt,
@@ -156,10 +166,29 @@ Model::Config Model::read_config_switches(RuntimeParams &params) {
                       "is set to DT.",
               .units = "s"});
 
+  params.get("FIRST_DIRECTION", config.first_direction,
+             {.default_value = 0,
+              .desc = "An integer that indicates which direction goes first "
+                      "in parts of the code that use directionally split "
+                      "updates, with even numbers (or 0) used for x- first "
+                      "and odd numbers used for y-first."});
+  bool alternate_first_direction = false;
+  params.get("ALTERNATE_FIRST_DIRECTION", alternate_first_direction,
+             {.default_value = false,
+              .desc = "If true, after every dynamic timestep alternate whether the x- or y- "
+                      "direction updates occur first in directionally split parts of the calculation. "
+                      "If this is true, FIRST_DIRECTION applies at the start of a new run or if "
+                      "the next first direction can not be found in the restart file."});
+  if (alternate_first_direction) {
+    // defer: the switch of first_direction after each dynamics step.
+    logger::fatal("MOM: Alternating the first direction (ALTERNATE_FIRST_DIRECTION = True) "
+                  "is not implemented yet.");
+  }
+
   return config;
 }
 
-void Model::initialize_dynamics() {
+void Model::initialize_dynamics(RuntimeParams &params) {
 
   // defer: restart registration (register_restarts_dyn_*) and diagnostics.
   if (config_.split && config_.use_alt_split) {
@@ -171,9 +200,10 @@ void Model::initialize_dynamics() {
     logger::fatal("initialize_dynamics: The split time stepping (SPLIT = True) "
                   "is not implemented yet.");
   } else if (config_.use_RK2) {
-    // todo: initialize_dyn_unsplit_RK2
-    logger::note("initialize_dynamics: The unsplit RK2 dynamics is not implemented yet, "
-                 "so the model state does not change in time.");
+    dyn_unsplit_RK2_.emplace(make_dyn_unsplit_RK2(domain_, grid_, vgrid_, pbv_, params));
+    logger::note("initialize_dynamics: The Coriolis, pressure, viscosity and vertical "
+                 "friction terms of the unsplit RK2 step are stubs that add nothing yet, "
+                 "so a state at rest stays at rest.");
   } else {
     // defer: initialize_dyn_unsplit
     logger::fatal("initialize_dynamics: The unsplit RK3 time stepping (USE_RK2 = False) "

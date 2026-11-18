@@ -65,6 +65,11 @@ public:
   /// @return The Angstrom thickness in thickness units.
   amrex::Real Angstrom_H() const { return Angstrom_H_; }
 
+  /// @brief A thickness so small that adding it to a thickness of one Angstrom
+  /// or more doesn't change it [H ~> m or kg m-2].
+  /// @return The subroundoff thickness.
+  amrex::Real H_subroundoff() const { return H_subroundoff_; }
+
   /// @brief Reduced gravity across each interface [L2 Z-1 T-2 ~> m s-2].
   /// The bottom value (index nk) does not matter physically and is set only
   /// to avoid an uninitialized value in output, as in MOM6.
@@ -84,6 +89,7 @@ private:
   bool Boussinesq_ = true;            ///< Whether the Boussinesq approximation is made.
   amrex::Real Angstrom_Z_ = 0.0;      ///< The minimum layer thickness [Z ~> m].
   amrex::Real Angstrom_H_ = 0.0;      ///< The minimum layer thickness [H ~> m or kg m-2].
+  amrex::Real H_subroundoff_ = 0.0;   ///< A negligible thickness [H ~> m or kg m-2].
   std::vector<amrex::Real> g_prime_;  ///< Interface reduced gravities (nk+1) [L2 Z-1 T-2 ~> m s-2].
   std::vector<amrex::Real> Rlay_;     ///< Layer target densities (nk) [R ~> kg m-3].
 };

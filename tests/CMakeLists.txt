@@ -86,6 +86,25 @@ add_test(NAME test_MOM_state_mpi
                  ${MPIEXEC_PREFLAGS} $<TARGET_FILE:test_MOM_state> ${MPIEXEC_POSTFLAGS})
 set_tests_properties(test_MOM_state_mpi PROPERTIES LABELS "mpi" PROCESSORS 2)
 
+# Tests the continuity solver.
+add_executable(test_MOM_continuity MOM_continuity/test_MOM_continuity.cpp)
+target_link_libraries(test_MOM_continuity GTest::gtest MOM_src_core MOM_config_src_infra)
+gtest_discover_tests(test_MOM_continuity PROPERTIES LABELS "unit")
+add_test(NAME test_MOM_continuity_mpi
+         COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+                 ${MPIEXEC_PREFLAGS} $<TARGET_FILE:test_MOM_continuity> ${MPIEXEC_POSTFLAGS})
+set_tests_properties(test_MOM_continuity_mpi PROPERTIES LABELS "mpi" PROCESSORS 2)
+
+# Tests the unsplit RK2 time stepper's setup.
+add_executable(test_MOM_dynamics_unsplit_RK2
+  MOM_dynamics_unsplit_RK2/test_MOM_dynamics_unsplit_RK2.cpp)
+target_link_libraries(test_MOM_dynamics_unsplit_RK2 GTest::gtest MOM_src_core MOM_config_src_infra)
+gtest_discover_tests(test_MOM_dynamics_unsplit_RK2 PROPERTIES LABELS "unit")
+add_test(NAME test_MOM_dynamics_unsplit_RK2_mpi
+         COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+                 ${MPIEXEC_PREFLAGS} $<TARGET_FILE:test_MOM_dynamics_unsplit_RK2> ${MPIEXEC_POSTFLAGS})
+set_tests_properties(test_MOM_dynamics_unsplit_RK2_mpi PROPERTIES LABELS "mpi" PROCESSORS 2)
+
 add_subdirectory(config_src)
 
 # System/regression test: run the full protoMOMxx executable against the double_gyre example

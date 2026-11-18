@@ -1,0 +1,3 @@
+! Added to double_gyre's MOM_input in the unsplit RK2 setup tests:
+! DEBUG = True, which is not implemented yet.
+DEBUG = True
