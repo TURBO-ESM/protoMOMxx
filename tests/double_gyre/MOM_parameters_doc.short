@@ -127,6 +127,10 @@ BOUND_CORIOLIS = True           ! default = False
                                 ! option would have no effect on the SADOURNY Coriolis scheme if it were
                                 ! possible to use centered difference thickness fluxes.
 
+! === module MOM_PressureForce ===
+
+! === module MOM_PressureForce_FV ===
+
 ! === module MOM_surface_forcing ===
 VARIABLE_WINDS = False          ! default = True
                                 ! If true, the winds vary in time after the initialization.

@@ -12,14 +12,8 @@ namespace {
 // The routines below stand in for the modules that the time step calls but
 // that are not implemented yet. Each one sets its outputs to zero, or leaves
 // its arguments unchanged when it only updates them, so for now the step adds
-// no pressure, viscous or wind terms. Their arguments are the ones
-// that exist so far; the modules will add theirs.
-
-// todo: MOM6's PressureForce (MOM_PressureForce), which sets PFu and PFv.
-void PressureForce(const amrex::MultiFab & /*h*/, amrex::MultiFab &PFu, amrex::MultiFab &PFv) {
-  PFu.setVal(0.0);
-  PFv.setVal(0.0);
-}
+// no viscous or wind terms. Their arguments are the ones that exist so far;
+// the modules will add theirs.
 
 // todo: MOM6's horizontal_viscosity (MOM_hor_visc), which sets diffu and diffv.
 void horizontal_viscosity(const amrex::MultiFab & /*u*/, const amrex::MultiFab & /*v*/,
@@ -153,15 +147,6 @@ DynUnsplitRK2 make_dyn_unsplit_RK2(const Domain &domain, const Grid &G, const Ve
              {.default_value = use_tides,
               .desc = "If true, calculate self-attraction and loading."});
 
-  DynUnsplitRK2 dyn{.domain = domain,
-                    .G = G,
-                    .GV = GV,
-                    .pbv = pbv,
-                    .be = be,
-                    .begw = begw,
-                    .dt_visc_bug = dt_visc_bug,
-                    .continuity = make_continuity(G, GV, pbv, params),
-                    .coriolis_adv = make_coriolis_adv(G, GV, pbv, params)};
   if (calculate_SAL) {
     // defer: SAL_init
     logger::fatal("make_dyn_unsplit_RK2: Self-attraction and loading "
@@ -172,7 +157,18 @@ DynUnsplitRK2 make_dyn_unsplit_RK2(const Domain &domain, const Grid &G, const Ve
     logger::fatal("make_dyn_unsplit_RK2: Tidal forcing (TIDES = True) "
                   "is not implemented yet.");
   }
-  // todo: PressureForce_init, hor_visc_init and vertvisc_init
+
+  DynUnsplitRK2 dyn{.domain = domain,
+                    .G = G,
+                    .GV = GV,
+                    .pbv = pbv,
+                    .be = be,
+                    .begw = begw,
+                    .dt_visc_bug = dt_visc_bug,
+                    .continuity = make_continuity(G, GV, pbv, params),
+                    .coriolis_adv = make_coriolis_adv(G, GV, pbv, params),
+                    .pressure_force = make_pressure_force(G, GV, params)};
+  // todo: hor_visc_init and vertvisc_init
 
   return dyn;
 }
@@ -200,10 +196,11 @@ void DynUnsplitRK2::step(State &state, const amrex::Real dt, const MechForcing &
   // them between steps in its control structure, for its diagnostics. Here
   // they are set to zero at the start of every step instead. The answers are
   // the same as long as each step writes every point of them that it reads.
-  // That holds for CAu and CAv: CorAdCalc sets every valid point, and the
-  // halo exchange after it sets the halo points.
-  // todo: check this for PFu, PFv, diffu and diffv as their stubs are
-  //       replaced by their modules.
+  // That holds for CAu, CAv, PFu and PFv: CorAdCalc and MOM6's PressureForce
+  // set every valid point, and the halo exchange after each sets the halo
+  // points.
+  // todo: check this for diffu and diffv when horizontal_viscosity replaces
+  //       its stub.
   amrex::MultiFab CAu = domain.make_u_field({.nk = nk});    // Coriolis and advection.
   amrex::MultiFab CAv = domain.make_v_field({.nk = nk});
   amrex::MultiFab PFu = domain.make_u_field({.nk = nk});    // Pressure force.
@@ -249,7 +246,7 @@ void DynUnsplitRK2::step(State &state, const amrex::Real dt, const MechForcing &
   coriolis_adv.CorAdCalc(u, v, h_av, uh, vh, CAu, CAv);
 
   // PFu = d/dx M(h_av, T, S)  (function of h[n-1/2])
-  PressureForce(h, PFu, PFv);
+  pressure_force.pressure_force(h, PFu, PFv);
   domain.pass_vector(PFu, PFv);
   domain.pass_vector(CAu, CAv);
 

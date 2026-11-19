@@ -104,6 +104,11 @@ add_test(NAME test_MOM_CoriolisAdv_mpi
                  ${MPIEXEC_PREFLAGS} $<TARGET_FILE:test_MOM_CoriolisAdv> ${MPIEXEC_POSTFLAGS})
 set_tests_properties(test_MOM_CoriolisAdv_mpi PROPERTIES LABELS "mpi" PROCESSORS 2)
 
+# Tests the pressure gradient acceleration.
+add_executable(test_MOM_PressureForce MOM_PressureForce/test_MOM_PressureForce.cpp)
+target_link_libraries(test_MOM_PressureForce GTest::gtest MOM_src_core MOM_config_src_infra)
+gtest_discover_tests(test_MOM_PressureForce PROPERTIES LABELS "unit")
+
 # Tests the unsplit RK2 time stepper's setup.
 add_executable(test_MOM_dynamics_unsplit_RK2
   MOM_dynamics_unsplit_RK2/test_MOM_dynamics_unsplit_RK2.cpp)

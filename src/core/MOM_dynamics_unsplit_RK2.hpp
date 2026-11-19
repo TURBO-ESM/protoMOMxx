@@ -8,6 +8,7 @@
 #include <AMReX_REAL.H>
 
 #include "MOM_CoriolisAdv.hpp"
+#include "MOM_PressureForce.hpp"
 #include "MOM_continuity.hpp"
 #include "MOM_domain_infra.hpp"
 #include "MOM_file_parser.hpp"
@@ -50,8 +51,8 @@ struct DynUnsplitRK2 {
 
   Continuity continuity;     ///< The continuity solver.
   CoriolisAdv coriolis_adv;  ///< The Coriolis and momentum advection terms.
-  // todo: the PressureForce, hor_visc and vertvisc modules, which come with
-  //       their callers.
+  PressureForce pressure_force;  ///< The pressure gradient acceleration.
+  // todo: the hor_visc and vertvisc modules, which come with their callers.
 
   /// @brief Advance u, v and h by one time step. The analogue of MOM6's
   /// step_MOM_dyn_unsplit_RK2.

@@ -329,6 +329,59 @@ PV_ADV_SCHEME = "PV_ADV_CENTERED" ! default = "PV_ADV_CENTERED"
                                 !    PV_ADV_CENTERED - centered (aka Sadourny, 75)
                                 !    PV_ADV_UPWIND1  - upwind, first order
 
+! === module MOM_PressureForce ===
+ANALYTIC_FV_PGF = True          ! default = True
+                                ! If true the pressure gradient forces are calculated with a finite volume form
+                                ! that analytically integrates the equations of state in pressure to avoid any
+                                ! possibility of numerical thermobaric instability, as described in Adcroft et
+                                ! al., O. Mod. (2008).
+
+! === module MOM_PressureForce_FV ===
+RHO_PGF_REF = 1035.0            !   [kg m-3] default = 1035.0
+                                ! The reference density that is subtracted off when calculating pressure
+                                ! gradient forces.  Its inverse is subtracted off of specific volumes when in
+                                ! non-Boussinesq mode.  The default is RHO_0.
+RHO_PGF_REF_BUG = True          ! default = True
+                                ! If true, recover a bug that RHO_0 (the mean seawater density in Boussinesq
+                                ! mode) and RHO_PGF_REF (the subtracted reference density in finite volume
+                                ! pressure gradient forces) are incorrectly interchanged in several instances in
+                                ! Boussinesq mode.
+SSH_IN_EOS_PRESSURE_FOR_PGF = False ! default = False
+                                ! If true, include contributions from the sea surface height in the height-based
+                                ! pressure used in the equation of state calculations for the Boussinesq
+                                ! pressure gradient forces, including adjustments for atmospheric or sea-ice
+                                ! pressure.
+MASS_WEIGHT_IN_PRESSURE_GRADIENT = False ! default = False
+                                ! If true, use mass weighting when interpolating T/S for integrals near the
+                                ! bathymetry in FV pressure gradient calculations.
+MASS_WEIGHT_IN_PRESSURE_GRADIENT_TOP = False ! default = False
+                                ! If true and MASS_WEIGHT_IN_PRESSURE_GRADIENT is true, use mass weighting when
+                                ! interpolating T/S for integrals near the top of the water column in FV
+                                ! pressure gradient calculations.
+MASS_WEIGHT_IN_PGF_VANISHED_ONLY = False ! default = False
+                                ! If true, use mass weighting when interpolating T/S for integrals only if one
+                                ! side is vanished according to RESET_INTXPA_H_NONVANISHED.
+USE_INACCURATE_PGF_RHO_ANOM = False ! default = False
+                                ! If true, use a form of the PGF that uses the reference density in an
+                                ! inaccurate way. This is not recommended.
+RECONSTRUCT_FOR_PRESSURE = False ! default = False
+                                ! If True, use vertical reconstruction of T & S within the integrals of the FV
+                                ! pressure gradient calculation. If False, use the constant-by-layer algorithm.
+                                ! The default is set by USE_REGRIDDING.
+PRESSURE_RECONSTRUCTION_SCHEME = 1 ! default = 1
+                                ! Order of vertical reconstruction of T/S to use in the integrals within the FV
+                                ! pressure gradient calculation.
+                                !  0: PCM or no reconstruction.
+                                !  1: PLM reconstruction.
+                                !  2: PPM reconstruction.
+                                !  3: PLM with least squares slope.
+BOUNDARY_EXTRAPOLATION_PRESSURE = True ! default = True
+                                ! If true, the reconstruction of T & S for pressure in boundary cells is
+                                ! extrapolated, rather than using PCM in these cells. If true, the same order
+                                ! polynomial is used as is used for the interior cells.
+USE_STANLEY_PGF = False         ! default = False
+                                ! If true, turn on Stanley SGS T variance parameterization in PGF code.
+
 ! === module MOM_surface_forcing ===
 VARIABLE_WINDS = False          ! default = True
                                 ! If true, the winds vary in time after the initialization.
