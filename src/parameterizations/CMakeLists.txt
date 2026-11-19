@@ -2,6 +2,7 @@
 add_library(MOM_src_parameterizations
   lateral/MOM_hor_visc.cpp
   vertical/MOM_set_viscosity.cpp
+  vertical/MOM_vert_friction.cpp
 )
 
 target_include_directories(MOM_src_parameterizations

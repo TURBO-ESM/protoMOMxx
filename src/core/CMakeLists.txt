@@ -6,6 +6,7 @@ add_library(MOM_src_core
   MOM_PressureForce.cpp
   MOM_PressureForce_FV.cpp
   MOM_dynamics_unsplit_RK2.cpp
+  MOM_interface_heights.cpp
 )
 
 target_include_directories(MOM_src_core

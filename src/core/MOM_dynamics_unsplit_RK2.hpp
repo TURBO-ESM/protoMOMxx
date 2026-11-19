@@ -18,6 +18,7 @@
 #include "MOM_porous_barrier.hpp"
 #include "MOM_set_viscosity.hpp"
 #include "MOM_state.hpp"
+#include "MOM_vert_friction.hpp"
 #include "MOM_vertical_grid.hpp"
 #include "MOM_visc_fields.hpp"
 
@@ -32,8 +33,8 @@ namespace MOM {
 /// creates it, and step() advances the state by one time step. The analogue
 /// of MOM6's MOM_dyn_unsplit_RK2_CS and the routines that take it.
 ///
-/// The pressure and vertical friction terms are stubs for now. They add
-/// nothing, so a state at rest stays at rest.
+/// The pressure force is a stub for now that adds nothing, and so is the
+/// bottom boundary layer of set_visc, so the bottom feels no drag.
 ///
 /// It refers to the domain, the grids, the open face fractions and the
 /// vertical viscosity setup, so they must outlive it.
@@ -57,7 +58,7 @@ struct DynUnsplitRK2 {
   CoriolisAdv coriolis_adv;  ///< The Coriolis and momentum advection terms.
   PressureForce pressure_force;  ///< The pressure gradient acceleration.
   HorVisc hor_visc;              ///< The horizontal viscosity.
-  // todo: the vertvisc module, which comes with its callers.
+  VertVisc vertvisc;             ///< The vertical viscosity and the wind stress.
 
   /// @brief Advance u, v and h by one time step. The analogue of MOM6's
   /// step_MOM_dyn_unsplit_RK2.

@@ -172,6 +172,18 @@ BIHARMONIC = False              ! default = True
                                 ! If true, use a biharmonic horizontal viscosity. BIHARMONIC may be used with
                                 ! LAPLACIAN.
 
+! === module MOM_vert_friction ===
+DIRECT_STRESS = True            ! default = False
+                                ! If true, the wind stress is distributed over the topmost HMIX_STRESS of fluid
+                                ! (like in HYCOM), and an added mixed layer viscosity or a physically based
+                                ! boundary layer turbulence parameterization is not needed for stability.
+HARMONIC_VISC = True            ! default = False
+                                ! If true, use the harmonic mean thicknesses for calculating the vertical
+                                ! viscosity.
+HMIX_FIXED = 20.0               !   [m]
+                                ! The prescribed depth over which the near-surface viscosity and diffusivity are
+                                ! elevated when the bulk mixed layer is not used.
+
 ! === module MOM_surface_forcing ===
 VARIABLE_WINDS = False          ! default = True
                                 ! If true, the winds vary in time after the initialization.

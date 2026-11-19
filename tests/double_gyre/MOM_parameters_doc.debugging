@@ -1,3 +1,11 @@
 ! This file was written by the model and records the debugging parameters used at run-time.
 DEBUG = False                   ! default = False
                                 ! If true, write out verbose debugging data.
+U_TRUNC_FILE = ""               ! default = ""
+                                ! The absolute path to a file into which the accelerations leading to zonal
+                                ! velocity truncations are written. Undefine this for efficiency if this
+                                ! diagnostic is not needed.
+V_TRUNC_FILE = ""               ! default = ""
+                                ! The absolute path to a file into which the accelerations leading to meridional
+                                ! velocity truncations are written. Undefine this for efficiency if this
+                                ! diagnostic is not needed.

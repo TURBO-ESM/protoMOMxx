@@ -3,32 +3,12 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_MFIter.H>
 
+#include "MOM_interface_heights.hpp"
 #include "MOM_logger.hpp"
 
 namespace MOM {
 
 namespace {
-
-// The routines below stand in for the modules that the time step calls but
-// that are not implemented yet. Each one sets its outputs to zero, or leaves
-// its arguments unchanged when it only updates them, so for now the step adds
-// no vertical viscosity or wind stress. Their arguments are the ones that
-// exist so far; the modules will add theirs.
-
-// todo: MOM6's thickness_to_dz (MOM_interface_heights), which sets the
-//       vertical extent of each layer.
-void thickness_to_dz(const amrex::MultiFab & /*h*/, amrex::MultiFab &dz) { dz.setVal(0.0); }
-
-// todo: MOM6's vertvisc_coef (MOM_vert_friction), which sets the coupling
-//       coefficients between the layers.
-void vertvisc_coef(const amrex::MultiFab & /*u*/, const amrex::MultiFab & /*v*/,
-                   const amrex::MultiFab & /*h*/, const amrex::MultiFab & /*dz*/,
-                   const MechForcing & /*forces*/, const amrex::Real /*dt*/) {}
-
-// todo: MOM6's vertvisc (MOM_vert_friction), which applies the vertical
-//       viscosity and the wind stress to u and v.
-void vertvisc(amrex::MultiFab & /*u*/, amrex::MultiFab & /*v*/, const amrex::MultiFab & /*h*/,
-              const MechForcing & /*forces*/, const amrex::Real /*dt*/) {}
 
 /// @brief h_av = (h + hp)/2, on the valid points and halo points around them.
 void average_thickness(const amrex::MultiFab &h, const amrex::MultiFab &hp,
@@ -155,8 +135,8 @@ DynUnsplitRK2 make_dyn_unsplit_RK2(const Domain &domain, const Grid &G, const Ve
                     .continuity = make_continuity(G, GV, pbv, params),
                     .coriolis_adv = make_coriolis_adv(G, GV, pbv, params),
                     .pressure_force = make_pressure_force(G, GV, params),
-                    .hor_visc = make_hor_visc(domain, G, GV, params)};
-  // todo: vertvisc_init
+                    .hor_visc = make_hor_visc(domain, G, GV, params),
+                    .vertvisc = make_vertvisc(G, GV, params)};
 
   return dyn;
 }
@@ -208,8 +188,13 @@ void DynUnsplitRK2::step(State &state, ViscFields &visc, const amrex::Real dt,
   amrex::MultiFab vp = domain.make_v_field({.nk = nk});    // Predicted meridional velocity [L T-1 ~> m s-1].
   h_av.setVal(0.0);
   hp.setVal(0.0);
+  dz.setVal(0.0);
   up.setVal(0.0);
   vp.setVal(0.0);
+
+  // The coupling coefficients that vertvisc_coef sets and vertvisc reads.
+  // MOM6 keeps them in its vertvisc_CS between steps.
+  ViscCoupling coupling = make_visc_coupling(domain, nk);
 
   // diffu = horizontal viscosity terms (u, h)
   hor_visc.horizontal_viscosity(u, v, h, uh, vh, diffu, diffv);
@@ -244,9 +229,9 @@ void DynUnsplitRK2::step(State &state, ViscFields &visc, const amrex::Real dt,
   // up[n-1/2] <- up*[n-1/2] + dt/2 d/dz visc d/dz up[n-1/2]
   const amrex::Real dt_visc = dt_visc_bug ? dt_pred : dt;
   set_visc.set_viscous_ML(u, v, h_av, forces, dt_visc, visc);
-  thickness_to_dz(h_av, dz);
-  vertvisc_coef(up, vp, h_av, dz, forces, dt_pred);
-  vertvisc(up, vp, h_av, forces, dt_pred);
+  thickness_to_dz(h_av, dz, GV, /*halo_size=*/1);
+  vertvisc.vertvisc_coef(up, vp, h_av, dz, visc, dt_pred, coupling);
+  vertvisc.vertvisc(up, vp, h_av, forces, visc, dt_pred, coupling);
   domain.pass_vector(up, vp);
 
   // uh = up[n-1/2] * h[n-1/2]
@@ -272,11 +257,11 @@ void DynUnsplitRK2::step(State &state, ViscFields &visc, const amrex::Real dt,
 
   // up[n] <- up* + dt d/dz visc d/dz up
   // u[n] <- u*[n] + dt d/dz visc d/dz u[n]
-  thickness_to_dz(h_av, dz);
-  vertvisc_coef(up, vp, h_av, dz, forces, dt);
-  vertvisc(up, vp, h_av, forces, dt);
-  vertvisc_coef(u, v, h_av, dz, forces, dt);
-  vertvisc(u, v, h_av, forces, dt);
+  thickness_to_dz(h_av, dz, GV, /*halo_size=*/1);
+  vertvisc.vertvisc_coef(up, vp, h_av, dz, visc, dt, coupling);
+  vertvisc.vertvisc(up, vp, h_av, forces, visc, dt, coupling);
+  vertvisc.vertvisc_coef(u, v, h_av, dz, visc, dt, coupling);
+  vertvisc.vertvisc(u, v, h_av, forces, visc, dt, coupling);
   domain.pass_vector(up, vp);
   domain.pass_vector(u, v);
 

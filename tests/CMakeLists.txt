@@ -123,6 +123,20 @@ add_executable(test_MOM_set_viscosity MOM_set_viscosity/test_MOM_set_viscosity.c
 target_link_libraries(test_MOM_set_viscosity GTest::gtest MOM_src_core MOM_config_src_infra)
 gtest_discover_tests(test_MOM_set_viscosity PROPERTIES LABELS "unit")
 
+# Tests the vertical viscosity and the wind stress.
+add_executable(test_MOM_vert_friction MOM_vert_friction/test_MOM_vert_friction.cpp)
+target_link_libraries(test_MOM_vert_friction GTest::gtest MOM_src_core MOM_config_src_infra)
+gtest_discover_tests(test_MOM_vert_friction PROPERTIES LABELS "unit")
+add_test(NAME test_MOM_vert_friction_mpi
+         COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+                 ${MPIEXEC_PREFLAGS} $<TARGET_FILE:test_MOM_vert_friction> ${MPIEXEC_POSTFLAGS})
+set_tests_properties(test_MOM_vert_friction_mpi PROPERTIES LABELS "mpi" PROCESSORS 2)
+
+# Tests the vertical extent of the layers.
+add_executable(test_MOM_interface_heights MOM_interface_heights/test_MOM_interface_heights.cpp)
+target_link_libraries(test_MOM_interface_heights GTest::gtest MOM_src_core MOM_config_src_infra)
+gtest_discover_tests(test_MOM_interface_heights PROPERTIES LABELS "unit")
+
 # Tests the unsplit RK2 time stepper's setup.
 add_executable(test_MOM_dynamics_unsplit_RK2
   MOM_dynamics_unsplit_RK2/test_MOM_dynamics_unsplit_RK2.cpp)

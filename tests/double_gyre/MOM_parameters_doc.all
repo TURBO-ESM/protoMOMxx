@@ -512,6 +512,70 @@ OBC_SPECIFIED_STRAIN_BUG = True ! default = True
                                 ! If true, recover a bug that specified shear strain option at open boundaries
                                 ! cannot be applied.
 
+! === module MOM_vert_friction ===
+VERT_FRICTION_ANSWER_DATE = 99991231 ! default = 99991231
+                                ! The vintage of the order of arithmetic and expressions in the viscous
+                                ! calculations.  Values below 20190101 recover the answers from the end of 2018,
+                                ! while higher values use expressions that do not use an arbitrary hard-coded
+                                ! maximum viscous coupling coefficient between layers.  Values below 20230601
+                                ! recover a form of the viscosity within the mixed layer that breaks up the
+                                ! magnitude of the wind stress in some non-Boussinesq cases.
+DIRECT_STRESS = True            ! default = False
+                                ! If true, the wind stress is distributed over the topmost HMIX_STRESS of fluid
+                                ! (like in HYCOM), and an added mixed layer viscosity or a physically based
+                                ! boundary layer turbulence parameterization is not needed for stability.
+FIXED_DEPTH_LOTW_ML = False     ! default = False
+                                ! If true, use a Law-of-the-wall prescription for the mixed layer viscosity
+                                ! within a boundary layer that is the lesser of HMIX_FIXED and the total depth
+                                ! of the ocean in a column.
+LOTW_VISCOUS_ML_FLOOR = False   ! default = False
+                                ! If true, use a Law-of-the-wall prescription to set a lower bound on the
+                                ! viscous coupling between layers within the surface boundary layer, based the
+                                ! distance of interfaces from the surface.  This only acts when there are large
+                                ! changes in the thicknesses of successive layers or when the viscosity is set
+                                ! externally and the wind stress has subsequently increased.
+VON_KARMAN_CONST = 0.41         !   [nondim] default = 0.41
+                                ! The value the von Karman constant as used for mixed layer viscosity.
+HARMONIC_VISC = True            ! default = False
+                                ! If true, use the harmonic mean thicknesses for calculating the vertical
+                                ! viscosity.
+HARMONIC_BL_SCALE = 0.0         !   [nondim] default = 0.0
+                                ! A scale to determine when water is in the boundary layers based solely on
+                                ! harmonic mean thicknesses for the purpose of determining the extent to which
+                                ! the thicknesses used in the viscosities are upwinded.
+HMIX_FIXED = 20.0               !   [m]
+                                ! The prescribed depth over which the near-surface viscosity and diffusivity are
+                                ! elevated when the bulk mixed layer is not used.
+HMIX_STRESS = 20.0              !   [m] default = 20.0
+                                ! The depth over which the wind stress is applied if DIRECT_STRESS is true.
+USE_GL90_IN_SSW = False         ! default = False
+                                ! If true, use simpler method to calculate 1/N^2 in GL90 vertical viscosity
+                                ! coefficient. This method is valid in stacked shallow water mode.
+KV_ML_INVZ2 = 0.01              !   [m2 s-1] default = 0.01
+                                ! An extra kinematic viscosity in a mixed layer of thickness HMIX_FIXED, with
+                                ! the actual viscosity scaling as 1/(z*HMIX_FIXED)^2, where z is the distance
+                                ! from the surface, to allow for finite wind stresses to be transmitted through
+                                ! infinitesimally thin surface layers.  This is an older option for numerical
+                                ! convenience without a strong physical basis, and its use is now discouraged.
+CFL_TRUNCATE = 0.5              !   [nondim] default = 0.5
+                                ! The value of the CFL number that will cause velocity components to be
+                                ! truncated; instability can occur past 0.5.
+CFL_REPORT = 0.5                !   [nondim] default = 0.5
+                                ! The value of the CFL number that causes accelerations to be reported; the
+                                ! default is CFL_TRUNCATE.
+CFL_TRUNCATE_RAMP_TIME = 0.0    !   [s] default = 0.0
+                                ! The time over which the CFL truncation value is ramped up at the beginning of
+                                ! the run.
+CFL_TRUNCATE_START = 0.0        !   [nondim] default = 0.0
+                                ! The start value of the truncation CFL number used when ramping up CFL_TRUNC.
+STOKES_MIXING_COMBINED = False  ! default = False
+                                ! Flag to use Stokes drift Mixing via the Lagrangian  current (Eulerian plus
+                                ! Stokes drift).  Still needs work and testing, so not recommended for use.
+VEL_UNDERFLOW = 0.0             !   [m s-1] default = 0.0
+                                ! A negligibly small velocity magnitude below which velocity components are set
+                                ! to 0.  A reasonable value might be 1e-30 m/s, which is less than an Angstrom
+                                ! divided by the age of the universe.
+
 ! === module MOM_surface_forcing ===
 VARIABLE_WINDS = False          ! default = True
                                 ! If true, the winds vary in time after the initialization.
