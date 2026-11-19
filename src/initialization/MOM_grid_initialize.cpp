@@ -354,6 +354,69 @@ void set_derived_metrics(const Domain &domain, GridFields &fields) {
       IareaT(i, j, 0) = Adcroft_reciprocal(areaT(i, j, 0));
     });
   }
+
+  fields.IdxCu = domain.make_u_field({.nk = 1});
+  fields.IdyCu = domain.make_u_field({.nk = 1});
+  fields.IdxCu_OBCmask = domain.make_u_field({.nk = 1});
+
+  for (amrex::MFIter mfi(fields.dxCu); mfi.isValid(); ++mfi) {
+    const amrex::Box bx = mom_box(mfi.growntilebox());
+    const amrex::Array4<amrex::Real> dxCu = mom_array(fields.dxCu, mfi);
+    const amrex::Array4<amrex::Real> dyCu = mom_array(fields.dyCu, mfi);
+    const amrex::Array4<const amrex::Real> maskCu = mom_const_array(fields.mask2dCu, mfi);
+    const amrex::Array4<amrex::Real> IdxCu = mom_array(fields.IdxCu, mfi);
+    const amrex::Array4<amrex::Real> IdyCu = mom_array(fields.IdyCu, mfi);
+    const amrex::Array4<amrex::Real> IdxCu_OBCmask = mom_array(fields.IdxCu_OBCmask, mfi);
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+      if (dxCu(i, j, 0) < 0.0) dxCu(i, j, 0) = 0.0;
+      if (dyCu(i, j, 0) < 0.0) dyCu(i, j, 0) = 0.0;
+      IdxCu(i, j, 0) = Adcroft_reciprocal(dxCu(i, j, 0));
+      IdyCu(i, j, 0) = Adcroft_reciprocal(dyCu(i, j, 0));
+      // defer: multiply by OBCmaskCu, as MOM6 does. It equals mask2dCu, but
+      //        with 0 also at open boundary faces.
+      IdxCu_OBCmask(i, j, 0) = maskCu(i, j, 0) * IdxCu(i, j, 0);
+    });
+  }
+
+  fields.IdxCv = domain.make_v_field({.nk = 1});
+  fields.IdyCv = domain.make_v_field({.nk = 1});
+  fields.IdyCv_OBCmask = domain.make_v_field({.nk = 1});
+
+  for (amrex::MFIter mfi(fields.dxCv); mfi.isValid(); ++mfi) {
+    const amrex::Box bx = mom_box(mfi.growntilebox());
+    const amrex::Array4<amrex::Real> dxCv = mom_array(fields.dxCv, mfi);
+    const amrex::Array4<amrex::Real> dyCv = mom_array(fields.dyCv, mfi);
+    const amrex::Array4<const amrex::Real> maskCv = mom_const_array(fields.mask2dCv, mfi);
+    const amrex::Array4<amrex::Real> IdxCv = mom_array(fields.IdxCv, mfi);
+    const amrex::Array4<amrex::Real> IdyCv = mom_array(fields.IdyCv, mfi);
+    const amrex::Array4<amrex::Real> IdyCv_OBCmask = mom_array(fields.IdyCv_OBCmask, mfi);
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+      if (dxCv(i, j, 0) < 0.0) dxCv(i, j, 0) = 0.0;
+      if (dyCv(i, j, 0) < 0.0) dyCv(i, j, 0) = 0.0;
+      IdxCv(i, j, 0) = Adcroft_reciprocal(dxCv(i, j, 0));
+      IdyCv(i, j, 0) = Adcroft_reciprocal(dyCv(i, j, 0));
+      // defer: multiply by OBCmaskCv, as MOM6 does. It equals mask2dCv, but
+      //        with 0 also at open boundary faces.
+      IdyCv_OBCmask(i, j, 0) = maskCv(i, j, 0) * IdyCv(i, j, 0);
+    });
+  }
+
+  fields.IareaBu = domain.make_q_field({.nk = 1});
+
+  for (amrex::MFIter mfi(fields.dxBu); mfi.isValid(); ++mfi) {
+    const amrex::Box bx = mom_box(mfi.growntilebox());
+    const amrex::Array4<amrex::Real> dxBu = mom_array(fields.dxBu, mfi);
+    const amrex::Array4<amrex::Real> dyBu = mom_array(fields.dyBu, mfi);
+    const amrex::Array4<amrex::Real> areaBu = mom_array(fields.areaBu, mfi);
+    const amrex::Array4<amrex::Real> IareaBu = mom_array(fields.IareaBu, mfi);
+    amrex::ParallelFor(bx, [=] AMREX_GPU_DEVICE(int i, int j, int) {
+      if (dxBu(i, j, 0) < 0.0) dxBu(i, j, 0) = 0.0;
+      if (dyBu(i, j, 0) < 0.0) dyBu(i, j, 0) = 0.0;
+      // areaBu is usually positive already.
+      if (areaBu(i, j, 0) <= 0.0) areaBu(i, j, 0) = dxBu(i, j, 0) * dyBu(i, j, 0);
+      IareaBu(i, j, 0) = Adcroft_reciprocal(areaBu(i, j, 0));
+    });
+  }
 }
 
 void initialize_masks(const Domain &domain, GridFields &fields,

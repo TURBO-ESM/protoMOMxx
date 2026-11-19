@@ -323,6 +323,7 @@ void DocFileWriter::write_message_and_desc(std::string_view mesg, std::string_vi
       }
     }
 
+    line_text.erase(line_text.find_last_not_of(' ') + 1);
     std::string comment_line = indent + "! " + line_text;
 
     if (write_all)

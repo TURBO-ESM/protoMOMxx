@@ -1,5 +1,7 @@
 # MOM C++ kernels, and the Fortran<->C++ bridge MOM6 calls under -D_TIM.
-# Moved here from TIM's mom/cpp/ and turbotmp/.
+# Moved here from TIM's mom/cpp/ and turbotmp/. The option structs and kernel
+# signatures mirror the Fortran types the bridge passes. They will be
+# redesigned when the bridge is retired.
 #
 #   mom_kernels  the AMReX kernels alone (protoMOMxx::mom_kernels). Needs only
 #                AMReX.

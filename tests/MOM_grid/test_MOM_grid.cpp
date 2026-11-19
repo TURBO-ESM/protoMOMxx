@@ -150,6 +150,18 @@ TEST(Grid, DoubleGyreGridSanity) {
   EXPECT_DOUBLE_EQ(grid.IdxT().max(0), 1.0 / grid.dxT().min(0));
   EXPECT_DOUBLE_EQ(grid.IdyT().max(0), 1.0 / grid.dyT().min(0));
   EXPECT_DOUBLE_EQ(grid.IareaT().max(0), 1.0 / grid.areaT().min(0));
+  EXPECT_DOUBLE_EQ(grid.IdxCu().max(0), 1.0 / grid.dxCu().min(0));
+  EXPECT_DOUBLE_EQ(grid.IdyCu().max(0), 1.0 / grid.dyCu().min(0));
+  EXPECT_DOUBLE_EQ(grid.IdxCv().max(0), 1.0 / grid.dxCv().min(0));
+  EXPECT_DOUBLE_EQ(grid.IdyCv().max(0), 1.0 / grid.dyCv().min(0));
+  EXPECT_DOUBLE_EQ(grid.IareaBu().max(0), 1.0 / grid.areaBu().min(0));
+
+  // The masked reciprocals are 0 at the faces on the closed boundaries, and
+  // equal the unmasked ones elsewhere.
+  EXPECT_EQ(grid.IdxCu_OBCmask().min(0), 0.0);
+  EXPECT_DOUBLE_EQ(grid.IdxCu_OBCmask().max(0), grid.IdxCu().max(0));
+  EXPECT_EQ(grid.IdyCv_OBCmask().min(0), 0.0);
+  EXPECT_DOUBLE_EQ(grid.IdyCv_OBCmask().max(0), grid.IdyCv().max(0));
 
   // f = 2 OMEGA sin(lat) increases northward from the southern boundary,
   // where sin(30 degrees N) = 1/2 makes f equal to OMEGA itself.

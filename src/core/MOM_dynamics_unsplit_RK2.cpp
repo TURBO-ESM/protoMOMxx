@@ -12,21 +12,8 @@ namespace {
 // The routines below stand in for the modules that the time step calls but
 // that are not implemented yet. Each one sets its outputs to zero, or leaves
 // its arguments unchanged when it only updates them, so for now the step adds
-// no Coriolis, pressure, viscous or wind terms. Their arguments are the ones
+// no pressure, viscous or wind terms. Their arguments are the ones
 // that exist so far; the modules will add theirs.
-
-// todo: MOM6's CoriolisAdv_stencil (MOM_CoriolisAdv). It returns 2 for every
-//       Coriolis scheme but the WENO ones.
-int CoriolisAdv_stencil() { return 2; }
-
-// todo: MOM6's CorAdCalc (MOM_CoriolisAdv), which sets CAu and CAv.
-void CorAdCalc(const amrex::MultiFab & /*u*/, const amrex::MultiFab & /*v*/,
-               const amrex::MultiFab & /*h*/, const amrex::MultiFab & /*uh*/,
-               const amrex::MultiFab & /*vh*/, amrex::MultiFab &CAu, amrex::MultiFab &CAv,
-               const PorousBarrier & /*pbv*/) {
-  CAu.setVal(0.0);
-  CAv.setVal(0.0);
-}
 
 // todo: MOM6's PressureForce (MOM_PressureForce), which sets PFu and PFv.
 void PressureForce(const amrex::MultiFab & /*h*/, amrex::MultiFab &PFu, amrex::MultiFab &PFv) {
@@ -173,8 +160,8 @@ DynUnsplitRK2 make_dyn_unsplit_RK2(const Domain &domain, const Grid &G, const Ve
                     .be = be,
                     .begw = begw,
                     .dt_visc_bug = dt_visc_bug,
-                    .continuity = make_continuity(G, GV, pbv, params)};
-  // todo: CoriolisAdv_init
+                    .continuity = make_continuity(G, GV, pbv, params),
+                    .coriolis_adv = make_coriolis_adv(G, GV, pbv, params)};
   if (calculate_SAL) {
     // defer: SAL_init
     logger::fatal("make_dyn_unsplit_RK2: Self-attraction and loading "
@@ -206,14 +193,17 @@ void DynUnsplitRK2::step(State &state, const amrex::Real dt, const MechForcing &
   amrex::MultiFab &vh = state.vh;
 
   const amrex::Real dt_pred = dt * be;  // The time step of the predictor [T ~> s].
-  const int cor_stencil = CoriolisAdv_stencil();
+  const int cor_stencil = coriolis_adv.stencil();
   const int nk = GV.nk();
 
   // The accelerations [L T-2 ~> m s-2]. MOM6 sets them to zero once and keeps
   // them between steps in its control structure, for its diagnostics. Here
   // they are set to zero at the start of every step instead. The answers are
   // the same as long as each step writes every point of them that it reads.
-  // todo: check this as each stub is replaced by its module.
+  // That holds for CAu and CAv: CorAdCalc sets every valid point, and the
+  // halo exchange after it sets the halo points.
+  // todo: check this for PFu, PFv, diffu and diffv as their stubs are
+  //       replaced by their modules.
   amrex::MultiFab CAu = domain.make_u_field({.nk = nk});    // Coriolis and advection.
   amrex::MultiFab CAv = domain.make_v_field({.nk = nk});
   amrex::MultiFab PFu = domain.make_u_field({.nk = nk});    // Pressure force.
@@ -256,7 +246,7 @@ void DynUnsplitRK2::step(State &state, const amrex::Real dt, const MechForcing &
   average_thickness(h, hp, h_av, cor_stencil);
 
   // CAu = -(f+zeta)/h_av vh + d/dx KE  (function of u[n-1] and uh[n-1])
-  CorAdCalc(u, v, h_av, uh, vh, CAu, CAv, pbv);
+  coriolis_adv.CorAdCalc(u, v, h_av, uh, vh, CAu, CAv);
 
   // PFu = d/dx M(h_av, T, S)  (function of h[n-1/2])
   PressureForce(h, PFu, PFv);
@@ -285,7 +275,7 @@ void DynUnsplitRK2::step(State &state, const amrex::Real dt, const MechForcing &
   average_thickness(h, hp, h_av, cor_stencil);
 
   // CAu = -(f+zeta(up))/h_av vh + d/dx KE(up)  (function of up[n-1/2], h[n-1/2])
-  CorAdCalc(up, vp, h_av, uh, vh, CAu, CAv, pbv);
+  coriolis_adv.CorAdCalc(up, vp, h_av, uh, vh, CAu, CAv);
 
   // up* = u[n] + (1+gamma) * dt * (PFu + CAu)  Extrapolated for damping
   // u*[n+1] = u[n] + dt * (PFu + CAu)

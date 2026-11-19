@@ -2,6 +2,7 @@
 add_library(MOM_src_core
   MOM.cpp
   MOM_continuity.cpp
+  MOM_CoriolisAdv.cpp
   MOM_dynamics_unsplit_RK2.cpp
 )
 

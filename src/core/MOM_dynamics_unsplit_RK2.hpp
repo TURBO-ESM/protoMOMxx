@@ -7,6 +7,7 @@
 #include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
 
+#include "MOM_CoriolisAdv.hpp"
 #include "MOM_continuity.hpp"
 #include "MOM_domain_infra.hpp"
 #include "MOM_file_parser.hpp"
@@ -27,8 +28,8 @@ namespace MOM {
 /// creates it, and step() advances the state by one time step. The analogue
 /// of MOM6's MOM_dyn_unsplit_RK2_CS and the routines that take it.
 ///
-/// The Coriolis, pressure, horizontal viscosity and vertical friction terms
-/// are stubs for now. They add nothing, so a state at rest stays at rest.
+/// The pressure, horizontal viscosity and vertical friction terms are stubs
+/// for now. They add nothing, so a state at rest stays at rest.
 ///
 /// It refers to the domain, the grids and the open face fractions, so they
 /// must outlive it.
@@ -47,9 +48,10 @@ struct DynUnsplitRK2 {
   /// If true, use an older, incorrect time step in the viscous terms.
   bool dt_visc_bug = false;
 
-  Continuity continuity;  ///< The continuity solver.
-  // todo: the CoriolisAdv, PressureForce, hor_visc and vertvisc modules,
-  //       which come with their callers.
+  Continuity continuity;     ///< The continuity solver.
+  CoriolisAdv coriolis_adv;  ///< The Coriolis and momentum advection terms.
+  // todo: the PressureForce, hor_visc and vertvisc modules, which come with
+  //       their callers.
 
   /// @brief Advance u, v and h by one time step. The analogue of MOM6's
   /// step_MOM_dyn_unsplit_RK2.

@@ -109,6 +109,19 @@ public:
   /// @return The u-face open length field.
   const amrex::MultiFab &dy_Cu() const { return fields_.dy_Cu; }
 
+  /// @brief 1/dxCu, or 0 where dxCu is 0 [L-1 ~> m-1].
+  /// @return The u-point inverse zonal grid spacing.
+  const amrex::MultiFab &IdxCu() const { return fields_.IdxCu; }
+
+  /// @brief 1/dyCu, or 0 where dyCu is 0 [L-1 ~> m-1].
+  /// @return The u-point inverse meridional grid spacing.
+  const amrex::MultiFab &IdyCu() const { return fields_.IdyCu; }
+
+  /// @brief 1/dxCu, or 0 at land faces [L-1 ~> m-1]. MOM6 also sets it
+  /// to 0 at open boundary faces.
+  /// @return The masked u-point inverse zonal grid spacing.
+  const amrex::MultiFab &IdxCu_OBCmask() const { return fields_.IdxCu_OBCmask; }
+
   /// @brief The geographic latitude at v points [degrees_N].
   /// @return The v-point latitude field.
   const amrex::MultiFab &geoLatCv() const { return fields_.geoLatCv; }
@@ -137,6 +150,19 @@ public:
   /// @return The v-face open length field.
   const amrex::MultiFab &dx_Cv() const { return fields_.dx_Cv; }
 
+  /// @brief 1/dxCv, or 0 where dxCv is 0 [L-1 ~> m-1].
+  /// @return The v-point inverse zonal grid spacing.
+  const amrex::MultiFab &IdxCv() const { return fields_.IdxCv; }
+
+  /// @brief 1/dyCv, or 0 where dyCv is 0 [L-1 ~> m-1].
+  /// @return The v-point inverse meridional grid spacing.
+  const amrex::MultiFab &IdyCv() const { return fields_.IdyCv; }
+
+  /// @brief 1/dyCv, or 0 at land faces [L-1 ~> m-1]. MOM6 also sets it
+  /// to 0 at open boundary faces.
+  /// @return The masked v-point inverse meridional grid spacing.
+  const amrex::MultiFab &IdyCv_OBCmask() const { return fields_.IdyCv_OBCmask; }
+
   /// @brief The geographic latitude at q (corner) points [degrees_N].
   /// @return The q-point latitude field.
   const amrex::MultiFab &geoLatBu() const { return fields_.geoLatBu; }
@@ -156,6 +182,10 @@ public:
   /// @brief The area of a q-cell [L2 ~> m2].
   /// @return The q-cell area field.
   const amrex::MultiFab &areaBu() const { return fields_.areaBu; }
+
+  /// @brief 1/areaBu, or 0 where areaBu is 0 [L-2 ~> m-2].
+  /// @return The inverse q-cell area field.
+  const amrex::MultiFab &IareaBu() const { return fields_.IareaBu; }
 
   /// @brief The land/sea mask at q points: 0 for boundary, 1 for ocean [nondim].
   /// @return The q-point mask field.
