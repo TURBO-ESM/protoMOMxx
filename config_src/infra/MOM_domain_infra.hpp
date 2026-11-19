@@ -86,6 +86,17 @@ inline amrex::Array4<const amrex::Real> mom_const_array(const amrex::MultiFab &m
   return mom_view(mf.const_array(mfi), mf.ixType());
 }
 
+/// @brief The read-only view of one box of a field that may not exist, or an
+/// empty view if the field was not created. The kernels take an empty view
+/// for a field that an option leaves out.
+/// @param mf The field, which may be empty (default-constructed).
+/// @param mfi The box; see mom_const_array.
+/// @return The view of the box's data, or an empty view.
+inline amrex::Array4<const amrex::Real> mom_const_array_or_empty(const amrex::MultiFab &mf,
+                                                                 const amrex::MFIter &mfi) {
+  return mf.empty() ? amrex::Array4<const amrex::Real>{} : mom_const_array(mf, mfi);
+}
+
 /// @brief The box to loop over when indexing a view.
 ///
 /// A box from the storage, e.g. MFIter::validbox() of a u field, uses the
@@ -96,6 +107,21 @@ inline amrex::Array4<const amrex::Real> mom_const_array(const amrex::MultiFab &m
 inline amrex::Box mom_box(const amrex::Box &bx) {
   const amrex::IntVect shift = bx.ixType().ixType();  // 1 in each direction that shifts
   return amrex::Box(bx.smallEnd() - shift, bx.bigEnd() - shift);
+}
+
+/// @brief A box grown by lo points on its low sides and hi points on its high
+/// sides, in i and j, to give the points of a MOM6 loop.
+///
+/// With bx the valid h points is:ie, js:je, MOM6's loop do J=js-2,Jeq+1
+/// covers mom_grow(bx, 2, 1), since Jeq = je in symmetric memory. The q
+/// points IscB:IecB, JscB:JecB are mom_grow(bx, 1, 0).
+/// @param bx The box to grow, e.g. MFIter::validbox() of an h field.
+/// @param lo The number of points added on the low side in i and j.
+/// @param hi The number of points added on the high side in i and j.
+/// @return The grown box.
+inline amrex::Box mom_grow(const amrex::Box &bx, const int lo, const int hi) {
+  const amrex::Box grown = amrex::growLo(amrex::growLo(bx, 0, lo), 1, lo);
+  return amrex::growHi(amrex::growHi(grown, 0, hi), 1, hi);
 }
 
 /// @brief The construction specification of a field. Passed to make_?_field().

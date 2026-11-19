@@ -155,6 +155,8 @@ TEST(Grid, DoubleGyreGridSanity) {
   EXPECT_DOUBLE_EQ(grid.IdxCv().max(0), 1.0 / grid.dxCv().min(0));
   EXPECT_DOUBLE_EQ(grid.IdyCv().max(0), 1.0 / grid.dyCv().min(0));
   EXPECT_DOUBLE_EQ(grid.IareaBu().max(0), 1.0 / grid.areaBu().min(0));
+  EXPECT_DOUBLE_EQ(grid.IdxBu().max(0), 1.0 / grid.dxBu().min(0));
+  EXPECT_DOUBLE_EQ(grid.IdyBu().max(0), 1.0 / grid.dyBu().min(0));
 
   // The masked reciprocals are 0 at the faces on the closed boundaries, and
   // equal the unmasked ones elsewhere.
@@ -162,6 +164,16 @@ TEST(Grid, DoubleGyreGridSanity) {
   EXPECT_DOUBLE_EQ(grid.IdxCu_OBCmask().max(0), grid.IdxCu().max(0));
   EXPECT_EQ(grid.IdyCv_OBCmask().min(0), 0.0);
   EXPECT_DOUBLE_EQ(grid.IdyCv_OBCmask().max(0), grid.IdyCv().max(0));
+
+  // The reciprocal u/v-cell areas are 0 at the land faces. Elsewhere they
+  // are positive and no larger than the product of the largest reciprocal
+  // spacings.
+  EXPECT_EQ(grid.IareaCu().min(0), 0.0);
+  EXPECT_GT(grid.IareaCu().max(0), 0.0);
+  EXPECT_LE(grid.IareaCu().max(0), (1.0 + 1e-14) * grid.IdxCu().max(0) * grid.IdyCu().max(0));
+  EXPECT_EQ(grid.IareaCv().min(0), 0.0);
+  EXPECT_GT(grid.IareaCv().max(0), 0.0);
+  EXPECT_LE(grid.IareaCv().max(0), (1.0 + 1e-14) * grid.IdxCv().max(0) * grid.IdyCv().max(0));
 
   // f = 2 OMEGA sin(lat) increases northward from the southern boundary,
   // where sin(30 degrees N) = 1/2 makes f equal to OMEGA itself.

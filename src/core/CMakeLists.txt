@@ -16,6 +16,7 @@ target_include_directories(MOM_src_core
 target_link_libraries(MOM_src_core
   PUBLIC
     MOM_src_initialization
+    MOM_src_parameterizations
     mom_kernels
 )
 add_amrex_to_protomom_target(MOM_src_core)

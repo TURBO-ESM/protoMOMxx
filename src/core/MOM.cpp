@@ -203,9 +203,9 @@ void Model::initialize_dynamics(RuntimeParams &params) {
                   "is not implemented yet.");
   } else if (config_.use_RK2) {
     dyn_unsplit_RK2_.emplace(make_dyn_unsplit_RK2(domain_, grid_, vgrid_, pbv_, params));
-    logger::note("initialize_dynamics: The pressure, viscosity and vertical friction "
-                 "terms of the unsplit RK2 step are stubs that add nothing yet, so a "
-                 "state at rest stays at rest.");
+    logger::note("initialize_dynamics: The pressure and vertical friction terms of the "
+                 "unsplit RK2 step are stubs that add nothing yet, so a state at rest "
+                 "stays at rest.");
   } else {
     // defer: initialize_dyn_unsplit
     logger::fatal("initialize_dynamics: The unsplit RK3 time stepping (USE_RK2 = False) "

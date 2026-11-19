@@ -51,6 +51,7 @@ struct GridFields {
   amrex::MultiFab IdyCu;     ///< 1/dyCu, or 0 where dyCu is 0 [L-1 ~> m-1].
   amrex::MultiFab IdxCu_OBCmask;  ///< 1/dxCu, or 0 at land faces [L-1 ~> m-1]. MOM6
                                   ///< also sets it to 0 at open boundary faces.
+  amrex::MultiFab IareaCu;   ///< 1/areaCu, or 0 at land faces [L-2 ~> m-2].
 
   amrex::MultiFab geoLatCv;  ///< The geographic latitude at v points [degrees_N].
   amrex::MultiFab geoLonCv;  ///< The geographic longitude at v points [degrees_E].
@@ -65,6 +66,7 @@ struct GridFields {
   amrex::MultiFab IdyCv;     ///< 1/dyCv, or 0 where dyCv is 0 [L-1 ~> m-1].
   amrex::MultiFab IdyCv_OBCmask;  ///< 1/dyCv, or 0 at land faces [L-1 ~> m-1]. MOM6
                                   ///< also sets it to 0 at open boundary faces.
+  amrex::MultiFab IareaCv;   ///< 1/areaCv, or 0 at land faces [L-2 ~> m-2].
 
   amrex::MultiFab geoLatBu;  ///< The geographic latitude at q points [degrees_N].
   amrex::MultiFab geoLonBu;  ///< The geographic longitude at q points [degrees_E].
@@ -72,6 +74,8 @@ struct GridFields {
   amrex::MultiFab dyBu;      ///< Delta y at q points [L ~> m].
   amrex::MultiFab areaBu;    ///< The area of a q-cell [L2 ~> m2].
   amrex::MultiFab IareaBu;   ///< 1/areaBu, or 0 where areaBu is 0 [L-2 ~> m-2].
+  amrex::MultiFab IdxBu;     ///< 1/dxBu, or 0 where dxBu is 0 [L-1 ~> m-1].
+  amrex::MultiFab IdyBu;     ///< 1/dyBu, or 0 where dyBu is 0 [L-1 ~> m-1].
   amrex::MultiFab mask2dBu;  ///< 0 for boundary points and 1 for ocean points at
                              ///< q points [nondim].
 

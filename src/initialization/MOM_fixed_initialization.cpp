@@ -89,9 +89,6 @@ Grid make_grid(const Domain &domain, RuntimeParams &params) {
   fields.CoriolisBu = initialize_rotation(domain, fields.geoLatBu, params);
 
   set_derived_metrics(domain, fields);
-  // defer: the other reciprocals of MOM6's set_derived_metrics and
-  //        initialize_masks (IdxBu, IdyBu, IareaCu, IareaCv), until their
-  //        first users.
 
   return Grid(std::move(fields));
 }

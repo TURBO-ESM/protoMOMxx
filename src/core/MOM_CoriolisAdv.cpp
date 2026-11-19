@@ -215,7 +215,7 @@ void CoriolisAdv::CorAdCalc(const amrex::MultiFab &u, const amrex::MultiFab &v,
     const amrex::Box bxH0 = mfi.validbox();
     // MOM6's IscB:IecB, JscB:JecB: the corners of those cells, the first
     // ones on their southwest sides.
-    const amrex::Box bxQ0 = amrex::growLo(amrex::growLo(bxH0, 0, 1), 1, 1);
+    const amrex::Box bxQ0 = mom_grow(bxH0, 1, 0);
 
     MOM::coradcalc_tr(
         bxH0, bxQ0, mom_const_array(u, mfi), mom_const_array(v, mfi), mom_const_array(h, mfi),

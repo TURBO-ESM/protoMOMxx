@@ -12,17 +12,8 @@ namespace {
 // The routines below stand in for the modules that the time step calls but
 // that are not implemented yet. Each one sets its outputs to zero, or leaves
 // its arguments unchanged when it only updates them, so for now the step adds
-// no viscous or wind terms. Their arguments are the ones that exist so far;
-// the modules will add theirs.
-
-// todo: MOM6's horizontal_viscosity (MOM_hor_visc), which sets diffu and diffv.
-void horizontal_viscosity(const amrex::MultiFab & /*u*/, const amrex::MultiFab & /*v*/,
-                          const amrex::MultiFab & /*h*/, const amrex::MultiFab & /*uh*/,
-                          const amrex::MultiFab & /*vh*/, amrex::MultiFab &diffu,
-                          amrex::MultiFab &diffv, const amrex::Real /*dt*/) {
-  diffu.setVal(0.0);
-  diffv.setVal(0.0);
-}
+// no vertical viscosity or wind stress. Their arguments are the ones that
+// exist so far; the modules will add theirs.
 
 // todo: MOM6's set_viscous_ML (MOM_set_viscosity), which sets the viscosities
 //       of the surface mixed layer.
@@ -167,8 +158,9 @@ DynUnsplitRK2 make_dyn_unsplit_RK2(const Domain &domain, const Grid &G, const Ve
                     .dt_visc_bug = dt_visc_bug,
                     .continuity = make_continuity(G, GV, pbv, params),
                     .coriolis_adv = make_coriolis_adv(G, GV, pbv, params),
-                    .pressure_force = make_pressure_force(G, GV, params)};
-  // todo: hor_visc_init and vertvisc_init
+                    .pressure_force = make_pressure_force(G, GV, params),
+                    .hor_visc = make_hor_visc(domain, G, GV, params)};
+  // todo: vertvisc_init
 
   return dyn;
 }
@@ -196,11 +188,10 @@ void DynUnsplitRK2::step(State &state, const amrex::Real dt, const MechForcing &
   // them between steps in its control structure, for its diagnostics. Here
   // they are set to zero at the start of every step instead. The answers are
   // the same as long as each step writes every point of them that it reads.
-  // That holds for CAu, CAv, PFu and PFv: CorAdCalc and MOM6's PressureForce
-  // set every valid point, and the halo exchange after each sets the halo
-  // points.
-  // todo: check this for diffu and diffv when horizontal_viscosity replaces
-  //       its stub.
+  // That holds for all six: CorAdCalc, MOM6's PressureForce and
+  // horizontal_viscosity set every valid point, and the halo exchange after
+  // each sets the halo points. Without LAPLACIAN or BIHARMONIC,
+  // horizontal_viscosity leaves diffu and diffv at zero in both.
   amrex::MultiFab CAu = domain.make_u_field({.nk = nk});    // Coriolis and advection.
   amrex::MultiFab CAv = domain.make_v_field({.nk = nk});
   amrex::MultiFab PFu = domain.make_u_field({.nk = nk});    // Pressure force.
@@ -225,7 +216,7 @@ void DynUnsplitRK2::step(State &state, const amrex::Real dt, const MechForcing &
   vp.setVal(0.0);
 
   // diffu = horizontal viscosity terms (u, h)
-  horizontal_viscosity(u, v, h, uh, vh, diffu, diffv, dt);
+  hor_visc.horizontal_viscosity(u, v, h, uh, vh, diffu, diffv);
   domain.pass_vector(diffu, diffv);
 
   // This continuity step is only for the Coriolis terms: the denominator of

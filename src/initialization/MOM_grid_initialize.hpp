@@ -41,18 +41,20 @@ GridFields spherical_grid_fields(const Domain &domain, const GridExtents &extent
 /// MOM6's initialize_masks.
 /// @param domain The computational domain the fields are created on.
 /// @param fields The grid fields. Requires bathyT and the u/v grid
-///        spacings; creates the masks, dy_Cu/dx_Cv and areaCu/areaCv.
+///        spacings; creates the masks, dy_Cu/dx_Cv, areaCu/areaCv and
+///        IareaCu/IareaCv.
 /// @param params Runtime parameters.
 void initialize_masks(const Domain &domain, GridFields &fields,
                       RuntimeParams &params);
 
 /// @brief Set the land/sea masks (mask2dT/Cu/Cv/Bu) from the bottom depth,
 /// with points no deeper than the masking depth masked as land, and the
-/// open face lengths (dy_Cu/dx_Cv) and u/v-cell areas (areaCu/areaCv), which
-/// are zero across land faces.
+/// open face lengths (dy_Cu/dx_Cv), u/v-cell areas (areaCu/areaCv) and their
+/// reciprocals (IareaCu/IareaCv), which are zero across land faces.
 /// @param domain The computational domain the fields are created on.
 /// @param fields The grid fields. Requires bathyT and the u/v grid
-///        spacings; creates the masks, dy_Cu/dx_Cv and areaCu/areaCv.
+///        spacings; creates the masks, dy_Cu/dx_Cv, areaCu/areaCv and
+///        IareaCu/IareaCv.
 /// @param mask_depth The depth at or below which a point is land [Z ~> m].
 void set_masks(const Domain &domain, GridFields &fields,
                amrex::Real mask_depth);
@@ -65,7 +67,8 @@ void set_masks(const Domain &domain, GridFields &fields,
 /// @param domain The computational domain the fields are created on.
 /// @param fields The grid fields. Requires the spacings and areas at h, u, v
 ///        and q points and the u and v masks; creates IdxT, IdyT, IareaT,
-///        IdxCu, IdyCu, IdxCu_OBCmask, IdxCv, IdyCv, IdyCv_OBCmask and IareaBu.
+///        IdxCu, IdyCu, IdxCu_OBCmask, IdxCv, IdyCv, IdyCv_OBCmask, IareaBu,
+///        IdxBu and IdyBu.
 void set_derived_metrics(const Domain &domain, GridFields &fields);
 
 } // namespace MOM
