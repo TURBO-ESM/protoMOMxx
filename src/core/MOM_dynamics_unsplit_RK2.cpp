@@ -15,12 +15,6 @@ namespace {
 // no vertical viscosity or wind stress. Their arguments are the ones that
 // exist so far; the modules will add theirs.
 
-// todo: MOM6's set_viscous_ML (MOM_set_viscosity), which sets the viscosities
-//       of the surface mixed layer.
-void set_viscous_ML(const amrex::MultiFab & /*u*/, const amrex::MultiFab & /*v*/,
-                    const amrex::MultiFab & /*h*/, const MechForcing & /*forces*/,
-                    const amrex::Real /*dt*/) {}
-
 // todo: MOM6's thickness_to_dz (MOM_interface_heights), which sets the
 //       vertical extent of each layer.
 void thickness_to_dz(const amrex::MultiFab & /*h*/, amrex::MultiFab &dz) { dz.setVal(0.0); }
@@ -85,7 +79,8 @@ void accumulate_flux(const amrex::MultiFab &uh, const amrex::Real dt, amrex::Mul
 } // namespace
 
 DynUnsplitRK2 make_dyn_unsplit_RK2(const Domain &domain, const Grid &G, const VerticalGrid &GV,
-                                   const PorousBarrier &pbv, RuntimeParams &params) {
+                                   const PorousBarrier &pbv, const SetVisc &set_visc,
+                                   RuntimeParams &params) {
 
   params.doc_module("MOM_dynamics_unsplit_RK2", "");
 
@@ -153,6 +148,7 @@ DynUnsplitRK2 make_dyn_unsplit_RK2(const Domain &domain, const Grid &G, const Ve
                     .G = G,
                     .GV = GV,
                     .pbv = pbv,
+                    .set_visc = set_visc,
                     .be = be,
                     .begw = begw,
                     .dt_visc_bug = dt_visc_bug,
@@ -165,8 +161,8 @@ DynUnsplitRK2 make_dyn_unsplit_RK2(const Domain &domain, const Grid &G, const Ve
   return dyn;
 }
 
-void DynUnsplitRK2::step(State &state, const amrex::Real dt, const MechForcing &forces,
-                         const bool x_first) const {
+void DynUnsplitRK2::step(State &state, ViscFields &visc, const amrex::Real dt,
+                         const MechForcing &forces, const bool x_first) const {
 
   // defer: the DEBUG checksums between the stages (MOM_state_chksum,
   //        MOM_accel_chksum). make_dyn_unsplit_RK2 rejects DEBUG = True.
@@ -247,7 +243,7 @@ void DynUnsplitRK2::step(State &state, const amrex::Real dt, const MechForcing &
 
   // up[n-1/2] <- up*[n-1/2] + dt/2 d/dz visc d/dz up[n-1/2]
   const amrex::Real dt_visc = dt_visc_bug ? dt_pred : dt;
-  set_viscous_ML(u, v, h_av, forces, dt_visc);
+  set_visc.set_viscous_ML(u, v, h_av, forces, dt_visc, visc);
   thickness_to_dz(h_av, dz);
   vertvisc_coef(up, vp, h_av, dz, forces, dt_pred);
   vertvisc(up, vp, h_av, forces, dt_pred);

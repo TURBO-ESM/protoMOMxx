@@ -16,8 +16,10 @@
 #include "MOM_grid.hpp"
 #include "MOM_hor_visc.hpp"
 #include "MOM_porous_barrier.hpp"
+#include "MOM_set_viscosity.hpp"
 #include "MOM_state.hpp"
 #include "MOM_vertical_grid.hpp"
+#include "MOM_visc_fields.hpp"
 
 namespace MOM {
 
@@ -33,13 +35,14 @@ namespace MOM {
 /// The pressure and vertical friction terms are stubs for now. They add
 /// nothing, so a state at rest stays at rest.
 ///
-/// It refers to the domain, the grids and the open face fractions, so they
-/// must outlive it.
+/// It refers to the domain, the grids, the open face fractions and the
+/// vertical viscosity setup, so they must outlive it.
 struct DynUnsplitRK2 {
   const Domain &domain;      ///< The domain, for the halo exchanges and the work fields.
   const Grid &G;             ///< The horizontal grid.
   const VerticalGrid &GV;    ///< The vertical grid.
   const PorousBarrier &pbv;  ///< The open fractions of the cell faces.
+  const SetVisc &set_visc;   ///< The setup of the vertical viscosities, which the model owns.
 
   /// A number from 0.5 to 1 that sets the backward weighting of the time
   /// stepping [nondim].
@@ -60,10 +63,12 @@ struct DynUnsplitRK2 {
   /// step_MOM_dyn_unsplit_RK2.
   /// @param state The state. The step advances u, v and h, sets uh and vh to
   ///        the volume fluxes of the step, and adds dt*uh and dt*vh to uhtr, vhtr.
+  /// @param visc The viscosities and bottom boundary layer properties.
   /// @param dt The time step [T ~> s].
   /// @param forces The mechanical forcing.
   /// @param x_first If true, the continuity solver advects zonally first.
-  void step(State &state, amrex::Real dt, const MechForcing &forces, bool x_first) const;
+  void step(State &state, ViscFields &visc, amrex::Real dt, const MechForcing &forces,
+            bool x_first) const;
 };
 
 /// @brief Read the unsplit RK2 time stepper's options and set up the modules
@@ -72,11 +77,13 @@ struct DynUnsplitRK2 {
 /// @param G The horizontal grid.
 /// @param GV The vertical grid.
 /// @param pbv The open fractions of the cell faces.
+/// @param set_visc The setup of the vertical viscosities.
 /// @param params Runtime parameters.
-/// @return The time stepper, referring to domain, G, GV and pbv.
+/// @return The time stepper, referring to domain, G, GV, pbv and set_visc.
 /// @throws logger::FatalError if DEBUG, CALCULATE_SAL or TIDES is true,
 ///         which are not implemented yet.
 DynUnsplitRK2 make_dyn_unsplit_RK2(const Domain &domain, const Grid &G, const VerticalGrid &GV,
-                                   const PorousBarrier &pbv, RuntimeParams &params);
+                                   const PorousBarrier &pbv, const SetVisc &set_visc,
+                                   RuntimeParams &params);
 
 } // namespace MOM

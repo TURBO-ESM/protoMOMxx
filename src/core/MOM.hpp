@@ -12,6 +12,7 @@
 #include "MOM_forcing_type.hpp"
 #include "MOM_grid.hpp"
 #include "MOM_porous_barrier.hpp"
+#include "MOM_set_viscosity.hpp"
 #include "MOM_state.hpp"
 #include "MOM_vertical_grid.hpp"
 
@@ -106,9 +107,15 @@ private:
   /// porous barriers.
   PorousBarrier pbv_;
 
+  /// @brief The viscosities and bottom boundary layer properties, which
+  /// set_visc_ creates and sets and the dynamics read (MOM6's visc).
+  ViscFields visc_;
+
+  /// @brief The setup of the vertical viscosities.
+  SetVisc set_visc_;
+
   /// @brief The unsplit RK2 time stepper. Set only when SPLIT is false and
-  /// USE_RK2 is true. It refers to domain_, grid_, vgrid_ and pbv_, which are
-  /// declared before it so that they outlive it.
+  /// USE_RK2 is true. It refers to domain_, grid_, vgrid_, pbv_ and set_visc_.
   std::optional<DynUnsplitRK2> dyn_unsplit_RK2_;
 
   /// @brief Read the scalar configuration switches into a Config object.

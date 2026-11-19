@@ -14,7 +14,8 @@ Model::Model(RuntimeParams &params)
     grid_(make_grid(domain_, params)),
     vgrid_(params),
     state_(make_state(domain_, grid_, vgrid_, params)),
-    pbv_(make_porous_barrier(domain_, vgrid_.nk())) {
+    pbv_(make_porous_barrier(domain_, vgrid_.nk())),
+    set_visc_(make_set_visc(domain_, grid_, vgrid_, pbv_, params, visc_)) {
 
   // defer: MOM_initialize_OBCs and the open boundary segment data.
 
@@ -26,8 +27,8 @@ Model::Model(RuntimeParams &params)
 void Model::step(const MechForcing &forces, const amrex::Real time_interval) {
 
   // defer: the parts of step_MOM around the dynamics: the DEBUG checksums, the
-  //        halo update of the forcing, the thermodynamic, tracer advection and
-  //        bottom boundary layer cadences (DT_THERM, ...), and the diagnostics.
+  //        halo update of the forcing, the thermodynamic and tracer advection
+  //        cadences (DT_THERM, ...), and the diagnostics.
 
   // The number of dynamics steps in this call, and their length [T ~> s].
   int n_max = 1;
@@ -37,6 +38,11 @@ void Model::step(const MechForcing &forces, const amrex::Real time_interval) {
   const amrex::Real dt = time_interval / amrex::Real(n_max);
 
   for (int n = 1; n <= n_max; ++n) {
+    // todo: update the bottom boundary layer properties when step_MOM does:
+    //       at the first dynamics step of each thermodynamic step (DT_THERM),
+    //       through its bbl_time_int. The call is
+    //       set_visc_.set_viscous_BBL(state_.u, state_.v, state_.h, visc_);
+    //       it is left out while set_viscous_BBL is a stub.
     if (config_.split && config_.use_alt_split) {
       // defer: step_MOM_dyn_split_RK2b
       logger::fatal("step: The split RK2b time stepping (SPLIT_RK2B = True) "
@@ -45,7 +51,7 @@ void Model::step(const MechForcing &forces, const amrex::Real time_interval) {
       // defer: step_MOM_dyn_split_RK2
       logger::fatal("step: The split time stepping (SPLIT = True) is not implemented yet.");
     } else if (config_.use_RK2) {
-      dyn_unsplit_RK2_->step(state_, dt, forces, config_.first_direction % 2 == 0);
+      dyn_unsplit_RK2_->step(state_, visc_, dt, forces, config_.first_direction % 2 == 0);
     } else {
       // defer: step_MOM_dyn_unsplit
       logger::fatal("step: The unsplit RK3 time stepping (USE_RK2 = False) "
@@ -202,7 +208,8 @@ void Model::initialize_dynamics(RuntimeParams &params) {
     logger::fatal("initialize_dynamics: The split time stepping (SPLIT = True) "
                   "is not implemented yet.");
   } else if (config_.use_RK2) {
-    dyn_unsplit_RK2_.emplace(make_dyn_unsplit_RK2(domain_, grid_, vgrid_, pbv_, params));
+    dyn_unsplit_RK2_.emplace(
+        make_dyn_unsplit_RK2(domain_, grid_, vgrid_, pbv_, set_visc_, params));
     logger::note("initialize_dynamics: The pressure and vertical friction terms of the "
                  "unsplit RK2 step are stubs that add nothing yet, so a state at rest "
                  "stays at rest.");

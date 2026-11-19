@@ -19,6 +19,7 @@
 #include "MOM_infra.hpp"
 #include "MOM_logger.hpp"
 #include "MOM_porous_barrier.hpp"
+#include "MOM_set_viscosity.hpp"
 #include "MOM_state.hpp"
 #include "MOM_state_initialization.hpp"
 #include "MOM_vertical_grid.hpp"
@@ -46,7 +47,9 @@ void initialize_with(const std::string &override_file) {
   const MOM::Grid G = MOM::make_grid(domain, params);
   const MOM::VerticalGrid GV(params);
   const MOM::PorousBarrier pbv = MOM::make_porous_barrier(domain, GV.nk());
-  (void)MOM::make_dyn_unsplit_RK2(domain, G, GV, pbv, params);
+  MOM::ViscFields visc;
+  const MOM::SetVisc set_visc = MOM::make_set_visc(domain, G, GV, pbv, params, visc);
+  (void)MOM::make_dyn_unsplit_RK2(domain, G, GV, pbv, set_visc, params);
 }
 
 /// @brief The largest absolute value of a field, ghost cells included.
@@ -100,14 +103,17 @@ TEST(DynUnsplitRK2Test, StateAtRestStaysAtRest) {
     const MOM::VerticalGrid GV(params);
     MOM::State state = MOM::make_state(domain, G, GV, params);
     const MOM::PorousBarrier pbv = MOM::make_porous_barrier(domain, GV.nk());
-    const MOM::DynUnsplitRK2 dyn = MOM::make_dyn_unsplit_RK2(domain, G, GV, pbv, params);
+    MOM::ViscFields visc;
+    const MOM::SetVisc set_visc = MOM::make_set_visc(domain, G, GV, pbv, params, visc);
+    const MOM::DynUnsplitRK2 dyn =
+        MOM::make_dyn_unsplit_RK2(domain, G, GV, pbv, set_visc, params);
     const MOM::MechForcing forces = MOM::make_mech_forcing(domain);
 
     const amrex::IntVect ng = state.h.nGrowVect();
     amrex::MultiFab h_start(state.h.boxArray(), state.h.DistributionMap(), state.h.nComp(), ng);
     amrex::MultiFab::Copy(h_start, state.h, 0, 0, state.h.nComp(), ng);
 
-    dyn.step(state, /*dt=*/300.0, forces, /*x_first=*/true);
+    dyn.step(state, visc, /*dt=*/300.0, forces, /*x_first=*/true);
 
     EXPECT_EQ(max_difference(state.h, h_start), 0.0) << n_boxes << " boxes";
     EXPECT_EQ(max_abs(state.u), 0.0) << n_boxes << " boxes";

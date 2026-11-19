@@ -118,6 +118,11 @@ add_test(NAME test_MOM_hor_visc_mpi
                  ${MPIEXEC_PREFLAGS} $<TARGET_FILE:test_MOM_hor_visc> ${MPIEXEC_POSTFLAGS})
 set_tests_properties(test_MOM_hor_visc_mpi PROPERTIES LABELS "mpi" PROCESSORS 2)
 
+# Tests the setup of the vertical viscosities.
+add_executable(test_MOM_set_viscosity MOM_set_viscosity/test_MOM_set_viscosity.cpp)
+target_link_libraries(test_MOM_set_viscosity GTest::gtest MOM_src_core MOM_config_src_infra)
+gtest_discover_tests(test_MOM_set_viscosity PROPERTIES LABELS "unit")
+
 # Tests the unsplit RK2 time stepper's setup.
 add_executable(test_MOM_dynamics_unsplit_RK2
   MOM_dynamics_unsplit_RK2/test_MOM_dynamics_unsplit_RK2.cpp)
