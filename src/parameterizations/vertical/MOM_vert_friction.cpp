@@ -394,7 +394,9 @@ void VertVisc::vertvisc(amrex::MultiFab &u, amrex::MultiFab &v, const amrex::Mul
                         const ViscCoupling &coupling) const {
   check_field(u, Stagger::XFace, 0, "vertvisc", "u");
   check_field(v, Stagger::YFace, 0, "vertvisc", "v");
-  check_field(h, Stagger::Cell, 0, "vertvisc", "h");
+  // With DIRECT_STRESS, the thickness at a velocity point comes from the h
+  // points on both sides.
+  check_field(h, Stagger::Cell, 1, "vertvisc", "h");
   check_field(forces.taux, Stagger::XFace, 0, "vertvisc", "taux");
   check_field(forces.tauy, Stagger::YFace, 0, "vertvisc", "tauy");
   // The velocity truncation reads the cell areas next to each velocity point.

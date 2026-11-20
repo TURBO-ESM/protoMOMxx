@@ -75,7 +75,8 @@ struct VertVisc {
   ///        the valid points.
   /// @param v The meridional velocity [L T-1 ~> m s-1], at v points, updated
   ///        at the valid points.
-  /// @param h The layer thickness [H ~> m or kg m-2], at h points.
+  /// @param h The layer thickness [H ~> m or kg m-2], at h points, valid one
+  ///        point into the halo.
   /// @param forces The mechanical forcing, for the wind stress.
   /// @param visc The viscosities and bottom boundary layer properties.
   /// @param dt The time step [T ~> s].

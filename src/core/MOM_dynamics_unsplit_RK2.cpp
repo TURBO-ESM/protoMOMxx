@@ -165,9 +165,12 @@ void DynUnsplitRK2::step(State &state, ViscFields &visc, const amrex::Real dt,
   // they are set to zero at the start of every step instead. The answers are
   // the same as long as each step writes every point of them that it reads.
   // That holds for all six: CorAdCalc, MOM6's PressureForce and
-  // horizontal_viscosity set every valid point, and the halo exchange after
-  // each sets the halo points. Without LAPLACIAN or BIHARMONIC,
-  // horizontal_viscosity leaves diffu and diffv at zero in both.
+  // horizontal_viscosity set every valid point, and the halo exchanges after
+  // the first calls set the halo points. The second CorAdCalc call has no
+  // exchange after it, as in MOM6, so the halos of CAu and CAv keep the first
+  // call's values in both; only valid points are read after it. Without
+  // LAPLACIAN or BIHARMONIC, horizontal_viscosity leaves diffu and diffv at
+  // zero in both.
   amrex::MultiFab CAu = domain.make_u_field({.nk = nk});    // Coriolis and advection.
   amrex::MultiFab CAv = domain.make_v_field({.nk = nk});
   amrex::MultiFab PFu = domain.make_u_field({.nk = nk});    // Pressure force.

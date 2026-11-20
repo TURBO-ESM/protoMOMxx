@@ -49,9 +49,24 @@ void initialize_with(const std::string &override_file) {
   const MOM::Grid G = MOM::make_grid(domain, params);
   const MOM::VerticalGrid GV(params);
   const MOM::PorousBarrier pbv = MOM::make_porous_barrier(domain, GV.nk());
+  // SetVisc comes from double_gyre's own settings, so the override reaches
+  // only make_dyn_unsplit_RK2. make_set_visc also rejects DEBUG = True.
+  MOM::RuntimeParams base(double_gyre_input());
   MOM::ViscFields visc;
-  const MOM::SetVisc set_visc = MOM::make_set_visc(domain, G, GV, pbv, params, visc);
+  const MOM::SetVisc set_visc = MOM::make_set_visc(domain, G, GV, pbv, base, visc);
   (void)MOM::make_dyn_unsplit_RK2(domain, G, GV, pbv, set_visc, params);
+}
+
+/// @brief Expect the setup with an override file to stop with a fatal error
+/// from make_dyn_unsplit_RK2 itself.
+void expect_fatal_from_stepper(const std::string &override_file) {
+  try {
+    initialize_with(override_file);
+    ADD_FAILURE() << override_file << ": no fatal error";
+  } catch (const MOM::logger::FatalError &e) {
+    EXPECT_NE(std::string(e.what()).find("make_dyn_unsplit_RK2"), std::string::npos)
+        << override_file << ": " << e.what();
+  }
 }
 
 /// @brief The largest absolute value of a field, ghost cells included.
@@ -77,15 +92,15 @@ TEST(DynUnsplitRK2Test, DoubleGyreSetsUp) {
 
 // The options that are not implemented yet are fatal.
 TEST(DynUnsplitRK2Test, DebugIsFatal) {
-  EXPECT_THROW(initialize_with("MOM_override_debug"), MOM::logger::FatalError);
+  expect_fatal_from_stepper("MOM_override_debug");
 }
 
 TEST(DynUnsplitRK2Test, CalculateSALIsFatal) {
-  EXPECT_THROW(initialize_with("MOM_override_sal"), MOM::logger::FatalError);
+  expect_fatal_from_stepper("MOM_override_sal");
 }
 
 TEST(DynUnsplitRK2Test, TidesIsFatal) {
-  EXPECT_THROW(initialize_with("MOM_override_tides"), MOM::logger::FatalError);
+  expect_fatal_from_stepper("MOM_override_tides");
 }
 
 // One step from double_gyre's state at rest, on one box and on six. Without

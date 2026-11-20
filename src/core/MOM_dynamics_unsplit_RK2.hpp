@@ -82,7 +82,9 @@ struct DynUnsplitRK2 {
 /// @param params Runtime parameters.
 /// @return The time stepper, referring to domain, G, GV, pbv and set_visc.
 /// @throws logger::FatalError if DEBUG, CALCULATE_SAL or TIDES is true,
-///         which are not implemented yet.
+///         which are not implemented yet, or if a module it makes rejects an
+///         option (e.g., BIHARMONIC = True in make_hor_visc, or USE_EOS = True
+///         in make_pressure_force_FV).
 DynUnsplitRK2 make_dyn_unsplit_RK2(const Domain &domain, const Grid &G, const VerticalGrid &GV,
                                    const PorousBarrier &pbv, const SetVisc &set_visc,
                                    RuntimeParams &params);
