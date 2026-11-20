@@ -3,66 +3,12 @@
 #include <AMReX_Gpu.H>
 #include <AMReX_MFIter.H>
 
+#include "MOM_interface_heights.hpp"
 #include "MOM_logger.hpp"
 
 namespace MOM {
 
 namespace {
-
-// The routines below stand in for the modules that the time step calls but
-// that are not implemented yet. Each one sets its outputs to zero, or leaves
-// its arguments unchanged when it only updates them, so for now the step adds
-// no Coriolis, pressure, viscous or wind terms. Their arguments are the ones
-// that exist so far; the modules will add theirs.
-
-// todo: MOM6's CoriolisAdv_stencil (MOM_CoriolisAdv). It returns 2 for every
-//       Coriolis scheme but the WENO ones.
-int CoriolisAdv_stencil() { return 2; }
-
-// todo: MOM6's CorAdCalc (MOM_CoriolisAdv), which sets CAu and CAv.
-void CorAdCalc(const amrex::MultiFab & /*u*/, const amrex::MultiFab & /*v*/,
-               const amrex::MultiFab & /*h*/, const amrex::MultiFab & /*uh*/,
-               const amrex::MultiFab & /*vh*/, amrex::MultiFab &CAu, amrex::MultiFab &CAv,
-               const PorousBarrier & /*pbv*/) {
-  CAu.setVal(0.0);
-  CAv.setVal(0.0);
-}
-
-// todo: MOM6's PressureForce (MOM_PressureForce), which sets PFu and PFv.
-void PressureForce(const amrex::MultiFab & /*h*/, amrex::MultiFab &PFu, amrex::MultiFab &PFv) {
-  PFu.setVal(0.0);
-  PFv.setVal(0.0);
-}
-
-// todo: MOM6's horizontal_viscosity (MOM_hor_visc), which sets diffu and diffv.
-void horizontal_viscosity(const amrex::MultiFab & /*u*/, const amrex::MultiFab & /*v*/,
-                          const amrex::MultiFab & /*h*/, const amrex::MultiFab & /*uh*/,
-                          const amrex::MultiFab & /*vh*/, amrex::MultiFab &diffu,
-                          amrex::MultiFab &diffv, const amrex::Real /*dt*/) {
-  diffu.setVal(0.0);
-  diffv.setVal(0.0);
-}
-
-// todo: MOM6's set_viscous_ML (MOM_set_viscosity), which sets the viscosities
-//       of the surface mixed layer.
-void set_viscous_ML(const amrex::MultiFab & /*u*/, const amrex::MultiFab & /*v*/,
-                    const amrex::MultiFab & /*h*/, const MechForcing & /*forces*/,
-                    const amrex::Real /*dt*/) {}
-
-// todo: MOM6's thickness_to_dz (MOM_interface_heights), which sets the
-//       vertical extent of each layer.
-void thickness_to_dz(const amrex::MultiFab & /*h*/, amrex::MultiFab &dz) { dz.setVal(0.0); }
-
-// todo: MOM6's vertvisc_coef (MOM_vert_friction), which sets the coupling
-//       coefficients between the layers.
-void vertvisc_coef(const amrex::MultiFab & /*u*/, const amrex::MultiFab & /*v*/,
-                   const amrex::MultiFab & /*h*/, const amrex::MultiFab & /*dz*/,
-                   const MechForcing & /*forces*/, const amrex::Real /*dt*/) {}
-
-// todo: MOM6's vertvisc (MOM_vert_friction), which applies the vertical
-//       viscosity and the wind stress to u and v.
-void vertvisc(amrex::MultiFab & /*u*/, amrex::MultiFab & /*v*/, const amrex::MultiFab & /*h*/,
-              const MechForcing & /*forces*/, const amrex::Real /*dt*/) {}
 
 /// @brief h_av = (h + hp)/2, on the valid points and halo points around them.
 void average_thickness(const amrex::MultiFab &h, const amrex::MultiFab &hp,
@@ -113,7 +59,8 @@ void accumulate_flux(const amrex::MultiFab &uh, const amrex::Real dt, amrex::Mul
 } // namespace
 
 DynUnsplitRK2 make_dyn_unsplit_RK2(const Domain &domain, const Grid &G, const VerticalGrid &GV,
-                                   const PorousBarrier &pbv, RuntimeParams &params) {
+                                   const PorousBarrier &pbv, const SetVisc &set_visc,
+                                   RuntimeParams &params) {
 
   params.doc_module("MOM_dynamics_unsplit_RK2", "");
 
@@ -166,15 +113,6 @@ DynUnsplitRK2 make_dyn_unsplit_RK2(const Domain &domain, const Grid &G, const Ve
              {.default_value = use_tides,
               .desc = "If true, calculate self-attraction and loading."});
 
-  DynUnsplitRK2 dyn{.domain = domain,
-                    .G = G,
-                    .GV = GV,
-                    .pbv = pbv,
-                    .be = be,
-                    .begw = begw,
-                    .dt_visc_bug = dt_visc_bug,
-                    .continuity = make_continuity(G, GV, pbv, params)};
-  // todo: CoriolisAdv_init
   if (calculate_SAL) {
     // defer: SAL_init
     logger::fatal("make_dyn_unsplit_RK2: Self-attraction and loading "
@@ -185,13 +123,26 @@ DynUnsplitRK2 make_dyn_unsplit_RK2(const Domain &domain, const Grid &G, const Ve
     logger::fatal("make_dyn_unsplit_RK2: Tidal forcing (TIDES = True) "
                   "is not implemented yet.");
   }
-  // todo: PressureForce_init, hor_visc_init and vertvisc_init
+
+  DynUnsplitRK2 dyn{.domain = domain,
+                    .G = G,
+                    .GV = GV,
+                    .pbv = pbv,
+                    .set_visc = set_visc,
+                    .be = be,
+                    .begw = begw,
+                    .dt_visc_bug = dt_visc_bug,
+                    .continuity = make_continuity(G, GV, pbv, params),
+                    .coriolis_adv = make_coriolis_adv(G, GV, pbv, params),
+                    .pressure_force = make_pressure_force(G, GV, params),
+                    .hor_visc = make_hor_visc(domain, G, GV, params),
+                    .vertvisc = make_vertvisc(G, GV, params)};
 
   return dyn;
 }
 
-void DynUnsplitRK2::step(State &state, const amrex::Real dt, const MechForcing &forces,
-                         const bool x_first) const {
+void DynUnsplitRK2::step(State &state, ViscFields &visc, const amrex::Real dt,
+                         const MechForcing &forces, const bool x_first) const {
 
   // defer: the DEBUG checksums between the stages (MOM_state_chksum,
   //        MOM_accel_chksum). make_dyn_unsplit_RK2 rejects DEBUG = True.
@@ -206,14 +157,20 @@ void DynUnsplitRK2::step(State &state, const amrex::Real dt, const MechForcing &
   amrex::MultiFab &vh = state.vh;
 
   const amrex::Real dt_pred = dt * be;  // The time step of the predictor [T ~> s].
-  const int cor_stencil = CoriolisAdv_stencil();
+  const int cor_stencil = coriolis_adv.stencil();
   const int nk = GV.nk();
 
   // The accelerations [L T-2 ~> m s-2]. MOM6 sets them to zero once and keeps
   // them between steps in its control structure, for its diagnostics. Here
   // they are set to zero at the start of every step instead. The answers are
   // the same as long as each step writes every point of them that it reads.
-  // todo: check this as each stub is replaced by its module.
+  // That holds for all six: CorAdCalc, MOM6's PressureForce and
+  // horizontal_viscosity set every valid point, and the halo exchanges after
+  // the first calls set the halo points. The second CorAdCalc call has no
+  // exchange after it, as in MOM6, so the halos of CAu and CAv keep the first
+  // call's values in both; only valid points are read after it. Without
+  // LAPLACIAN or BIHARMONIC, horizontal_viscosity leaves diffu and diffv at
+  // zero in both.
   amrex::MultiFab CAu = domain.make_u_field({.nk = nk});    // Coriolis and advection.
   amrex::MultiFab CAv = domain.make_v_field({.nk = nk});
   amrex::MultiFab PFu = domain.make_u_field({.nk = nk});    // Pressure force.
@@ -234,11 +191,16 @@ void DynUnsplitRK2::step(State &state, const amrex::Real dt, const MechForcing &
   amrex::MultiFab vp = domain.make_v_field({.nk = nk});    // Predicted meridional velocity [L T-1 ~> m s-1].
   h_av.setVal(0.0);
   hp.setVal(0.0);
+  dz.setVal(0.0);
   up.setVal(0.0);
   vp.setVal(0.0);
 
+  // The coupling coefficients that vertvisc_coef sets and vertvisc reads.
+  // MOM6 keeps them in its vertvisc_CS between steps.
+  ViscCoupling coupling = make_visc_coupling(domain, nk);
+
   // diffu = horizontal viscosity terms (u, h)
-  horizontal_viscosity(u, v, h, uh, vh, diffu, diffv, dt);
+  hor_visc.horizontal_viscosity(u, v, h, uh, vh, diffu, diffv);
   domain.pass_vector(diffu, diffv);
 
   // This continuity step is only for the Coriolis terms: the denominator of
@@ -256,10 +218,10 @@ void DynUnsplitRK2::step(State &state, const amrex::Real dt, const MechForcing &
   average_thickness(h, hp, h_av, cor_stencil);
 
   // CAu = -(f+zeta)/h_av vh + d/dx KE  (function of u[n-1] and uh[n-1])
-  CorAdCalc(u, v, h_av, uh, vh, CAu, CAv, pbv);
+  coriolis_adv.CorAdCalc(u, v, h_av, uh, vh, CAu, CAv);
 
   // PFu = d/dx M(h_av, T, S)  (function of h[n-1/2])
-  PressureForce(h, PFu, PFv);
+  pressure_force.pressure_force(h, PFu, PFv);
   domain.pass_vector(PFu, PFv);
   domain.pass_vector(CAu, CAv);
 
@@ -269,10 +231,10 @@ void DynUnsplitRK2::step(State &state, const amrex::Real dt, const MechForcing &
 
   // up[n-1/2] <- up*[n-1/2] + dt/2 d/dz visc d/dz up[n-1/2]
   const amrex::Real dt_visc = dt_visc_bug ? dt_pred : dt;
-  set_viscous_ML(u, v, h_av, forces, dt_visc);
-  thickness_to_dz(h_av, dz);
-  vertvisc_coef(up, vp, h_av, dz, forces, dt_pred);
-  vertvisc(up, vp, h_av, forces, dt_pred);
+  set_visc.set_viscous_ML(u, v, h_av, forces, dt_visc, visc);
+  thickness_to_dz(h_av, dz, GV, /*halo_size=*/1);
+  vertvisc.vertvisc_coef(up, vp, h_av, dz, visc, dt_pred, coupling);
+  vertvisc.vertvisc(up, vp, h_av, forces, visc, dt_pred, coupling);
   domain.pass_vector(up, vp);
 
   // uh = up[n-1/2] * h[n-1/2]
@@ -285,7 +247,7 @@ void DynUnsplitRK2::step(State &state, const amrex::Real dt, const MechForcing &
   average_thickness(h, hp, h_av, cor_stencil);
 
   // CAu = -(f+zeta(up))/h_av vh + d/dx KE(up)  (function of up[n-1/2], h[n-1/2])
-  CorAdCalc(up, vp, h_av, uh, vh, CAu, CAv, pbv);
+  coriolis_adv.CorAdCalc(up, vp, h_av, uh, vh, CAu, CAv);
 
   // up* = u[n] + (1+gamma) * dt * (PFu + CAu)  Extrapolated for damping
   // u*[n+1] = u[n] + dt * (PFu + CAu)
@@ -298,11 +260,11 @@ void DynUnsplitRK2::step(State &state, const amrex::Real dt, const MechForcing &
 
   // up[n] <- up* + dt d/dz visc d/dz up
   // u[n] <- u*[n] + dt d/dz visc d/dz u[n]
-  thickness_to_dz(h_av, dz);
-  vertvisc_coef(up, vp, h_av, dz, forces, dt);
-  vertvisc(up, vp, h_av, forces, dt);
-  vertvisc_coef(u, v, h_av, dz, forces, dt);
-  vertvisc(u, v, h_av, forces, dt);
+  thickness_to_dz(h_av, dz, GV, /*halo_size=*/1);
+  vertvisc.vertvisc_coef(up, vp, h_av, dz, visc, dt, coupling);
+  vertvisc.vertvisc(up, vp, h_av, forces, visc, dt, coupling);
+  vertvisc.vertvisc_coef(u, v, h_av, dz, visc, dt, coupling);
+  vertvisc.vertvisc(u, v, h_av, forces, visc, dt, coupling);
   domain.pass_vector(up, vp);
   domain.pass_vector(u, v);
 

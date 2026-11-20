@@ -38,6 +38,10 @@ Grid::Grid(GridFields &&fields)
   check_created(fields_.areaCu, "areaCu");
   check_created(fields_.mask2dCu, "mask2dCu");
   check_created(fields_.dy_Cu, "dy_Cu");
+  check_created(fields_.IdxCu, "IdxCu");
+  check_created(fields_.IdyCu, "IdyCu");
+  check_created(fields_.IdxCu_OBCmask, "IdxCu_OBCmask");
+  check_created(fields_.IareaCu, "IareaCu");
 
   check_created(fields_.geoLatCv, "geoLatCv");
   check_created(fields_.geoLonCv, "geoLonCv");
@@ -46,12 +50,19 @@ Grid::Grid(GridFields &&fields)
   check_created(fields_.areaCv, "areaCv");
   check_created(fields_.mask2dCv, "mask2dCv");
   check_created(fields_.dx_Cv, "dx_Cv");
+  check_created(fields_.IdxCv, "IdxCv");
+  check_created(fields_.IdyCv, "IdyCv");
+  check_created(fields_.IdyCv_OBCmask, "IdyCv_OBCmask");
+  check_created(fields_.IareaCv, "IareaCv");
 
   check_created(fields_.geoLatBu, "geoLatBu");
   check_created(fields_.geoLonBu, "geoLonBu");
   check_created(fields_.dxBu, "dxBu");
   check_created(fields_.dyBu, "dyBu");
   check_created(fields_.areaBu, "areaBu");
+  check_created(fields_.IareaBu, "IareaBu");
+  check_created(fields_.IdxBu, "IdxBu");
+  check_created(fields_.IdyBu, "IdyBu");
   check_created(fields_.mask2dBu, "mask2dBu");
 
   check_created(fields_.CoriolisBu, "CoriolisBu");

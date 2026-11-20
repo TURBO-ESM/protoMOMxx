@@ -17,7 +17,8 @@ struct PorousBarrier {
   amrex::MultiFab por_face_areaV;  ///< The open fraction of the v faces [nondim].
 
   // todo: por_layer_widthU and por_layer_widthV, the open fractions at the
-  //       nk+1 interfaces, which come with set_visc, their first user.
+  //       nk+1 interfaces, which come with the port of set_viscous_BBL, their
+  //       first user.
 };
 
 /// @brief Create the open fractions of the cell faces on the domain's

@@ -1,35 +1,13 @@
 #include "MOM_continuity.hpp"
 
-#include <string_view>
-
 #include <AMReX_Gpu.H>
 #include <AMReX_MFIter.H>
 
 #include "MOM_domain_infra.hpp"
+#include "MOM_domains.hpp"
 #include "MOM_logger.hpp"
 
 namespace MOM {
-
-namespace {
-
-/// @brief Stop if a field has the wrong stagger or too few ghost cells.
-/// Otherwise it would be read one point off, with no error.
-/// @param mf The field.
-/// @param stagger The stagger the kernel expects.
-/// @param halo The number of ghost cells needed in i and j.
-/// @param name The field's name, for the message.
-void check_field(const amrex::MultiFab &mf, const Stagger stagger, const int halo,
-                 const std::string_view name) {
-  if (!has_stagger(mf, stagger)) {
-    logger::fatal("continuity: ", name, " does not have the stagger the kernel expects.");
-  }
-  if (ni_halo(mf) < halo || nj_halo(mf) < halo) {
-    logger::fatal("continuity: ", name, " has ", ni_halo(mf), " x ", nj_halo(mf),
-                  " ghost cells, and the stencil needs ", halo, ".");
-  }
-}
-
-} // namespace
 
 Continuity make_continuity(const Grid &G, const VerticalGrid &GV, const PorousBarrier &pbv,
                            RuntimeParams &params) {
@@ -145,15 +123,17 @@ void Continuity::continuity(const amrex::MultiFab &u, const amrex::MultiFab &v,
                             const bool x_first) const {
   // Check every field the kernel reads. The grid's fields all have the same
   // halo and always have the right stagger, so mask2dT stands for them.
-  check_field(u, Stagger::XFace, stencil(), "u");
-  check_field(v, Stagger::YFace, stencil(), "v");
-  check_field(hin, Stagger::Cell, stencil(), "hin");
-  check_field(h, Stagger::Cell, stencil(), "h");
-  check_field(uh, Stagger::XFace, stencil(), "uh");
-  check_field(vh, Stagger::YFace, stencil(), "vh");
-  check_field(G.mask2dT(), Stagger::Cell, stencil(), "the grid");
-  check_field(pbv.por_face_areaU, Stagger::XFace, stencil(), "por_face_areaU");
-  check_field(pbv.por_face_areaV, Stagger::YFace, stencil(), "por_face_areaV");
+  check_field(u, Stagger::XFace, stencil(), "continuity", "u");
+  check_field(v, Stagger::YFace, stencil(), "continuity", "v");
+  check_field(hin, Stagger::Cell, stencil(), "continuity", "hin");
+  check_field(h, Stagger::Cell, stencil(), "continuity", "h");
+  check_field(uh, Stagger::XFace, stencil(), "continuity", "uh");
+  check_field(vh, Stagger::YFace, stencil(), "continuity", "vh");
+  check_field(G.mask2dT(), Stagger::Cell, stencil(), "continuity", "the grid");
+  check_field(pbv.por_face_areaU, Stagger::XFace, stencil(), "continuity", "por_face_areaU");
+  check_field(pbv.por_face_areaV, Stagger::YFace, stencil(), "continuity", "por_face_areaV");
+
+  // defer: the open boundaries, which MOM6 passes to the kernel as OBC.
 
   // todo: temporary placeholders for MOM6's optional arguments, until the split
   //       scheme passes them. The kernel treats an empty Array4 as an absent arg.

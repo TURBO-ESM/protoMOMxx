@@ -80,14 +80,15 @@ Grid make_grid(const Domain &domain, RuntimeParams &params) {
   fields.bathyT = initialize_topography(domain, fields.geoLatT,
                                         fields.geoLonT, params);
 
+  // defer: the open boundaries: open_boundary_config, which reads
+  //        OBC_NUMBER_OF_SEGMENTS, the open boundary faces in initialize_masks,
+  //        and open_boundary_impose_land_mask.
+
   initialize_masks(domain, fields, params);
 
   fields.CoriolisBu = initialize_rotation(domain, fields.geoLatBu, params);
 
   set_derived_metrics(domain, fields);
-  // defer: the other reciprocals of MOM6's set_derived_metrics and
-  //        initialize_masks (IdxCu, IdyCu, IareaCu, IareaBu, ...), until
-  //        their first users.
 
   return Grid(std::move(fields));
 }

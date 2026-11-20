@@ -1,5 +1,7 @@
 # MOM C++ kernels, and the Fortran<->C++ bridge MOM6 calls under -D_TIM.
-# Moved here from TIM's mom/cpp/ and turbotmp/.
+# Moved here from TIM's mom/cpp/ and turbotmp/. The option structs and kernel
+# signatures mirror the Fortran types the bridge passes. They will be
+# redesigned when the bridge is retired.
 #
 #   mom_kernels  the AMReX kernels alone (protoMOMxx::mom_kernels). Needs only
 #                AMReX.
@@ -144,6 +146,12 @@ set(mom_fp_options
     $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-fno-fast-math>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-ffp-contract=off>
     $<$<COMPILE_LANG_AND_ID:CXX,IntelLLVM,Intel>:-fp-model=precise>
+    # todo: add -ffp-contract=off after -fp-model=precise for icpx. Coming
+    #       last, -fp-model=precise turns contraction back on, so icpx fuses
+    #       multiply-adds on targets with FMA instructions (e.g.,
+    #       -march=core-avx2). Also, protoMOMxx's own sources get none of
+    #       these options, so they contract with icpx, with nvcc in device
+    #       code, and with g++ on FMA targets.
     # nvcc: device code
     $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--fmad=false>
     $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--ftz=false>

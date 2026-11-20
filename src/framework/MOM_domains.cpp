@@ -92,4 +92,15 @@ Domain make_domain(RuntimeParams &params) {
                  .tripolar_n = tripolar_n});
 }
 
+void check_field(const amrex::MultiFab &mf, const Stagger stagger, const int halo,
+                 const std::string_view caller, const std::string_view name) {
+  if (!has_stagger(mf, stagger)) {
+    logger::fatal(caller, ": ", name, " does not have the stagger the kernel expects.");
+  }
+  if (ni_halo(mf) < halo || nj_halo(mf) < halo) {
+    logger::fatal(caller, ": ", name, " has ", ni_halo(mf), " x ", nj_halo(mf),
+                  " ghost cells, and the stencil needs ", halo, ".");
+  }
+}
+
 } // namespace MOM
