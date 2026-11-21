@@ -29,7 +29,7 @@ The implementation is a strict **three-tier separation**:
         │
         ▼
    <prefix>_FOO_bridge   (extern "C", marshalling only, no math)
-        │  copies Fortran-host arrays → device, transposes layout
+        │  copies Fortran-host arrays → device (same layout, no transpose)
         ▼
    MOM::FOO              (AMReX kernel: Box + Array4, ParallelFor)
         │
@@ -47,7 +47,7 @@ can be unit-tested or replaced independently.
 
 | File | Role |
 |---|---|
-| `src/mom_kernels/turbotmp/turbotmp_helper.{hpp,cpp}` | generic `A4Box`/`IntA4Box` containers + GPU arena alloc/free + Fortran↔C transpose. Reusable across all bridges. |
+| `src/mom_kernels/turbotmp/turbotmp_helper.{hpp,cpp}` | generic `A4Box`/`IntA4Box` containers + GPU arena alloc/free + host↔device copies of Fortran arrays. Reusable across all bridges. |
 | `src/mom_kernels/turbotmp_<module>_bridge.h` | `extern "C"` prototypes of the bridge entry points; includes TIM's `turbotmp_bridge_c_types.h` for `RealArray_C`, `LogicalArray_C`, `Box_C`. |
 | `src/mom_kernels/turbotmp_<module>_bridge.cpp` | bridge implementations: marshalling only, no math. |
 | `src/mom_kernels/<module>.hpp` | public AMReX kernel API in namespace `MOM`. |
@@ -79,18 +79,25 @@ For PR #8 the concrete files were
 ## 2. The `turbotmp::A4Box` helper
 
 A small struct that owns a GPU-arena allocation plus an `Array4<Real>`
-view. It carries **two** device buffers per array:
+view. It currently carries **two** device buffers per array:
 
-- `data` — AMReX C-order, exposed via `arr` (the `Array4` consumed by
-  kernels).
-- `data_f` — Fortran-order staging, written/read by host↔device transfers.
+- `data` — the buffer the kernel sees, exposed via `arr` (the `Array4`
+  consumed by kernels).
+- `data_f` — a staging buffer, written/read by host↔device transfers.
+
+**Both buffers have the same layout, and so does the Fortran array.**
+`amrex::Array4` is column-major: `i` varies fastest, and element
+`(i,j,k,n)` is at offset `i + jstride*j + kstride*k + nstride*n`
+(`AMReX_Array4.H`). That is Fortran's layout. There is no "C order" in
+play and no Fortran↔C transpose is needed. A Fortran array can be wrapped
+in an `Array4` directly, given its pointer, lower bounds and extents.
 
 ```cpp
 struct A4Box {
     amrex::Box                  bx;
-    amrex::Real*                data   = nullptr;  // device, C order
+    amrex::Real*                data   = nullptr;  // device, the kernel's buffer
     amrex::Array4<amrex::Real>  arr;               // view onto `data`
-    amrex::Real*                data_f = nullptr;  // device, Fortran order
+    amrex::Real*                data_f = nullptr;  // device, staging (same layout)
     int nx, ny, nz, ncomp;
 };
 
@@ -101,8 +108,11 @@ void  copy_array4_to_FortranHost(const A4Box& a4, double* f);
 ```
 
 Memory comes from `amrex::The_Arena()` so the same code runs on CPU and
-GPU. The Fortran↔C transpose happens in a `ParallelFor` lambda *on the
-device* — there is no host-side reordering. `make_array4` takes the
+GPU. The copy from `data_f` to `data` (and back) runs as a `ParallelFor`
+on the device. Its index formula is the same on both sides, so it is an
+identity copy, not a transpose; removing it, and the second buffer, is
+backlog item TB-010 in turbo-stack's `BACKLOG.md`. Do not describe it, or
+any new code, as a layout conversion. `make_array4` takes the
 extents and Fortran 1-based lower bounds from the descriptor itself
 (`RealArray_C::shape[]`/`lb[]`; a 2D descriptor, `dim == 2`, gets
 `nz = 1` and `lbz = 1`; `ncomp` is always 1) and positions `a4.bx`,
@@ -117,8 +127,7 @@ kernel), each one's `Array4` must be positioned at its own real offset
 for that shared indexing to land on the correct element in both. Get
 this wrong and every array with `lb == 1` is silently fine while every
 staggered array reads/writes the wrong element (or out of bounds) —
-see §7 #12. The staging buffer `data_f` keeps the input layout intact
-while the kernel-facing `data` is reordered.
+see §7 #12.
 
 ### 2.1 The `turbotmp::IntA4Box` helper (for `LogicalArray_C`)
 
@@ -168,8 +177,8 @@ Some Fortran `bind(C)` types are a flat aggregate of scalars — no
 passed `intent(in)` without `value`, so it crosses as a pointer:
 `const transport_adjust_CS_C*`). These need **no** `A4Box`/`IntA4Box`-
 style helper at all: there is nothing to allocate on the device and
-nothing to transpose, since a `bind(C)` struct of plain scalars already
-has the same memory layout the C++ side needs. The bridge just
+nothing to copy element by element, since a `bind(C)` struct of plain
+scalars already has the same memory layout the C++ side needs. The bridge just
 dereferences the host pointer once and passes the resulting struct
 straight through.
 
@@ -341,8 +350,10 @@ The kernel layer is the seam between AMReX and the model. Conventions:
   `[=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept` that delegate to
   `*_point` primitives or write inline math.
 - For multi-stage kernels, intermediate buffers are
-  `amrex::FArrayBox tmp_fab(box, ncomp)` allocated *inside the kernel*,
-  never returned to the bridge.
+  `amrex::FArrayBox tmp_fab(box, ncomp, amrex::The_Async_Arena())`
+  (likewise `IArrayBox`) allocated *inside the kernel*, never returned to
+  the bridge. Always pass `The_Async_Arena()` explicitly; never use
+  `The_Arena()` or the default arena for scratch (§7 #20).
 - Import AMReX names with `using amrex::Box; using amrex::Array4;` at
   file scope, or `using namespace amrex;` inside the .cpp — never
   sprinkle `amrex::` everywhere, and never `using namespace` in headers.
@@ -728,7 +739,40 @@ PR #8's ~30 commits surface the friction worth flagging:
     - **Where it slipped:** the CorAdCalc, vertvisc and interface-heights
       ports used bare literals because this list did not ask for `_rt`.
       `mom_hor_visc` was converted afterwards.
-20. **Plain fills and copies use the `BaseFab` member functions, not
+20. **Scratch buffers come from `The_Async_Arena()`.** Every `FArrayBox`/
+    `IArrayBox` a kernel allocates for its own temporaries passes
+    `amrex::The_Async_Arena()` as the arena argument:
+    `FArrayBox tmp_fab(bx, 1, amrex::The_Async_Arena());`.
+    - **Why it matters:** the buffer is freed when the C++ scope ends, but
+      the kernels that use it may still be queued or running on the GPU.
+      `The_Arena()` (and the default arena, used when the argument is
+      omitted) returns the memory to the pool immediately. On a single
+      stream that is harmless: the next user of the memory is queued
+      behind the previous one. In the native driver's `MFIter` loop,
+      AMReX runs boxes on several GPU streams, so memory freed by one
+      box's call can be handed to another box on another stream while the
+      first box's kernels are still reading it. That is a data race. It
+      produces wrong answers that vary from run to run, with no error.
+      `The_Async_Arena()` frees in stream order: the memory is released
+      only after the work already queued on that stream finishes.
+    - **Cost:** none on CPU builds, where it is equivalent to
+      `The_Arena()`. On GPU, freed memory is held until the stream
+      drains, which raises peak memory by at most one box's scratch per
+      stream in flight.
+    - **Bridge path:** the MOM6 bridge runs on one stream, so the race
+      never shows up in capture replay or in MOM6 runs. Passing those
+      tests does not prove a kernel is safe. Check the arena argument of
+      every scratch allocation by reading the code.
+    - **Where it slipped:** `mom_continuity_ppm.cpp` uses `The_Arena()`
+      and the default arena for all its scratch (fix tracked as TB-007 in
+      turbo-stack's `BACKLOG.md`). The CorAdCalc, hor_visc and
+      vert_friction ports use `The_Async_Arena()` throughout; follow
+      them.
+    - **Out of scope:** the bridge helper's `A4Box` buffers
+      (`make_array4`) stay on `The_Arena()`. They live on the
+      single-stream bridge path and are freed after an explicit
+      synchronize.
+21. **Plain fills and copies use the `BaseFab` member functions, not
     hand-written loops.** Wrap the `Array4` in a non-owning
     `FArrayBox(arr)` and call the AMReX member function. The wrapper
     neither allocates nor copies; it just views the same memory.

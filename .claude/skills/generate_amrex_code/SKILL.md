@@ -1,7 +1,7 @@
 ---
 name: generate_amrex_code
 version: "0.3.3"
-description: Produce the C++/AMReX side of a bridge for a MOM6 Fortran subroutine. Adds a three-tier implementation inside a TURBO-ESM/protoMOMxx checkout (under src/mom_kernels/) — an extern "C" marshalling bridge, an AMReX kernel in namespace MOM, and (when the kernel is stencil-free per cell) a pointwise device primitive — and reuses the existing turbotmp::A4Box helper for host↔device transfer and Fortran↔C layout transpose. Grounds the AMReX port in the original Fortran source, located either via an optional MOM6 checkout path or by user paste. Assumes the Fortran-side bind(C) interface and capture-mode regression input already exist; this skill does not modify any Fortran source. Mirrors the pattern established in TURBO-ESM/TIM PR #8 (that code now lives in protoMOMxx).
+description: Produce the C++/AMReX side of a bridge for a MOM6 Fortran subroutine. Adds a three-tier implementation inside a TURBO-ESM/protoMOMxx checkout (under src/mom_kernels/) — an extern "C" marshalling bridge, an AMReX kernel in namespace MOM, and (when the kernel is stencil-free per cell) a pointwise device primitive — and reuses the existing turbotmp::A4Box helper for host↔device transfer of Fortran arrays (Array4 and Fortran share the same column-major layout, so no transpose is involved). Grounds the AMReX port in the original Fortran source, located either via an optional MOM6 checkout path or by user paste. Assumes the Fortran-side bind(C) interface and capture-mode regression input already exist; this skill does not modify any Fortran source. Mirrors the pattern established in TURBO-ESM/TIM PR #8 (that code now lives in protoMOMxx).
 user-invocable: true
 argument-hint: <function-name> [<mom6-directory>] [--work_dir <path>] [--enable_src_validate] [--enable_git_commit] [--disable_git_commit]
 ---
@@ -486,8 +486,13 @@ Deliberately grep-able and meant to be stripped later.
   headers are normal C++.
 - Every `make_array4` reaches a `free_array4` on every path —
   including early-return / abort paths (lessons.md §7 #5).
-- Reuse `turbotmp::A4Box` and its helpers; never duplicate the
-  Fortran↔C transpose logic.
+- Reuse `turbotmp::A4Box` and its helpers; never write new host↔device
+  copy logic. `Array4` and Fortran arrays share the same column-major
+  layout, so never add or describe a "Fortran↔C transpose" or "C order"
+  (lessons.md §2).
+- Every scratch `FArrayBox`/`IArrayBox` allocated inside a kernel passes
+  `amrex::The_Async_Arena()` explicitly; never `The_Arena()` or the
+  default arena (lessons.md §4, §7 #20).
 - Forward-declared opaque pointer types stay forward-declared until
   the model implements them; guard non-null arrivals with
   `AMREX_ABORT_LOC` (lessons.md §7 #7).
